@@ -24,7 +24,7 @@ const Newsletter = () => {
   };
 
   return (
-    <section className="pt-8 md:pt-12 lg:pt-16 lg:px-20 md:px-16 sm:px-12 px-8">
+    <section className="pt-8 md:pt-12 lg:pt-16 lg:px-20 md:px-16 sm:px-12 px-4">
       <div className="bg-[#492F92] p-10">
         <h2 className="text-2xl md:text-3xl font-normal max-w-[450px] text-[#F7CD3A] mb-4">
           Subscribe to our newsetter for the Latest Updates

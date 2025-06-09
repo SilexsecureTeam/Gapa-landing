@@ -5,7 +5,7 @@ import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="pb-8  lg:px-20 md:px-16 sm:px-12 px-8">
+    <footer className="pb-8  lg:px-20 md:px-16 sm:px-12 px-4">
       <div className="bg-[#EFECE0] py-6 px-15 ">
         <div className="flex flex-wrap md:justify-between gap-8 pb-10 border-b border-b-[#503535]">
           {/* 1. Logo, Text, Socials */}
@@ -129,7 +129,7 @@ const Footer = () => {
           </div>
         </div>
         {/* Copyright */}
-        <div className="mt-10 text-center text-xs text-[#503535]">
+        <div className="mt-10 text-center text-xs text-black">
           &copy; {new Date().getFullYear()} Your Company Name. All rights
           reserved.
         </div>

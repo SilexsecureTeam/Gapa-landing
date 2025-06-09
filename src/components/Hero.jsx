@@ -7,13 +7,13 @@ import hero3 from "../assets/hero3.png";
 const Hero = () => {
   return (
     <section
-      className="relative h-fit md:h-[90vh] py-12 md:py-10 lg:px-20 md:px-16 sm:px-12 px-8 bg-cover bg-center flex items-center justify-center"
+      className="relative h-fit md:h-[90vh] py-12 md:py-10 lg:px-20 md:px-16 sm:px-12 px-4 bg-cover bg-center flex items-center justify-center"
       style={{ backgroundImage: `url(${heroBg})` }}
     >
       {/* Content */}
       <div className="flex flex-col md:flex-row z-10 justify-between items-center w-full relative">
         {/* Left Side (Text) */}
-        <div className="w-full md:w-2/3 text-white px-0 animate-fadeIn order-1 md:order-1 mt-8 md:mt-0">
+        <div className="w-full md:w-2/3 text-white animate-fadeIn order-1 md:order-1 mt-8 md:mt-0">
           <h1 className="text-2xl sm:text-3xl md:text-5xl poppins uppercase leading-tight md:leading-[3.5rem] md:text-start text-center font-semibold mb-4 sm:mb-6">
             <span className="text-[#F7CD3A]">Fast</span>, Reliable Auto Repairs
             <br className="hidden sm:block" />

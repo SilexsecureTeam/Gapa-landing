@@ -164,7 +164,7 @@ const Service = () => {
   );
 
   return (
-    <section className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-8 ">
+    <section className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4 ">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row w-full mb-8 md:mb-12 justify-between items-start sm:items-center gap-4">
           <h1 className="text-[#333333] font-semibold text-2xl md:text-4xl leading-tight">

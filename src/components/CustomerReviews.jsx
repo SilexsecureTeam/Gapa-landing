@@ -175,7 +175,7 @@ const CustomerReviews = () => {
   );
 
   return (
-    <section className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-8 ">
+    <section className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4 ">
       <div className="">
         {/* Header with Title and Navigation */}
         <div className="flex justify-between items-start md:items-center mb-8 md:mb-12">

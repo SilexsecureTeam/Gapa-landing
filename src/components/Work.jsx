@@ -21,7 +21,7 @@ import work from "../assets/work.png";
 
 const Work = () => {
   return (
-    <div className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-8 ">
+    <div className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4 ">
       <div className="bg-[#333333] rounded-t-lg ">
         <img
           src={work}

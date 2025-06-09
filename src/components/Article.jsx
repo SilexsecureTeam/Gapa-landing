@@ -108,7 +108,7 @@ const Article = () => {
   };
 
   return (
-    <section className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-8">
+    <section className="py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4">
       <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#333333] mb-4 md:mb-8">
         Latest Articles
       </h2>

@@ -128,7 +128,7 @@ const Trust = () => {
   }, []);
 
   return (
-    <section className="bg-[#f3f1f7] py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-8">
+    <section className="bg-[#f3f1f7] py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4">
       <div className="flex flex-col md:flex-row w-full mx-auto bg-[#f3f1f7]">
         <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 bg-[#492F92] rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
           <h1 className="text-[#E5E5E5] font-bold text-xl md:text-2xl  mb-6 md:mb-8 leading-tight">

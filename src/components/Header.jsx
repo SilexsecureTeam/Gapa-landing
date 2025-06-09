@@ -9,7 +9,7 @@ const Header = () => {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="flex justify-between items-center py-6 lg:px-20 md:px-16 sm:px-12 px-8 text-white relative">
+    <header className="flex justify-between items-center py-6 lg:px-20 md:px-16 sm:px-12 px-4 text-white relative">
       {/* Mobile Hamburger */}
       <div className="md:hidden flex items-center">
         <button onClick={toggleMenu} className="text-[#492F92]">
