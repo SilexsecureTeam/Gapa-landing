@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import logo from "../assets/logo.png";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,13 +25,22 @@ const Header = () => {
       {/* Desktop Nav */}
       <div className="hidden md:flex items-center">
         <ul className="flex space-x-7 md:text-lg cursor-pointer text-[#333333] font-semibold">
-          <li className="text-[#492F92] hover:text-[#3b2371] transition">
-            Home
-          </li>
-          <li className="hover:text-[#3b2371] transition">About Us</li>
+          <Link to="/">
+            {" "}
+            <li className="text-[#492F92] hover:text-[#3b2371] transition">
+              Home
+            </li>{" "}
+          </Link>
+          <Link to="/about">
+            <li className="hover:text-[#3b2371] transition">About Us</li>
+          </Link>
           <li className="hover:text-[#3b2371] transition">Services</li>
-          <li className="hover:text-[#3b2371] transition">Contact</li>
-          <li className="hover:text-[#3b2371] transition">Team</li>
+          <Link to="/contact">
+            <li className="hover:text-[#3b2371] transition">Contact</li>
+          </Link>
+          <Link to="/team">
+            <li className="hover:text-[#3b2371] transition">Team</li>
+          </Link>
         </ul>
         <button className="bg-[#492F92] text-white text-[14px] font-medium py-2 px-4 rounded cursor-pointer ml-12 hover:bg-[#3b2371] transition duration-300">
           Sign In
@@ -51,21 +61,30 @@ const Header = () => {
         </div>
 
         <ul className="flex flex-col space-y-6 p-6 text-[16px] font-medium">
-          <li className="hover:text-[#492F92]" onClick={closeMenu}>
-            Home
-          </li>
-          <li className="hover:text-[#492F92]" onClick={closeMenu}>
-            About Us
-          </li>
+          <Link to="/">
+            {" "}
+            <li className="hover:text-[#492F92]" onClick={closeMenu}>
+              Home
+            </li>{" "}
+          </Link>
+          <Link to="/about">
+            <li className="hover:text-[#492F92]" onClick={closeMenu}>
+              About Us
+            </li>{" "}
+          </Link>
           <li className="hover:text-[#492F92]" onClick={closeMenu}>
             Services
           </li>
+          <Link to="/contact"></Link>
           <li className="hover:text-[#492F92]" onClick={closeMenu}>
             Contact
           </li>
-          <li className="hover:text-[#492F92]" onClick={closeMenu}>
-            Team
-          </li>
+          <Link to="/team">
+            {" "}
+            <li className="hover:text-[#492F92]" onClick={closeMenu}>
+              Team
+            </li>{" "}
+          </Link>
         </ul>
       </div>
 

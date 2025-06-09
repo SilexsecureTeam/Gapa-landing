@@ -16,21 +16,30 @@
   font-family: "Poppins", sans-serif;
 }
 
-@keyframes slide {
-  0% {
-    transform: translateX(0%);
+@layer utilities {
+  .animate-scale-pulse {
+    animation: scale-pulse 1.5s ease-in-out infinite;
   }
-  33% {
-    transform: translateX(-100%);
-  }
-  66% {
-    transform: translateX(-200%);
-  }
-  100% {
-    transform: translateX(0%);
-  }
-}
 
-.animate-slide {
-  animation: slide 18s ease-in-out infinite;
+  @keyframes scale-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
