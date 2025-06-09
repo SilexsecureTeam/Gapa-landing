@@ -1,15 +1,74 @@
-import React from "react";
-import heroBg from "../assets/hero-bg.png";
+import React, { useState, useEffect, useMemo } from "react";
+import heroBg1 from "../assets/hero-bg.png"; // Update with actual images if you have multiple
 import hero1 from "../assets/hero1.png";
 import hero2 from "../assets/hero2.png";
 import hero3 from "../assets/hero3.png";
 
 const Hero = () => {
+  // Memoize the images array to prevent recreation on every render
+  const images = useMemo(() => [heroBg1, heroBg1, heroBg1], []); // Replace with heroBg2, heroBg3, etc., if available
+  const [currentImage, setCurrentImage] = useState(0);
+  const totalImages = images.length;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => prev + 1);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Reset to first image seamlessly when reaching the duplicated set
+  useEffect(() => {
+    if (currentImage === totalImages) {
+      setTimeout(() => {
+        setCurrentImage(0);
+      }, 700); // Match transition duration
+    }
+  }, [currentImage, totalImages]);
+
+  // Preload images to prevent loading issues
+  useEffect(() => {
+    images.forEach((image) => {
+      const img = new Image();
+      img.src = image;
+    });
+  }, [images]);
+
+  // Duplicate images for seamless looping
+  const extendedImages = [...images, ...images];
+
   return (
-    <section
-      className="relative h-fit md:h-[90vh] py-12 md:py-10 lg:px-20 md:px-16 sm:px-12 px-4 bg-cover bg-center flex items-center justify-center"
-      style={{ backgroundImage: `url(${heroBg})` }}
-    >
+    <section className="relative h-fit md:h-[90vh] py-12 md:py-10 lg:px-20 md:px-16 sm:px-12 px-4 flex items-center justify-center overflow-hidden">
+      {/* Slider Container */}
+      <div
+        className="absolute inset-0 flex"
+        style={{
+          transform: `translateX(-${
+            (currentImage * 100) / (totalImages * 2)
+          }%)`,
+          width: `${extendedImages.length * 100}%`,
+          transition:
+            currentImage === totalImages
+              ? "none"
+              : "transform 700ms ease-in-out",
+        }}
+      >
+        {extendedImages.map((image, index) => (
+          <div
+            key={index}
+            className="w-full h-full  bg-center"
+            style={{
+              backgroundImage: `url(${image})`,
+              flex: `0 0 ${100 / extendedImages.length}%`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/40 z-0"></div>
+
       {/* Content */}
       <div className="flex flex-col md:flex-row z-10 justify-between items-center w-full relative">
         {/* Left Side (Text) */}
@@ -27,25 +86,25 @@ const Hero = () => {
         </div>
 
         {/* Right Side (Images & CTA) */}
-        <div className="w-full md:w-1/3 mt-15 md:mt-0 text-white px-0 sm:px-2 md:px-4 animate-fadeIn flex justify-start flex-col order-2 md:order-2">
+        <div className="w-full md:w-1/3 mt-8 md:mt-0 text-white px-0 sm:px-2 md:px-4 animate-fadeIn flex justify-start flex-col order-2 md:order-2">
           <div className="mb-4 flex justify-center md:justify-start gap-2">
             <img
               src={hero1}
-              alt="hero1"
-              className="w-12 h-12 sm:w-15 sm:h-15 object-cover rounded-lg shadow-md"
+              alt="Car repair service 1"
+              className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg shadow-md"
             />
             <img
               src={hero2}
-              alt="hero2"
-              className="w-12 h-12 sm:w-15 sm:h-15 object-cover rounded-lg shadow-md"
+              alt="Car repair service 2"
+              className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg shadow-md"
             />
             <img
               src={hero3}
-              alt="hero3"
-              className="w-12 h-12 sm:w-15 sm:h-15 object-cover rounded-lg shadow-md"
+              alt="Car repair service 3"
+              className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg shadow-md"
             />
           </div>
-          <p className="text-base sm:text-lg md:text-xl w-full font-light text-[#E5E5E5] mt-2 ">
+          <p className="text-base sm:text-lg md:text-xl w-full font-light text-[#E5E5E5] mt-2">
             Join 10,000+ Car Owners Who Trust Our Service
           </p>
           <button className="bg-[#492F92] mt-6 text-white py-3 px-6 w-full sm:w-auto rounded hover:bg-[#3b2371] transition duration-300 text-base font-medium shadow-md">
