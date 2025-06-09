@@ -13,7 +13,7 @@ const Hero = () => {
       {/* Content */}
       <div className="flex flex-col md:flex-row z-10 justify-between items-center w-full relative">
         {/* Left Side (Text) */}
-        <div className="w-full md:w-2/3 text-white px-0 sm:px-2 md:px-4 animate-fadeIn order-1 md:order-1 mt-8 md:mt-0">
+        <div className="w-full md:w-2/3 text-white px-0 animate-fadeIn order-1 md:order-1 mt-8 md:mt-0">
           <h1 className="text-2xl sm:text-3xl md:text-5xl poppins uppercase leading-tight md:leading-[3.5rem] md:text-start text-center font-semibold mb-4 sm:mb-6">
             <span className="text-[#F7CD3A]">Fast</span>, Reliable Auto Repairs
             <br className="hidden sm:block" />
