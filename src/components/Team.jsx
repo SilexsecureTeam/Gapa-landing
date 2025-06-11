@@ -38,19 +38,19 @@ const Team = () => {
         {technicians.map((technician) => (
           <div
             key={technician.id}
-            className="relative overflow-hidden h-60 rounded-lg shadow-lg bg-center bg-cover"
+            className="relative overflow-hidden h-60 rounded-lg shadow-lg bg-center bg-cover group"
             style={{ backgroundImage: `url(${technician.image})` }}
           >
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition duration-300"></div>
+            {/* Bottom-to-Top Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition duration-300"></div>
 
             {/* Text Content */}
             <div className="relative z-10 flex flex-col items-center justify-end h-full text-center text-white p-4">
-              <h3 className="text-lg  font-bold">Emeka Johnson</h3>
-              <p className="text-[12px]  font-medium mt-1.5">
+              <h3 className="text-lg font-bold">Emeka Johnson</h3>
+              <p className="text-[12px] font-medium mt-1.5">
                 Senior Auto Technician
               </p>
-              <p className="text-[12px]  font-medium ">
+              <p className="text-[12px] font-medium">
                 12+ years in vehicle <br /> diagnostics and repairs
               </p>
             </div>
