@@ -34,7 +34,9 @@ const Header = () => {
           <Link to="/about">
             <li className="hover:text-[#3b2371] transition">About Us</li>
           </Link>
-          <li className="hover:text-[#3b2371] transition">Services</li>
+          <Link to="/service">
+            <li className="hover:text-[#3b2371] transition">Services</li>
+          </Link>
           <Link to="/contact">
             <li className="hover:text-[#3b2371] transition">Contact</li>
           </Link>
@@ -72,9 +74,11 @@ const Header = () => {
               About Us
             </li>{" "}
           </Link>
-          <li className="hover:text-[#492F92]" onClick={closeMenu}>
-            Services
-          </li>
+          <Link to="/service">
+            <li className="hover:text-[#492F92]" onClick={closeMenu}>
+              Services
+            </li>{" "}
+          </Link>
           <Link to="/contact"></Link>
           <li className="hover:text-[#492F92]" onClick={closeMenu}>
             Contact

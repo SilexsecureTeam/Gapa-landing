@@ -86,9 +86,9 @@ const About = () => {
       </div>
 
       {/* Cards Section */}
-      <div className="flex flex-col md:flex-row justify-center items-start md:items-center gap-8 md:gap-12 py-16">
+      <div className="flex flex-col md:flex-row justify-center items-start md:items-center gap-8 md:gap-12 py-16 md:py-30">
         {data.map((item, index) => (
-          <div key={index} className="w-full md:w-1/3 text-center">
+          <div key={index} className="w-full md:w-1/3 text-start">
             <h2 className="text-2xl md:text-3xl font-medium mb-4 text-[#333333]">
               {item.title}
             </h2>
@@ -100,12 +100,12 @@ const About = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="w-full flex flex-col-reverse md:flex-row justify-between items-center md:space-x-12 space-y-8 md:space-y-0">
+      <div className="w-full flex flex-col-reverse md:flex-row justify-between items-start md:space-x-12 space-y-8 md:space-y-0">
         <div className="w-full md:w-1/2">
           <img
             src={about2}
             alt="about"
-            className="w-full h-auto object-cover rounded"
+            className="w-full h-80 object-cover rounded"
           />
         </div>
         <div className="w-full md:w-1/2">
