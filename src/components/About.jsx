@@ -121,7 +121,7 @@ const About = () => {
         </div>
       </div>
       {/* Logo Carousel Container */}
-      <div className="relative overflow-hidden py-20">
+      <div className="relative overflow-hidden my-20">
         {/* Gradient overlays for smooth fade effect */}
         <div className="absolute left-0 top-0 w-16 md:w-24 lg:w-32 h-full bg-gradient-to-r from-gray-50 to-transparent z-10"></div>
         <div className="absolute right-0 top-0 w-16 md:w-24 lg:w-32 h-full bg-gradient-to-l from-gray-50 to-transparent z-10"></div>
