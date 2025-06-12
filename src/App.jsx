@@ -12,6 +12,8 @@ const AboutPage = lazy(() => import("./Pages/AboutPage"));
 const ServicePage = lazy(() => import("./Pages/ServicePage"));
 const SignupPage = lazy(() => import("./Pages/SignupPage"));
 const SigninPage = lazy(() => import("./Pages/SigninPage"));
+const ProfilePage = lazy(() => import("./Pages/ProfilePage"));
+const ProfileMecPage = lazy(() => import("./Pages/ProfileMecPage"));
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
             <Route path="/service" element={<ServicePage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/signin" element={<SigninPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile-mec" element={<ProfileMecPage />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}
           </Routes>

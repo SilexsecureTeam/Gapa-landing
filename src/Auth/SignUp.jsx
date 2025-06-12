@@ -104,7 +104,7 @@ const SignUp = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
-                Your email*
+                Your email<span className="text-[#FF0000]">*</span>
               </label>
               <input
                 type="email"
@@ -118,7 +118,7 @@ const SignUp = () => {
             </div>
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
-                Phone number*
+                Phone number<span className="text-[#FF0000]">*</span>
               </label>
               <input
                 type="tel"
@@ -132,7 +132,7 @@ const SignUp = () => {
             </div>
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
-                Select your role*
+                Select your role<span className="text-[#FF0000]">*</span>
               </label>
               <select
                 name="role"
