@@ -10,6 +10,8 @@ const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
 const TeamPage = lazy(() => import("./Pages/TeamPage"));
 const AboutPage = lazy(() => import("./Pages/AboutPage"));
 const ServicePage = lazy(() => import("./Pages/ServicePage"));
+const SignupPage = lazy(() => import("./Pages/SignupPage"));
+const SigninPage = lazy(() => import("./Pages/SigninPage"));
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/team" element={<TeamPage />} />
             <Route path="/service" element={<ServicePage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/signin" element={<SigninPage />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}
           </Routes>

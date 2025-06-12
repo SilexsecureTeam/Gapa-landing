@@ -44,9 +44,12 @@ const Header = () => {
             <li className="hover:text-[#3b2371] transition">Team</li>
           </Link>
         </ul>
-        <button className="bg-[#492F92] text-white text-[14px] font-medium py-2 px-4 rounded cursor-pointer ml-12 hover:bg-[#3b2371] transition duration-300">
-          Sign In
-        </button>
+        <Link to="/signin">
+          {" "}
+          <button className="bg-[#492F92] text-white text-[14px] font-medium py-2 px-4 rounded cursor-pointer ml-12 hover:bg-[#3b2371] transition duration-300">
+            Sign In
+          </button>{" "}
+        </Link>
       </div>
 
       {/* Mobile Nav Menu */}
@@ -94,9 +97,12 @@ const Header = () => {
 
       {/* Always visible Sign In Button for mobile */}
       <div className="md:hidden ml-4">
-        <button className="bg-[#492F92] text-white text-[14px] font-medium py-2 px-4 rounded cursor-pointer hover:bg-[#3b2371] transition duration-300">
-          Sign In
-        </button>
+        <Link to="/signin">
+          {" "}
+          <button className="bg-[#492F92] text-white text-[14px] font-medium py-2 px-4 rounded cursor-pointer hover:bg-[#3b2371] transition duration-300">
+            Sign In
+          </button>{" "}
+        </Link>
       </div>
     </header>
   );
