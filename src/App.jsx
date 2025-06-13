@@ -15,6 +15,10 @@ const SigninPage = lazy(() => import("./Pages/SigninPage"));
 const ProfilePage = lazy(() => import("./Pages/ProfilePage"));
 const ProfileMecPage = lazy(() => import("./Pages/ProfileMecPage"));
 const Book1Page = lazy(() => import("./Pages/Book1Page"));
+const Book2Page = lazy(() => import("./Pages/Book2Page"));
+const Book3Page = lazy(() => import("./Pages/Book3Page"));
+const Book4Page = lazy(() => import("./Pages/Book4Page"));
+const Book5Page = lazy(() => import("./Pages/Book5Page"));
 
 function App() {
   return (
@@ -44,6 +48,10 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile-mec" element={<ProfileMecPage />} />
             <Route path="/book-first" element={<Book1Page />} />
+            <Route path="/book-second" element={<Book2Page />} />
+            <Route path="/book-third" element={<Book3Page />} />
+            <Route path="/book-forth" element={<Book4Page />} />
+            <Route path="/book-fifth" element={<Book5Page />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}
           </Routes>

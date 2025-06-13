@@ -2,17 +2,17 @@ import React from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Newsletter from "../components/Newsletter";
-import Vehicle from "../components/Vehicle";
+import Issue from "../components/Issue";
 
-const Book1Page = () => {
+const Book2Page = () => {
   return (
     <div>
       <Header />
-      <Vehicle />
+      <Issue />
       <Newsletter />
       <Footer />
     </div>
   );
 };
 
-export default Book1Page;
+export default Book2Page;
