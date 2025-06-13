@@ -14,6 +14,7 @@ const SignupPage = lazy(() => import("./Pages/SignupPage"));
 const SigninPage = lazy(() => import("./Pages/SigninPage"));
 const ProfilePage = lazy(() => import("./Pages/ProfilePage"));
 const ProfileMecPage = lazy(() => import("./Pages/ProfileMecPage"));
+const Book1Page = lazy(() => import("./Pages/Book1Page"));
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
             <Route path="/signin" element={<SigninPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/profile-mec" element={<ProfileMecPage />} />
+            <Route path="/book-first" element={<Book1Page />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}
           </Routes>
