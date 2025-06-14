@@ -24,7 +24,7 @@ const Header = () => {
 
       {/* Desktop Nav */}
       <div className="hidden md:flex items-center">
-        <ul className="flex space-x-7 md:text-lg cursor-pointer text-[#333333] font-semibold">
+        <ul className="flex space-x-7 md:text-[17px] cursor-pointer text-[#333333] font-semibold">
           <Link to="/">
             {" "}
             <li className="text-[#492F92] hover:text-[#3b2371] transition">

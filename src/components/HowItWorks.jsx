@@ -33,7 +33,7 @@ const HowItWorks = () => {
 
             {/* Horizontal connector line only between middle steps on desktop */}
             {index < steps.length - 1 && (
-              <div className="hidden md:block absolute top-8 right-[-50%] w-full h-0.5 border-t border-dashed border-yellow-400 z-0" />
+              <div className="hidden md:block absolute top-8 right-[0%] w-full h-0.5 border-t border-dashed border-yellow-400 z-0" />
             )}
 
             <h3 className="text-lg font-semibold mt-4">{step.title}</h3>
@@ -43,7 +43,7 @@ const HowItWorks = () => {
 
             {/* Dashed connector line for small screens */}
             {index < steps.length - 1 && (
-              <div className="block md:hidden w-1 h-12 border-l border-dashed border-yellow-400 mt-4"></div>
+              <div className="hidden w-1 h-12 border-l border-dashed border-yellow-400 mt-4"></div>
             )}
           </div>
         ))}
