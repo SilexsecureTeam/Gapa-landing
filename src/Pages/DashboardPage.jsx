@@ -5,7 +5,7 @@ import Header from "../components/Dashboard/Header";
 import Overview from "../components/Dashboard/Overview";
 // import Vehicles from "../components/Dashboard/Vehicles";
 // import BookService from "../components/Dashboard/BookService";
-// import ServiceHistory from "../components/Dashboard/ServiceHistory";
+import ServiceHistory from "../components/Dashboard/ServiceHistory";
 // import TrackProgress from "../components/Dashboard/TrackProgress";
 // import Messages from "../components/Dashboard/Messages";
 // import Settings from "../components/Dashboard/Settings";
@@ -23,7 +23,7 @@ const DashboardPage = () => {
             <Route index element={<Overview />} />
             {/* <Route path="vehicles" element={<Vehicles />} /> */}
             {/* <Route path="book-service" element={<BookService />} /> */}
-            {/* <Route path="service-history" element={<ServiceHistory />} /> */}
+            <Route path="service-history" element={<ServiceHistory />} />
             {/* <Route path="track-progress" element={<TrackProgress />} /> */}
             {/* <Route path="messages" element={<Messages />} /> */}
             {/* <Route path="settings" element={<Settings />} /> */}
