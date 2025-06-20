@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import * as Progress from "@radix-ui/react-progress";
+import { Link } from "react-router-dom";
 
 const options = [
   {
@@ -98,12 +99,15 @@ const Option = () => {
         </fieldset>
 
         <div className="w-full flex justify-end">
-          <button
-            type="submit"
-            className="w-fit px-6 bg-[#492F92] cursor-pointer text-white py-3 rounded shadow hover:bg-[#3a236d] transition-colors font-semibold"
-          >
-            Continue
-          </button>
+          <Link to="/book-forth">
+            {" "}
+            <button
+              type="submit"
+              className="w-fit px-6 bg-[#492F92] cursor-pointer text-white py-3 rounded shadow hover:bg-[#3a236d] transition-colors font-semibold"
+            >
+              Continue
+            </button>{" "}
+          </Link>
         </div>
       </form>
     </div>

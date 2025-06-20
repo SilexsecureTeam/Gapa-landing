@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
 import trust from "../assets/trust.png";
+import { Link } from "react-router-dom";
 
 const Trust = () => {
   const [selectedVehicle, setSelectedVehicle] = useState("");
@@ -165,9 +166,12 @@ const Trust = () => {
             />
           </div>
 
-          <button className="bg-[#F7CD3A] w-full cursor-pointer text-[#492F92] font-semibold py-3 md:py-4 px-4 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50 text-sm md:text-base lg:text-lg">
-            Book a Service
-          </button>
+          <Link to="/book-first">
+            {" "}
+            <button className="bg-[#F7CD3A] w-full cursor-pointer text-[#492F92] font-semibold py-3 md:py-4 px-4 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50 text-sm md:text-base lg:text-lg">
+              Book a Service
+            </button>
+          </Link>
         </div>
 
         <div className="w-full md:w-1/2  rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">

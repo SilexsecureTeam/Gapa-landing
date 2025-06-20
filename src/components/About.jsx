@@ -88,13 +88,14 @@ const About = () => {
       {/* Cards Section */}
       <div className="flex flex-col md:flex-row justify-center items-start md:items-center gap-8 md:gap-12 py-16 md:py-30">
         {data.map((item, index) => (
-          <div key={index} className="w-full md:w-1/3 text-start">
+          <div
+            key={index}
+            className="w-full md:w-1/3 bg-gray-50 cursor-pointer duration-150 hover:scale-110 p-4 text-start"
+          >
             <h2 className="text-2xl md:text-[26px] font-medium mb-4 text-[#333333]">
               {item.title}
             </h2>
-            <h4 className="text-[#333333] text-base md:text-lg px-2">
-              {item.subtitle}
-            </h4>
+            <h4 className="text-[#333333] text-base px-2">{item.subtitle}</h4>
           </div>
         ))}
       </div>

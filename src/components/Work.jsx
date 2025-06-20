@@ -29,8 +29,8 @@ const Work = () => {
           alt="Work"
           className="w-full h-[50vh] md:h-[70vh] object-center object-cover rounded-t-lg"
         />
-        <div className="px-4 md:px-8 lg:px-12">
-          <h1 className="text-white text-2xl md:text-3xl lg:text-4xl font-semibold md:pt-8 lg:pt-12 pt-4 pb-15">
+        <div className="p-4 md:p-8 lg:p-12">
+          <h1 className="text-white text-center md:text-start text-2xl md:text-3xl lg:text-4xl font-semibold md:pt-8 lg:pt-12 pt-4 pb-15">
             How it works
           </h1>
           <HowItWorks />

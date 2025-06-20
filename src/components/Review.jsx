@@ -8,7 +8,7 @@ import {
   MapPin,
   Wallet,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const requestData = [
   {
@@ -128,12 +128,15 @@ const Review = () => {
         </div>
 
         {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-fit mt-8 sm:mt-12 px-6 sm:px-8 py-2 sm:py-4 bg-[#492F92] text-white rounded shadow hover:bg-[#3a236d] transition-colors font-semibold text-xs sm:text-sm cursor-pointer"
-        >
-          Submit request
-        </button>
+        <Link to="/">
+          {" "}
+          <button
+            type="submit"
+            className="w-fit mt-8 sm:mt-12 px-6 sm:px-8 py-2 sm:py-4 bg-[#492F92] text-white rounded shadow hover:bg-[#3a236d] transition-colors font-semibold text-xs sm:text-sm cursor-pointer"
+          >
+            Submit request
+          </button>{" "}
+        </Link>
       </div>
     </div>
   );

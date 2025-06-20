@@ -21,11 +21,11 @@ const steps = [
 const HowItWorks = () => {
   return (
     <div className=" text-white ">
-      <div className="relative flex flex-col md:flex-row items-start justify-between w-full">
+      <div className="relative flex flex-col md:flex-row md:items-start items-center justify-between w-full">
         {steps.map((step, index) => (
           <div
             key={step.id}
-            className="relative z-10 flex flex-col items-start text-center w-full md:w-1/3 mb-12 md:mb-0"
+            className="relative z-10 flex flex-col md:items-start items-center text-center w-full md:w-1/3 mb-12 md:mb-0"
           >
             <div className="bg-yellow-400 text-black w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold shadow-md">
               {step.id}
@@ -37,7 +37,7 @@ const HowItWorks = () => {
             )}
 
             <h3 className="text-lg font-semibold mt-4">{step.title}</h3>
-            <p className="text-sm text-start mt-2 max-w-xs">
+            <p className="text-sm text-center md:text-start mt-2 max-w-xs">
               {step.description}
             </p>
 

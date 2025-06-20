@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import * as Progress from "@radix-ui/react-progress";
+import { Link } from "react-router-dom";
 
 // Helper to get days in month
 const getDaysInMonth = (year, month) => {
@@ -311,13 +312,15 @@ const Calendar = () => {
         </div>
 
         {/* Continue Button */}
-        <button
-          type="submit"
-          className="w-24 sm:w-32 px-3 sm:px-4 py-1 sm:py-2 bg-[#492F92] text-white rounded shadow hover:bg-[#3a236d] transition-colors font-semibold text-xs sm:text-sm"
-          disabled={!selectedDate || !selectedTime}
-        >
-          Continue
-        </button>
+        <Link to="/book-fifth">
+          <button
+            type="submit"
+            className="w-24 sm:w-32 px-3 sm:px-4 py-1 sm:py-2 bg-[#492F92] text-white rounded shadow hover:bg-[#3a236d] transition-colors font-semibold text-xs sm:text-sm"
+            disabled={!selectedDate || !selectedTime}
+          >
+            Continue
+          </button>
+        </Link>
       </form>
     </div>
   );

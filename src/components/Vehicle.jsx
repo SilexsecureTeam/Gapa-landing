@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import * as Progress from "@radix-ui/react-progress";
 import { Plus } from "lucide-react";
 import Veh from "../assets/vehicle.png";
+import { Link } from "react-router-dom";
 
 const DEFAULT_VEHICLE = {
   year: "2022",
@@ -11,7 +12,12 @@ const DEFAULT_VEHICLE = {
 };
 
 const Vehicle = () => {
-  const [vehicles, setVehicles] = useState([DEFAULT_VEHICLE]);
+  const [vehicles, setVehicles] = useState([
+    DEFAULT_VEHICLE,
+    DEFAULT_VEHICLE,
+    DEFAULT_VEHICLE,
+  ]);
+
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     year: "",
@@ -119,12 +125,21 @@ const Vehicle = () => {
         </div>
         {/* Add Vehicle Button */}
         <div className="flex justify-start mt-6 sm:mt-10">
-          <button
+          {/* <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 bg-[#492F92] text-white px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base cursor-pointer rounded shadow hover:bg-[#3a236d]"
           >
             <Plus size={16} className="sm:h-5 sm:w-5" /> Add a Vehicle
-          </button>
+          </button> */}
+          <Link to="/book-second">
+            {" "}
+            <button
+              // onClick={() => setShowForm(true)}
+              className="flex items-center gap-2 bg-[#492F92] text-white px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base cursor-pointer rounded shadow hover:bg-[#3a236d]"
+            >
+              <Plus size={16} className="sm:h-5 sm:w-5" /> Add a Vehicle
+            </button>{" "}
+          </Link>
         </div>
       </div>
 
