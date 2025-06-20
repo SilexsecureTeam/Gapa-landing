@@ -21,7 +21,7 @@ const Header = ({ open, setOpen }) => {
         </p>
       </div>
 
-      <div className="relative md:w-[30%] flex-grow max-w-xs">
+      <div className="relative md:w-[30%] flex-grow max-w-[180px] md:max-w-xs">
         <input
           type="text"
           placeholder="Search..."

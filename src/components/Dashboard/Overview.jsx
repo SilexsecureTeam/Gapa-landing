@@ -71,7 +71,7 @@ const maintenances = [
 
 const Overview = () => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 ">
       {/* Available Cars + Ongoing Service */}
       <div className="grid   lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 p-4 bg-white rounded-xl grid md:grid-cols-2 gap-4">

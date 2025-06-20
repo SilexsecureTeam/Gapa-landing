@@ -14,11 +14,11 @@ const DashboardPage = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#f7f5ff]">
+    <div className="flex h-screen overflow-auto bg-[#f7f5ff]">
       <Sidebar open={open} setOpen={setOpen} />
       <div className="flex flex-col flex-1">
         <Header open={open} setOpen={setOpen} />
-        <main className="flex-1 p-4 overflow-auto">
+        <main className="flex-1 p-4 overflow-auto ">
           <Routes>
             <Route index element={<Overview />} />
             {/* <Route path="vehicles" element={<Vehicles />} /> */}
