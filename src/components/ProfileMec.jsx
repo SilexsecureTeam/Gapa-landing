@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const ProfileMec = () => {
   const [form, setForm] = useState({
@@ -12,7 +13,7 @@ const ProfileMec = () => {
     certFile: null,
     skills: "",
   });
-
+  const navigate = useNavigate();
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "certFile") {
@@ -25,7 +26,8 @@ const ProfileMec = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Submit logic here
-    alert(JSON.stringify(form, null, 2));
+    // alert(JSON.stringify(form, null, 2));
+    navigate("/dashboard");
   };
 
   return (

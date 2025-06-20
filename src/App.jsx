@@ -19,6 +19,7 @@ const Book2Page = lazy(() => import("./Pages/Book2Page"));
 const Book3Page = lazy(() => import("./Pages/Book3Page"));
 const Book4Page = lazy(() => import("./Pages/Book4Page"));
 const Book5Page = lazy(() => import("./Pages/Book5Page"));
+const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
             <Route path="/book-third" element={<Book3Page />} />
             <Route path="/book-forth" element={<Book4Page />} />
             <Route path="/book-fifth" element={<Book5Page />} />
+            <Route path="/dashboard/*" element={<DashboardPage />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}
           </Routes>
