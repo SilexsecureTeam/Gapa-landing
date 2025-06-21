@@ -1,4 +1,4 @@
-// Sidebar.jsx
+// src/components/Dashboard/Sidebar.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
 import {
@@ -35,7 +35,7 @@ const navLinks = [
   { name: "Settings", icon: <Settings />, path: "/dashboard/settings" },
 ];
 
-const Sidebar = ({ open, setOpen }) => {
+const Sidebar = ({ open, setOpen, onSignOut }) => {
   return (
     <aside
       className={`fixed lg:static bg-white shadow-md h-full min-h-screen w-60 p-5 transition-all duration-300 z-50 ${
@@ -61,12 +61,12 @@ const Sidebar = ({ open, setOpen }) => {
             {link.name}
           </NavLink>
         ))}
-        <NavLink
-          to="/"
+        <button
+          onClick={onSignOut}
           className="flex items-center gap-3 px-4 py-2 mt-8 text-red-500 hover:bg-red-100 rounded-md"
         >
           <LogOut /> Log Out
-        </NavLink>
+        </button>
       </nav>
     </aside>
   );
