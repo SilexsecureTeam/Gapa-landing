@@ -8,7 +8,7 @@ import Overview from "../components/Dashboard/Overview";
 import ServiceHistory from "../components/Dashboard/ServiceHistory";
 // import TrackProgress from "../components/Dashboard/TrackProgress";
 // import Messages from "../components/Dashboard/Messages";
-// import Settings from "../components/Dashboard/Settings";
+import Settings from "../components/Dashboard/Settings";
 
 const DashboardPage = () => {
   const [open, setOpen] = useState(false);
@@ -26,7 +26,7 @@ const DashboardPage = () => {
             <Route path="service-history" element={<ServiceHistory />} />
             {/* <Route path="track-progress" element={<TrackProgress />} /> */}
             {/* <Route path="messages" element={<Messages />} /> */}
-            {/* <Route path="settings" element={<Settings />} /> */}
+            <Route path="settings" element={<Settings />} />
           </Routes>
         </main>
       </div>

@@ -82,10 +82,11 @@ const Header = () => {
               Services
             </li>{" "}
           </Link>
-          <Link to="/contact"></Link>
-          <li className="hover:text-[#492F92]" onClick={closeMenu}>
-            Contact
-          </li>
+          <Link to="/contact">
+            <li className="hover:text-[#492F92]" onClick={closeMenu}>
+              Contact
+            </li>
+          </Link>
           <Link to="/team">
             {" "}
             <li className="hover:text-[#492F92]" onClick={closeMenu}>
