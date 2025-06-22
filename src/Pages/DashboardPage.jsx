@@ -8,7 +8,7 @@ import Overview from "../components/Dashboard/Overview";
 // import BookService from "../components/Dashboard/BookService";
 import ServiceHistory from "../components/Dashboard/ServiceHistory";
 // import TrackProgress from "../components/Dashboard/TrackProgress";
-// import Messages from "../components/Dashboard/Messages";
+import Messages from "../components/Dashboard/Messages";
 import Settings from "../components/Dashboard/Settings";
 
 import SignOutModal from "../components/Dashboard/SignOutModal";
@@ -45,7 +45,7 @@ const DashboardPage = () => {
             {/* <Route path="book-service" element={<BookService />} /> */}
             <Route path="service-history" element={<ServiceHistory />} />
             {/* <Route path="track-progress" element={<TrackProgress />} /> */}
-            {/* <Route path="messages" element={<Messages />} /> */}
+            <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
           </Routes>
           <SignOutModal
