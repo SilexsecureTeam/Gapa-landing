@@ -1,5 +1,5 @@
 import React from "react";
-import profile from "../../assets/profile.png";
+import profile from "../../assets/Profile.png";
 import { BellIcon, MailIcon, SearchIcon, Menu, X } from "lucide-react";
 
 const Header = ({ open, setOpen }) => {
