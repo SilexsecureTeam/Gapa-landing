@@ -2,6 +2,9 @@ import React, { useRef, useEffect, useState } from "react";
 import service1 from "../assets/service1.png";
 import service2 from "../assets/service2.png";
 import service3 from "../assets/service3.png";
+import oil from "../assets/oil.png";
+import brake from "../assets/brake.png";
+import tyre from "../assets/tyre.png";
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,7 +29,7 @@ const Service = () => {
         "Quick and professional oil change service to keep your engine running smoothly",
       icon: Droplets,
       bgColor: "bg-[#F7CD3A]",
-      image: service1,
+      image: oil,
       text: "text-black",
     },
     {
@@ -36,7 +39,7 @@ const Service = () => {
         "Expert brake inspection and repair services for your safety on the road",
       icon: Disc,
       bgColor: "bg-[#492F92]",
-      image: service2,
+      image: brake,
       text: "text-white",
     },
     {
@@ -46,7 +49,7 @@ const Service = () => {
         "Complete tire installation, rotation, and balancing services",
       icon: CircleDashed,
       bgColor: "bg-[#F7CD3A]",
-      image: service3,
+      image: tyre,
       text: "text-black",
     },
     {

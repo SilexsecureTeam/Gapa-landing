@@ -1,5 +1,5 @@
 import React from "react";
-import work from "../assets/work.png";
+import work from "../assets/banner.png";
 import HowItWorks from "./HowItWorks";
 
 // const steps = [
@@ -27,7 +27,7 @@ const Work = () => {
         <img
           src={work}
           alt="Work"
-          className="w-full h-[50vh] md:h-[70vh] object-center object-cover rounded-t-lg"
+          className="w-full h-[50vh] md:h-[70vh] object-top object-cover rounded-t-lg"
         />
         <div className="p-4 md:p-8 lg:p-12">
           <h1 className="text-white text-center md:text-start text-2xl md:text-3xl lg:text-4xl font-semibold md:pt-8 lg:pt-12 pt-4 pb-15">

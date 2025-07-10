@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
-import trust from "../assets/trust.png";
+import trust from "../assets/booking.png";
 import { Link } from "react-router-dom";
 
 const Trust = () => {
@@ -174,8 +174,9 @@ const Trust = () => {
           </Link>
         </div>
 
-        <div className="w-full md:w-1/2  rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
+        <div className="relative w-full md:w-1/2  rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
           <img src={trust} alt="trust" className="w-full h-full object-cover" />
+          <div className="absolute top-0 left-0 h-full w-full bg-black/50"></div>
         </div>
       </div>
     </section>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { User, Mail, Phone, MessageSquare } from "lucide-react";
-import car from "../assets/car.png";
+import car from "../assets/talk.png";
 
 const Car = () => {
   const [formData, setFormData] = useState({
