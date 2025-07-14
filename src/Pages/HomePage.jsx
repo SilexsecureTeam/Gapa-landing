@@ -11,12 +11,14 @@ import RecentServices from "../components/RecentServices.jsx";
 import Article from "../components/Article.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import Footer from "../components/Footer.jsx";
+import TrustedSource from "../components/TrustedSource.jsx";
 
 const HomePage = () => {
   return (
     <div>
       <Header />
       <Hero />
+      <TrustedSource />
       <Trust />
       <Service />
       <BrandSection />

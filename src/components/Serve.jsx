@@ -6,66 +6,88 @@ import serve2 from "../assets/serve2.png";
 import serve3 from "../assets/serve3.png";
 import serve4 from "../assets/serve4.png";
 import serve5 from "../assets/serve5.png";
+import { Link } from "react-router-dom";
 
 const Serve = () => {
   const services = [
     {
       image: serve,
-      title: "Oil Change",
-      text: "Keep your engine running smoothly with a quick and efficient oil change.",
+      title: "Oil Service",
+      text: "Premium oil changes for engine longevity using genuine auto spare parts.",
     },
     {
       image: serve1,
-      title: "Brake Repair",
-      text: "Ensuring safe stops with brake inspections and expert repairs.",
+      title: "Brake System Service",
+      text: "Safe, responsive braking solutions with expert inspections and repairs.",
     },
     {
       image: serve2,
-      title: "Engine Diagnostics",
-      text: "Accurately identify and resolve engine issues for optimal performance.",
+      title: "Diagnostic Services",
+      text: "Advanced tools for accurate issue detection and thorough vehicle analysis.",
     },
     {
       image: serve3,
-      title: "Battery Replacement",
-      text: "Keep your engine running smoothly with a quick and efficient oil change.",
+      title: "Engine Check",
+      text: "Thorough inspections to maintain performance and optimize your engine.",
     },
     {
       image: serve4,
-      title: "Exhaust System Repair",
-      text: "Keep your engine running smoothly with a quick and efficient oil change.",
+      title: "Wheel Balancing & Alignment",
+      text: "Precision services for smooth, safe rides with enhanced vehicle control.",
     },
     {
       image: serve5,
-      title: "Tire Services",
-      text: "Keep your engine running smoothly with a quick and efficient oil change.",
+      title: "Suspension Systems",
+      text: "Enhanced comfort and control with professional suspension maintenance.",
     },
   ];
+
+  const additionalServices = [
+    {
+      title: "Tyre Change",
+      text: "Quality tires with expert installation for optimal road performance.",
+    },
+    {
+      title: "Car Detailing",
+      text: "Restore your vehicle's shine inside and out with professional detailing.",
+    },
+    {
+      title: "Comprehensive Repairs",
+      text: "Complete fixes for all makes and models using genuine spare parts.",
+    },
+  ];
+
   return (
     <div className="bg-[#f3f1f7] py-8 md:py-12 lg:py-16 px-4 sm:px-8 md:px-16 lg:px-20">
       {/* Top Section */}
       <div className="w-full flex flex-col md:flex-row justify-between items-center md:space-x-12 space-y-8 md:space-y-0">
         <div className="w-full md:w-1/2">
-          <h1 className=" font-semibold text-2xl text-[#333333] md:text-[40px]">
-            Everything <br />
-            Your Vehicle Needs
+          <h1 className="font-semibold text-2xl text-[#333333] md:text-[40px] leading-tight">
+            Expert Car Repair & <br />
+            Maintenance Services
           </h1>
           <p className="md:text-lg text-base text-[#333333] mt-6">
-            From your first booking to the final tune-up, we make every service
-            count. Our goal is to extend your vehicle’s lifespan with
-            professional care and real convenience.
+            GAPA Fix offers a full suite of auto repair and maintenance
+            services, using genuine auto spare parts sourced through our
+            advanced part-matching technology. Our Lagos-based team ensures your
+            vehicle performs at its peak, with services tailored to your needs.
           </p>
-          <button className="bg-[#492F92] text-center font-semibold text-xl w-[60%] py-4 text-white my-8 rounded cursor-pointer">
-            Request a Call
-          </button>
+          <Link to="/book-first">
+            <button className="bg-[#492F92] text-center font-semibold text-xl w-[60%] py-4 text-white my-8 rounded cursor-pointer hover:bg-[#3d2578] transition-colors duration-300">
+              Book Now
+            </button>{" "}
+          </Link>
         </div>
         <div className="w-full md:w-1/2">
           <img
             src={service}
-            alt="about"
+            alt="Expert car repair and maintenance services"
             className="w-full h-auto object-cover rounded"
           />
         </div>
       </div>
+
+      {/* Main Services Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 space-y-9 pt-20 gap-8">
         {services.map((service, index) => (
           <div
@@ -89,6 +111,46 @@ const Serve = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Additional Services Section */}
+      <div className="mt-16 pt-8 border-t border-gray-300">
+        <h2 className="text-2xl md:text-3xl font-semibold text-[#333333] text-center mb-12">
+          Additional Services
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {additionalServices.map((service, index) => (
+            <div
+              key={index}
+              className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+            >
+              <h3 className="text-xl font-semibold text-[#333333] mb-3">
+                {service.title}
+              </h3>
+              <p className="text-[#333333] text-base leading-relaxed">
+                {service.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Call to Action Section */}
+      <div className="mt-16 bg-white p-8 rounded-lg shadow-lg text-center">
+        <h2 className="text-2xl md:text-3xl font-semibold text-[#333333] mb-4">
+          Get Started Today
+        </h2>
+        <p className="text-lg text-[#333333] mb-6">
+          Schedule your service or request a free quote today! Our expert team
+          is ready to help keep your vehicle running smoothly.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/service">
+            <button className="bg-[#492F92] text-white font-semibold text-lg px-8 py-3 rounded hover:bg-[#3d2578] transition-colors duration-300">
+              Schedule Service
+            </button>{" "}
+          </Link>
+        </div>
       </div>
     </div>
   );

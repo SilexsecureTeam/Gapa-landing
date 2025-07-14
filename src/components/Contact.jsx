@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { MapPin, Phone, User, Mail, MessageSquare } from "lucide-react";
 import contact from "../assets/contact1.png";
-// import logo from "../assets/logo.png"; // Import logo
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -97,49 +96,80 @@ const Contact = () => {
   };
 
   return (
-    <section className=" py-12 md:py-16 lg:px-10 md:px-8 sm:px-6 px-2">
+    <section className="py-12 md:py-16 lg:px-10 md:px-8 sm:px-6 px-2">
       <div className="flex flex-col md:flex-row w-full mx-auto">
         {/* Left Container */}
         <div className="w-full md:w-1/2 rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden flex flex-col justify-between pr-6 md:pr-8 lg:pr-12">
           <div>
-            <h1 className="text-[#492F92] text-2xl sm:text-3xl md:text-4xl max-w-[350px] uppercase leading-tight md:text-start text-center font-bold mb-2 md:mb-4">
-              Talk to Our Auto Service Team
+            <h1 className="text-[#492F92] text-2xl md:text-3xl uppercase leading-tight md:text-start text-center font-bold mb-2 md:mb-4">
+              Connect with GAPA Fix for Trusted Auto Care
             </h1>
             <p className="text-[#333333] text-base font-normal sm:text-lg md:text-lg">
-              Need help with bookings, service options, or general inquiries?
-              Fill out the form and one of our car care specialists will reach
-              out shortly.
+              Ready to fix your car with genuine auto spare parts and expert
+              service? GAPA Fix’s Lagos team is here to deliver fast, reliable
+              solutions tailored to you. Reach out to schedule your appointment
+              or learn more about our services
             </p>
-            <h2 className="text-[#333333] md:text-xl text-lg mt-4  font-medium">
+            <h2 className="text-[#333333] md:text-xl text-lg mt-4 font-medium">
               Our Office
             </h2>
             <img
               src={contact}
-              alt="Contact office"
+              alt="GAPA Fix office"
               className="mt-2 w-full h-58 md:w-fit"
             />
             <p className="text-[#333333] text-base font-normal mt-2 sm:text-lg">
-              Lorem ipsum dolor sit amet consectetur. Purus aliquam cursus sem
-              at lectus proin.
+              <span className="font-bold">Book Your Appointment:</span> Fill out
+              our Contact Form or call us now. Follow us on{" "}
+              <a
+                href="https://x.com"
+                className="text-[#492F92] hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                X
+              </a>{" "}
+              or{" "}
+              <a
+                href="https://instagram.com"
+                className="text-[#492F92] hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Instagram
+              </a>{" "}
+              for maintenance tips and exclusive offers!
             </p>
           </div>
-          {/* Address and Phone Number with Logo */}
-          <div className="mt-4 ">
+          {/* Address and Phone Number */}
+          <div className="mt-4">
             <h2 className="text-[#333333] md:text-2xl text-lg font-medium">
-              Abuja, Nigeria
+              Ikoyi, Lagos, Nigeria
             </h2>
-            <div className="flex  gap-4 mt-2">
-              <div className="flex  gap-2">
+            <div className="flex gap-4 mt-2">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-start gap-2">
                   <MapPin className="text-[#D5AB16] w-5 h-5" />
                   <p className="text-[#333333] text-base sm:text-lg">
-                    Lorem ipsumamet cursus sem, Utako, Abuja.
+                    Giwa Barracks Car Park, Ikoyi, Lagos, Nigeria
                   </p>
                 </div>
                 <div className="flex items-start gap-2">
                   <Phone className="text-[#D5AB16] w-5 h-5" />
                   <p className="text-[#333333] text-base sm:text-lg">
-                    +234801234567
+                    (234) 701 888 8307
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Mail className="text-[#D5AB16] w-5 h-5" />
+                  <p className="text-[#333333] text-base sm:text-lg">
+                    support@gapafix.com.ng
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <p className="text-[#333333] text-base sm:text-lg">
+                    <strong>Hours:</strong> Mon-Fri: 8 AM - 6 PM | Sat: 9 AM - 4
+                    PM | Sun: Closed
                   </p>
                 </div>
               </div>
@@ -148,7 +178,7 @@ const Contact = () => {
         </div>
 
         {/* Right Container (Form) */}
-        <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 border mt-6 md:mt-0 border-[#3333334D] rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex flex-col justify-between">
+        <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 border mt-6 md:mt-0 h-fit border-[#3333334D] rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex flex-col justify-between">
           <form onSubmit={handleSubmit} className="space-y-4 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
