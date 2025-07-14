@@ -54,11 +54,11 @@ const Footer = () => {
                   Book a Service
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a href="#" className="hover:text-[#F7CD3A] transition">
                   Book a Service
                 </a>
-              </li>
+              </li> */}
               <li>
                 <a href="#" className="hover:text-[#F7CD3A] transition">
                   Service Tracker

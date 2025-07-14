@@ -8,7 +8,7 @@ import Work from "../components/Work.jsx";
 import CustomerReviews from "../components/CustomerReviews.jsx";
 import Car from "../components/Car.jsx";
 import RecentServices from "../components/RecentServices.jsx";
-import Article from "../components/Article.jsx";
+// import Article from "../components/Article.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import Footer from "../components/Footer.jsx";
 import TrustedSource from "../components/TrustedSource.jsx";
@@ -26,7 +26,7 @@ const HomePage = () => {
       <CustomerReviews />
       <Car />
       <RecentServices />
-      <Article />
+      {/* <Article /> */}
       <Newsletter />
       <Footer />
     </div>

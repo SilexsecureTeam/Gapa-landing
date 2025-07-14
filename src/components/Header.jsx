@@ -40,9 +40,9 @@ const Header = () => {
           <Link to="/contact">
             <li className="hover:text-[#3b2371] transition">Contact</li>
           </Link>
-          <Link to="/team">
+          {/* <Link to="/team">
             <li className="hover:text-[#3b2371] transition">Team</li>
-          </Link>
+          </Link> */}
         </ul>
         <Link to="/signin">
           {" "}
@@ -87,12 +87,12 @@ const Header = () => {
               Contact
             </li>
           </Link>
-          <Link to="/team">
+          {/* <Link to="/team">
             {" "}
             <li className="hover:text-[#492F92]" onClick={closeMenu}>
               Team
             </li>{" "}
-          </Link>
+          </Link> */}
         </ul>
       </div>
 
