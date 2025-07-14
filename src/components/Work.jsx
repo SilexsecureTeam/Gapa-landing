@@ -1,5 +1,5 @@
 import React from "react";
-import work from "../assets/banner.png";
+import work from "../assets/work.png";
 import HowItWorks from "./HowItWorks";
 
 // const steps = [

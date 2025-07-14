@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { MapPin, Phone, User, Mail, MessageSquare } from "lucide-react";
-import contact from "../assets/banner1.png";
+import contact from "../assets/contact1.png";
 // import logo from "../assets/logo.png"; // Import logo
 
 const Contact = () => {
