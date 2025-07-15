@@ -4,17 +4,17 @@ const steps = [
   {
     id: 1,
     title: "Book a Service",
-    description: "Lorem ipsum dolor sit amet consectetur. Pretium egestas vel.",
+    description: "Send us a DM, call, or click the link in bio to schedule a visit. You choose the time – we come to you or you come to us.",
   },
   {
     id: 2,
     title: "Bring Your Car",
-    description: "Lorem ipsum dolor sit amet consectetur. Pretium egestas vel.",
+    description: "Stop by our workshop or request our mobile mechanic to come to your location. We handle all brands with care and precision.",
   },
   {
     id: 3,
     title: "Get Serviced",
-    description: "Lorem ipsum dolor sit amet consectetur. Pretium egestas vel.",
+    description: "Sit back while we run diagnostics, fix the issue, and get you back on the road – fast, clean, and stress-free.",
   },
 ];
 
