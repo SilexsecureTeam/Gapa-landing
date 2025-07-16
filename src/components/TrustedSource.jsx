@@ -29,7 +29,7 @@ const TrustedSource = () => {
             GAPA Fix: Your Trusted Source for <br />
             Genuine Car Repairs
           </h1>
-          <p className="md:text-lg text-base text-[#333333] max-w-4xl mx-auto leading-relaxed">
+          <p className="md:text-lg text-base text-[#333333] max-w-5xl mx-auto leading-relaxed">
             At GAPA Fix, we eliminate the stress of car repairs with expert
             services and genuine auto spare parts powered by GAPA Naija. Our
             cutting-edge technology ensures the perfect spare part fit for your

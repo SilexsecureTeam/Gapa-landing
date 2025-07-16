@@ -101,11 +101,11 @@ const Serve = () => {
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
               />
             </div>
-            <div className="">
-              <h3 className="text-[22px] font-semibold text-[#333333] mt-3">
+            <div className="px-5">
+              <h3 className="text-xl font-semibold text-[#333333] mt-3">
                 {service.title}
               </h3>
-              <p className="text-[#333333] text-lg mt-1 leading-relaxed">
+              <p className="text-[#333333] text-base mt-1 leading-relaxed">
                 {service.text}
               </p>
             </div>

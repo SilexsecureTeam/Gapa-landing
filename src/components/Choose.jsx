@@ -1,8 +1,8 @@
 import React from "react";
 import { CalendarClock, Shield, Sliders } from "lucide-react";
-import about3 from "../assets/about3.png";
-import about4 from "../assets/about4.png";
-import about5 from "../assets/about5.png";
+// import about3 from "../assets/about3.png";
+// import about4 from "../assets/about4.png";
+// import about5 from "../assets/about5.png";
 
 const Choose = () => {
   const features = [
@@ -22,36 +22,36 @@ const Choose = () => {
       text: "Whether at home, on the road, or in the shop. we meet you where you are.",
     },
   ];
-  const data = [
-    {
-      image: about3,
-      title: "Yemi Johnson",
-      subtitle: "Lead Mechanic",
-    },
-    {
-      image: about4,
-      title: "Chidibere Nonso",
+  // const data = [
+  //   {
+  //     image: about3,
+  //     title: "Yemi Johnson",
+  //     subtitle: "Lead Mechanic",
+  //   },
+  //   {
+  //     image: about4,
+  //     title: "Chidibere Nonso",
 
-      subtitle: "Tire and brake Specialist",
-    },
-    {
-      image: about5,
+  //     subtitle: "Tire and brake Specialist",
+  //   },
+  //   {
+  //     image: about5,
 
-      title: "Sani Yakubu",
-      subtitle: "Lead Electrician",
-    },
-  ];
+  //     title: "Sani Yakubu",
+  //     subtitle: "Lead Electrician",
+  //   },
+  // ];
 
   return (
     <div>
-      <div className="bg-[#333333] text-white w-full lg:px-20 md:px-16 sm:px-12 px-4">
-        <h2 className="font-semibold text-2xl py-3 md:text-[40px]">
+      <div className="bg-[#333333] text-white py-12 w-full lg:px-20 md:px-16 sm:px-12 px-4">
+        <h2 className="font-semibold text-2xl  md:text-[40px]">
           Why Choose Gapa?
         </h2>
         <h2 className="font-normal text-lg  md:text-2xl">
           Smart. Reliable. Hassle-Free.
         </h2>
-        <div className="flex justify-between flex-col pb-30 lg:flex-row gap-8">
+        <div className="flex justify-between flex-col lg:flex-row gap-8">
           {features.map((feature, index) => {
             const IconComponent = feature.icon;
             return (
@@ -73,7 +73,7 @@ const Choose = () => {
           })}
         </div>
       </div>
-      <div className="pb-8 md:pb-12 lg:pb-16 pt-6 px-4 sm:px-8 md:px-16 lg:px-20">
+      {/* <div className=" pt-6 px-4 sm:px-8 md:px-16 lg:px-20">
         <div className="flex flex-col md:flex-row justify-center items-start md:items-center gap-8 md:gap-12 pt-6 ">
           {data.map((item, index) => (
             <div key={index} className="w-full md:w-1/3 text-center">
@@ -85,7 +85,7 @@ const Choose = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -108,7 +108,7 @@ const About = () => {
             key={index}
             className="w-full md:w-1/3 md:h-56 bg-white shadow-lg cursor-pointer duration-300 hover:scale-105 hover:shadow-xl p-6 rounded-lg text-start"
           >
-            <h2 className="text-2xl md:text-[26px] font-medium mb-4 text-[#492F92]">
+            <h2 className="text-xl font-semibold mb-4 text-[#492F92]">
               {item.title}
             </h2>
             <p className="text-[#333333] text-base leading-relaxed">
@@ -128,7 +128,7 @@ const About = () => {
           />
         </div>
         <div className="w-full md:w-1/2">
-          <h1 className="font-semibold text-2xl text-[#492F92] md:text-[40px]">
+          <h1 className="font-semibold text-2xl text-[#492F92] md:text-3xl">
             Your Journey to Reliable Car Care
           </h1>
           <p className="md:text-lg text-base text-[#333333] mt-6">

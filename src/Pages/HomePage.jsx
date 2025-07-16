@@ -7,7 +7,7 @@ import BrandSection from "../components/BrandSection.jsx";
 import Work from "../components/Work.jsx";
 import CustomerReviews from "../components/CustomerReviews.jsx";
 import Car from "../components/Car.jsx";
-import RecentServices from "../components/RecentServices.jsx";
+// import RecentServices from "../components/RecentServices.jsx";
 // import Article from "../components/Article.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import Footer from "../components/Footer.jsx";
@@ -25,7 +25,7 @@ const HomePage = () => {
       <Work />
       <CustomerReviews />
       <Car />
-      <RecentServices />
+      {/* <RecentServices /> */}
       {/* <Article /> */}
       <Newsletter />
       <Footer />
