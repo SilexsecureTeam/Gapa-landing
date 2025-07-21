@@ -64,7 +64,7 @@ const SignIn = () => {
     e.preventDefault();
     // Submit logic here
     // alert(JSON.stringify(form, null, 2));
-    navigate("/profile"); // Navigate to homepage after submission
+    navigate("/"); // Navigate to homepage after submission
   };
 
   return (

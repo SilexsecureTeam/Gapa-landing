@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -19,12 +20,14 @@ const Book2Page = lazy(() => import("./Pages/Book2Page"));
 const Book3Page = lazy(() => import("./Pages/Book3Page"));
 const Book4Page = lazy(() => import("./Pages/Book4Page"));
 const Book5Page = lazy(() => import("./Pages/Book5Page"));
+const Success = lazy(() => import("./components/Success"));
 const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen w-full">
+        <ScrollToTop />
         <Suspense
           fallback={
             <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -53,6 +56,7 @@ function App() {
             <Route path="/book-third" element={<Book3Page />} />
             <Route path="/book-forth" element={<Book4Page />} />
             <Route path="/book-fifth" element={<Book5Page />} />
+            <Route path="/success" element={<Success />} />
             <Route path="/dashboard/*" element={<DashboardPage />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}

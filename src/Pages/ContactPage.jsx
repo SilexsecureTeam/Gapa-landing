@@ -2,7 +2,7 @@
 import Header from "../components/Header";
 import Newsletter from "../components/Newsletter";
 import Footer from "../components/Footer";
-import heroBg from "../assets/contact.png";
+import heroBg from "../assets/cont.png";
 import Contact from "../components/Contact";
 
 const ContactPage = () => {

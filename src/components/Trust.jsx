@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
-import trust from "../assets/booking.png";
-import { Link } from "react-router-dom";
+import trust from "../assets/book.png";
+import { useNavigate } from "react-router-dom";
 
-const Trust = () => {
+const Trust = ({ refProp }) => {
+  const navigate = useNavigate();
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -25,26 +26,32 @@ const Trust = () => {
   ];
 
   const services = [
-    "Oil Change",
-    "Brake Service",
-    "Engine Diagnostics",
-    "Tire Service",
-    "Battery Service",
-    "Air Conditioning",
-    "Transmission Service",
-    "General Maintenance",
+    "Oil Service",
+    "Brake System Service",
+    "Diagnostic Services",
+    "Engine Check",
+    "Wheel Balancing & Alignment",
+    "Suspension Systems",
+    "Tyre Change",
+    "Car Detailing",
+    "Comprehensive Repairs",
   ];
 
   const locations = [
-    "Downtown",
-    "North Side",
-    "South Side",
-    "East Side",
-    "West Side",
-    "Suburbs",
-    "Business District",
-    "Airport Area",
+    "Giwa Barracks Car Park, Ikoyi, Lagos",
+    "Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout, Lekki, Lagos",
   ];
+  const handleBookService = () => {
+    if (!selectedVehicle || !selectedService || !selectedLocation) {
+      alert(
+        "Please select your vehicle, service, and location before proceeding."
+      );
+      return;
+    }
+
+    // If all fields selected, navigate to profile page
+    navigate("/profile");
+  };
 
   const toggleDropdown = (type) => {
     setDropdownOpen((prev) => ({
@@ -129,13 +136,15 @@ const Trust = () => {
   }, []);
 
   return (
-    <section className="bg-[#f3f1f7] py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4">
+    <section
+      ref={refProp}
+      className="bg-[#f3f1f7] py-8 md:py-12 lg:py-16 lg:px-20 md:px-16 sm:px-12 px-4"
+    >
       <div className="flex flex-col md:flex-row w-full mx-auto bg-[#f3f1f7]">
         <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 bg-[#492F92] rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
           <h1 className="text-[#E5E5E5] font-bold text-xl md:text-2xl  mb-6 md:mb-8 leading-tight">
             Book Trusted Car Care in Minutes
           </h1>
-
           <div className="space-y-4 mb-6 md:mb-8">
             <Dropdown
               type="vehicle"
@@ -159,24 +168,23 @@ const Trust = () => {
             <Dropdown
               type="location"
               icon={MapPin}
-              placeholder="Your location?"
+              placeholder="Our Service Centers"
               options={locations}
               selectedValue={selectedLocation}
               isOpen={dropdownOpen.location}
             />
-          </div>
-
-          <Link to="/book-first">
-            {" "}
-            <button className="bg-[#F7CD3A] w-full cursor-pointer text-[#492F92] font-semibold py-3 md:py-4 px-4 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50 text-sm md:text-base lg:text-lg">
-              Book a Service
-            </button>
-          </Link>
+          </div>{" "}
+          <button
+            onClick={handleBookService}
+            className="bg-[#F7CD3A] w-full cursor-pointer text-[#492F92] font-semibold py-3 md:py-4 px-4 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50 text-sm md:text-base lg:text-lg"
+          >
+            Book a Service
+          </button>
         </div>
 
         <div className="relative w-full md:w-1/2  rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
           <img src={trust} alt="trust" className="w-full h-full object-cover" />
-          <div className="absolute top-0 left-0 h-full w-full bg-black/50"></div>
+          {/* <div className="absolute top-0 left-0 h-full w-full bg-black/50"></div> */}
         </div>
       </div>
     </section>

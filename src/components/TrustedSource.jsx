@@ -1,7 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
-const TrustedSource = () => {
+const TrustedSource = ({ onScheduleClick }) => {
   const features = [
     {
       title: "Genuine Spare Parts Guaranteed",
@@ -14,7 +14,7 @@ const TrustedSource = () => {
       icon: "⚙️",
     },
     {
-      title: "Customer-First Care",
+      title: "Customer-Care First",
       text: "Fast, transparent, and tailored to your needs with professional service excellence.",
       icon: "🚗",
     },
@@ -73,11 +73,12 @@ const TrustedSource = () => {
             excellence. Our expert team is ready to provide you with genuine
             parts and professional service.
           </p>
-          <Link to="/book-first">
-            <button className="bg-white text-[#492F92] font-semibold text-lg px-8 py-3 rounded hover:bg-gray-100 transition-colors duration-300">
-              Schedule Now
-            </button>{" "}
-          </Link>
+          <button
+            onClick={onScheduleClick}
+            className="bg-white text-[#492F92] font-semibold text-lg px-8 py-3 rounded hover:bg-gray-100 transition-colors duration-300"
+          >
+            Schedule Now
+          </button>{" "}
         </div>
       </div>
     </div>

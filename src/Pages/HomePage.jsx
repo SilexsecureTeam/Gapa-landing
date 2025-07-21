@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import Header from "../components/Header.jsx";
 import Hero from "../components/Hero.jsx";
 import Trust from "../components/Trust.jsx";
@@ -14,12 +14,17 @@ import Footer from "../components/Footer.jsx";
 import TrustedSource from "../components/TrustedSource.jsx";
 
 const HomePage = () => {
+  const trustRef = useRef(null);
+
+  const scrollToTrust = () => {
+    trustRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
   return (
     <div>
       <Header />
       <Hero />
-      <TrustedSource />
-      <Trust />
+      <TrustedSource onScheduleClick={scrollToTrust} />
+      <Trust refProp={trustRef} />
       <Service />
       <BrandSection />
       <Work />

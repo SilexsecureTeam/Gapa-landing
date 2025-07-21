@@ -1,6 +1,11 @@
 import React, { useRef } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import avatar from "../assets/avatar.png";
+import ava1 from "../assets/ava1.png";
+import ava2 from "../assets/ava2.png";
+import ava3 from "../assets/ava3.png";
+import ava4 from "../assets/ava4.png";
+import ava5 from "../assets/ava5.png";
 
 const CustomerReviews = () => {
   const desktopSliderRef = useRef(null);
@@ -15,9 +20,9 @@ const CustomerReviews = () => {
       carModel: "Toyota Camry 2022",
       review:
         "Working with DigitX was a pleasure. Their web design team created a stunning website that perfectly captured our brand's essence. The feedback from our customers has been overwhelmingly positive.",
-      customerName: "Jerry Thomas",
+      customerName: "Jessica Thomas",
       occupation: "Financial Analyst",
-      avatar: avatar,
+      avatar: ava1,
     },
     {
       id: 2,
@@ -27,7 +32,7 @@ const CustomerReviews = () => {
         "Outstanding brake repair service. They diagnosed the issue quickly and fixed it at a fair price. The staff was knowledgeable and kept me informed throughout the process.",
       customerName: "Michael Chen",
       occupation: "Software Engineer",
-      avatar: avatar,
+      avatar: ava2,
     },
     {
       id: 3,
@@ -35,9 +40,9 @@ const CustomerReviews = () => {
       carModel: "BMW 3 Series 2020",
       review:
         "Top-notch engine diagnostics and repair. They found and fixed issues that other shops missed. Professional service with attention to detail. Will definitely return.",
-      customerName: "Emily Rodriguez",
+      customerName: "Sofia Rodriguez",
       occupation: "Business Owner",
-      avatar: avatar,
+      avatar: ava3,
     },
     {
       id: 4,
@@ -47,7 +52,7 @@ const CustomerReviews = () => {
         "Great tire service and installation. Quick turnaround time and competitive pricing. The team explained everything clearly and provided excellent customer support.",
       customerName: "David Thompson",
       occupation: "Construction Manager",
-      avatar: avatar,
+      avatar: ava4,
     },
     {
       id: 5,
@@ -57,7 +62,7 @@ const CustomerReviews = () => {
         "Exceptional battery replacement service. They tested my electrical system thoroughly and installed a high-quality battery. Professional and reliable service.",
       customerName: "Lisa Martinez",
       occupation: "Doctor",
-      avatar: avatar,
+      avatar: ava5,
     },
     {
       id: 6,

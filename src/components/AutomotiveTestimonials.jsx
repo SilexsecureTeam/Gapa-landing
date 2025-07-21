@@ -1,46 +1,85 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import serve from "../assets/serve6.png";
+
 import avatar from "../assets/avatar.png";
+import ava1 from "../assets/ava1.png";
+import ava2 from "../assets/ava2.png";
+import ava3 from "../assets/ava3.png";
+import ava4 from "../assets/ava4.png";
+import ava5 from "../assets/ava5.png";
 
 const AutomotiveTestimonials = () => {
-  const testimonials = [
+  const reviews = [
     {
-      quote:
-        "From start to finish, the team truly understood our vision. The result was a stylish, functional, and uniquely ours car.",
-      author: "Nathan Adedayo, Abuja, Nigeria",
+      id: 1,
+      rating: 5,
+      carModel: "Toyota Camry 2022",
+      review:
+        "Working with DigitX was a pleasure. Their web design team created a stunning website that perfectly captured our brand's essence. The feedback from our customers has been overwhelmingly positive.",
+      customerName: "Jessica Thomas",
+      occupation: "Financial Analyst",
+      avatar: ava1,
     },
     {
-      quote:
-        "Working with them was a dream. They transformed our space into something even better than we imagined.",
-      author: "Olivia Adedayo, Abuja, Nigeria",
+      id: 2,
+      rating: 5,
+      carModel: "Honda Civic 2021",
+      review:
+        "Outstanding brake repair service. They diagnosed the issue quickly and fixed it at a fair price. The staff was knowledgeable and kept me informed throughout the process.",
+      customerName: "Michael Chen",
+      occupation: "Software Engineer",
+      avatar: ava2,
     },
     {
-      quote:
-        "The team’s expertise exceeded our expectations, delivering a car that perfectly matches our style and needs.",
-      author: "Emeka Okonkwo, Lagos, Nigeria",
+      id: 3,
+      rating: 5,
+      carModel: "BMW 3 Series 2020",
+      review:
+        "Top-notch engine diagnostics and repair. They found and fixed issues that other shops missed. Professional service with attention to detail. Will definitely return.",
+      customerName: "Sofia Rodriguez",
+      occupation: "Business Owner",
+      avatar: ava3,
     },
     {
-      quote:
-        "Their dedication turned our ideas into reality, creating a vehicle beyond what we could have hoped for.",
-      author: "Aisha Mohammed, Kano, Nigeria",
+      id: 4,
+      rating: 5,
+      carModel: "Ford F-150 2023",
+      review:
+        "Great tire service and installation. Quick turnaround time and competitive pricing. The team explained everything clearly and provided excellent customer support.",
+      customerName: "David Thompson",
+      occupation: "Construction Manager",
+      avatar: ava4,
     },
     {
-      quote:
-        "With their skill, they crafted a car that reflects our vision with outstanding quality and care.",
-      author: "Chukwuma Eze, Port Harcourt, Nigeria",
+      id: 5,
+      rating: 5,
+      carModel: "Mercedes C-Class 2022",
+      review:
+        "Exceptional battery replacement service. They tested my electrical system thoroughly and installed a high-quality battery. Professional and reliable service.",
+      customerName: "Lisa Martinez",
+      occupation: "Doctor",
+      avatar: ava5,
+    },
+    {
+      id: 6,
+      rating: 5,
+      carModel: "Audi A4 2021",
+      review:
+        "Impressive performance tuning service. My car's performance improved significantly. The technicians are skilled and use quality parts. Highly satisfied with the results.",
+      customerName: "James Wilson",
+      occupation: "Financial Advisor",
+      avatar: avatar,
     },
   ];
 
   const images = [serve];
 
-  // Counter Logic
   const Counter = ({ end, label }) => {
     const [count, setCount] = useState(0);
-
     useEffect(() => {
       let start = 0;
-      const duration = 2000; // Animation duration in ms
+      const duration = 2000;
       const stepTime = Math.abs(Math.floor(duration / end));
       const timer = setInterval(() => {
         start += 1;
@@ -50,7 +89,6 @@ const AutomotiveTestimonials = () => {
           clearInterval(timer);
         }
       }, stepTime);
-
       return () => clearInterval(timer);
     }, [end]);
 
@@ -64,38 +102,31 @@ const AutomotiveTestimonials = () => {
     );
   };
 
-  // Testimonial Logic
-  const Testimonial = ({ quote, author }) => {
-    const [name, location] = author.split(", ");
-
+  const Testimonial = ({ review, customerName, occupation, avatar }) => {
     return (
-      <div className="bg-purple-800 text-white p-6 rounded-lg shadow-md w-1/2 relative ">
-        <div className="absolute top-2 left-2 text-7xl font-serif italic ">
+      <div className="bg-purple-800 text-white p-6 rounded-lg shadow-md w-1/2 relative">
+        <div className="absolute top-2 left-2 text-7xl font-serif italic">
           "
         </div>
-        <p className="italic pt-12 pb-18 text-base pl-2">"{quote}"</p>
-        <div className="flex items-start">
+        <p className="italic pt-12 pb-8 text-base pl-2">"{review}"</p>
+        <div className="flex items-start mt-4">
           <img
             src={avatar}
-            alt="Avatar"
+            alt={customerName}
             className="w-12 h-12 rounded-full mr-4"
           />
-
-          <div className="flex justify-end">
-            <div className="text-right">
-              <p className="text-xs font-semibold">{name}</p>
-              <p className="text-xs text-gray-300">{location}</p>
-            </div>
+          <div>
+            <p className="text-xs font-semibold">{customerName}</p>
+            <p className="text-xs text-gray-300">{occupation}</p>
           </div>
         </div>
       </div>
     );
   };
 
-  // Testimonial Slider Logic
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsPerView = 2;
-  const totalSlides = Math.ceil(testimonials.length / itemsPerView);
+  const totalSlides = Math.ceil(reviews.length / itemsPerView);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % totalSlides);
@@ -105,26 +136,21 @@ const AutomotiveTestimonials = () => {
     setCurrentIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
 
-  const visibleTestimonials = testimonials.slice(
+  const visibleTestimonials = reviews.slice(
     currentIndex * itemsPerView,
     (currentIndex + 1) * itemsPerView
   );
 
-  // Slider Logic with absolute positioning
   return (
     <div className="py-6 lg:px-20 md:px-16 sm:px-12 px-4">
-      <div className="w-full ">
-        <div className="grid grid-cols-1 w-full pb-10 gap-6">
-          {/* Stats Section */}
-          <div className="flex justify-around mb-6">
-            <Counter end={10} label="Happy Customers" />
-            <Counter end={50} label="Mechanics on Staff" />
-            <Counter end={24} label="Average Turnaround Time" />
-            <Counter end={15} label="Years in Business" />
-          </div>
+      <div className="w-full">
+        <div className="flex justify-around mb-6">
+          <Counter end={10} label="Happy Customers" />
+          <Counter end={50} label="Mechanics on Staff" />
+          <Counter end={24} label="Average Turnaround Time" />
+          <Counter end={15} label="Years in Business" />
         </div>
 
-        {/* Testimonial and Slider Section */}
         <div className="flex flex-col md:flex-row gap-6">
           <div className="md:w-1/2 h-120 hidden md:block relative">
             <div
@@ -145,13 +171,13 @@ const AutomotiveTestimonials = () => {
                 onClick={prevSlide}
                 className="bg-[#D5AB16] p-1 rounded-full shadow-md transition mr-2"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={25} />
               </button>
               <button
                 onClick={nextSlide}
                 className="bg-[#D5AB16] p-1 rounded-full shadow-md transition"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={25} />
               </button>
             </div>
           </div>
@@ -161,11 +187,13 @@ const AutomotiveTestimonials = () => {
               What Our Customers Say About Us
             </h2>
             <div className="flex px-4 space-x-4 overflow-hidden">
-              {visibleTestimonials.map((testimonial, index) => (
+              {visibleTestimonials.map((testimonial) => (
                 <Testimonial
-                  key={index}
-                  quote={testimonial.quote}
-                  author={testimonial.author}
+                  key={testimonial.id}
+                  review={testimonial.review}
+                  customerName={testimonial.customerName}
+                  occupation={testimonial.occupation}
+                  avatar={testimonial.avatar}
                 />
               ))}
             </div>

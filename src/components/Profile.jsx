@@ -18,9 +18,8 @@ const Profile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Submit logic here
-    // alert(JSON.stringify(form, null, 2));
-    navigate("/profile-mec");
+    // Navigate to success page and pass form data
+    navigate("/success", { state: { formData: form } });
   };
 
   return (
