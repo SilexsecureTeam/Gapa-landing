@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import auth from "../assets/proflie.png";
 
 const Profile = () => {
@@ -10,16 +10,33 @@ const Profile = () => {
     vin: "",
   });
   const navigate = useNavigate();
+  const location = useLocation();
+  const trustData = location.state?.trustData || {};
+
+  // List of vehicle makes and their corresponding models
+  const vehicleData = {
+    Toyota: ["Camry", "Corolla", "RAV4", "Highlander"],
+    BMW: ["3 Series", "5 Series", "X3", "X5"],
+    Honda: ["Civic", "Accord", "CR-V", "Pilot"],
+    Ford: ["F-150", "Mustang", "Explorer", "Escape"],
+    Mercedes: ["C-Class", "E-Class", "S-Class", "GLC"],
+    Nissan: ["Altima", "Sentra", "Rogue", "Pathfinder"],
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+      // Reset vehicleModel when vehicleMake changes
+      ...(name === "vehicleMake" ? { vehicleModel: "" } : {}),
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Navigate to success page and pass form data
-    navigate("/success", { state: { formData: form } });
+    // Navigate to success page and pass form data and trust data
+    navigate("/success", { state: { formData: form, trustData } });
   };
 
   return (
@@ -50,29 +67,45 @@ const Profile = () => {
               <label className="block text-base font-semibold text-[#333333] mb-1">
                 Vehicle Make<span className="text-[#FF0000]">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 name="vehicleMake"
                 value={form.vehicleMake}
                 onChange={handleChange}
                 required
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                placeholder="e.g., Toyota"
-              />
+              >
+                <option value="" disabled>
+                  Select a make
+                </option>
+                {Object.keys(vehicleData).map((make) => (
+                  <option key={make} value={make}>
+                    {make}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
                 Vehicle Model<span className="text-[#FF0000]">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 name="vehicleModel"
                 value={form.vehicleModel}
                 onChange={handleChange}
                 required
+                disabled={!form.vehicleMake}
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                placeholder="e.g., Camry"
-              />
+              >
+                <option value="" disabled>
+                  Select a model
+                </option>
+                {form.vehicleMake &&
+                  vehicleData[form.vehicleMake].map((model) => (
+                    <option key={model} value={model}>
+                      {model}
+                    </option>
+                  ))}
+              </select>
             </div>
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">

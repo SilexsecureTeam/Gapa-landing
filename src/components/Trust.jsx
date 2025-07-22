@@ -41,6 +41,7 @@ const Trust = ({ refProp }) => {
     "Giwa Barracks Car Park, Ikoyi, Lagos",
     "Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout, Lekki, Lagos",
   ];
+
   const handleBookService = () => {
     if (!selectedVehicle || !selectedService || !selectedLocation) {
       alert(
@@ -49,8 +50,16 @@ const Trust = ({ refProp }) => {
       return;
     }
 
-    // If all fields selected, navigate to profile page
-    navigate("/profile");
+    // Navigate to profile page and pass Trust component data
+    navigate("/profile", {
+      state: {
+        trustData: {
+          vehicle: selectedVehicle,
+          service: selectedService,
+          location: selectedLocation,
+        },
+      },
+    });
   };
 
   const toggleDropdown = (type) => {
@@ -82,7 +91,7 @@ const Trust = ({ refProp }) => {
     <div className="relative md:mb-8 mb-4">
       <button
         onClick={() => toggleDropdown(type)}
-        className="w-full bg-white/10 backdrop-blur-sm cursor-pointer  border border-white/20 rounded-lg px-4 py-3 text-left text-[#E5E5E5] hover:bg-white/15 transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
+        className="w-full bg-white/10 backdrop-blur-sm cursor-pointer border border-white/20 rounded-lg px-4 py-3 text-left text-[#E5E5E5] hover:bg-white/15 transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -106,7 +115,7 @@ const Trust = ({ refProp }) => {
               <button
                 key={index}
                 onClick={() => handleSelection(type, option)}
-                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-[#F7CD3A] hover:text-[#492F92] transition-colors duration-200 text-sm md:text-base border-b border-gray-100 last:border-b-0"
+                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-[#F7CD3A] hover:text-[#492F92] transition-colors duration-200 text-sm md:text-base border-b border-gray-200 last:border-b-0"
               >
                 {option}
               </button>
@@ -142,7 +151,7 @@ const Trust = ({ refProp }) => {
     >
       <div className="flex flex-col md:flex-row w-full mx-auto bg-[#f3f1f7]">
         <div className="w-full md:w-1/2 p-6 md:p-8 lg:p-12 bg-[#492F92] rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
-          <h1 className="text-[#E5E5E5] font-bold text-xl md:text-2xl  mb-6 md:mb-8 leading-tight">
+          <h1 className="text-[#E5E5E5] font-bold text-xl md:text-2xl mb-6 md:mb-8 leading-tight">
             Book Trusted Car Care in Minutes
           </h1>
           <div className="space-y-4 mb-6 md:mb-8">
@@ -182,9 +191,8 @@ const Trust = ({ refProp }) => {
           </button>
         </div>
 
-        <div className="relative w-full md:w-1/2  rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
+        <div className="relative w-full md:w-1/2 rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
           <img src={trust} alt="trust" className="w-full h-full object-cover" />
-          {/* <div className="absolute top-0 left-0 h-full w-full bg-black/50"></div> */}
         </div>
       </div>
     </section>

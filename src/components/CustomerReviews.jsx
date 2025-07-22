@@ -14,67 +14,61 @@ const CustomerReviews = () => {
   const mobileCurrentSlide = useRef(0);
 
   const reviews = [
-    {
-      id: 1,
-      rating: 5,
-      carModel: "Toyota Camry 2022",
-      review:
-        "Working with DigitX was a pleasure. Their web design team created a stunning website that perfectly captured our brand's essence. The feedback from our customers has been overwhelmingly positive.",
-      customerName: "Jessica Thomas",
-      occupation: "Financial Analyst",
-      avatar: ava1,
-    },
-    {
-      id: 2,
-      rating: 5,
-      carModel: "Honda Civic 2021",
-      review:
-        "Outstanding brake repair service. They diagnosed the issue quickly and fixed it at a fair price. The staff was knowledgeable and kept me informed throughout the process.",
-      customerName: "Michael Chen",
-      occupation: "Software Engineer",
-      avatar: ava2,
-    },
-    {
-      id: 3,
-      rating: 5,
-      carModel: "BMW 3 Series 2020",
-      review:
-        "Top-notch engine diagnostics and repair. They found and fixed issues that other shops missed. Professional service with attention to detail. Will definitely return.",
-      customerName: "Sofia Rodriguez",
-      occupation: "Business Owner",
-      avatar: ava3,
-    },
-    {
-      id: 4,
-      rating: 5,
-      carModel: "Ford F-150 2023",
-      review:
-        "Great tire service and installation. Quick turnaround time and competitive pricing. The team explained everything clearly and provided excellent customer support.",
-      customerName: "David Thompson",
-      occupation: "Construction Manager",
-      avatar: ava4,
-    },
-    {
-      id: 5,
-      rating: 5,
-      carModel: "Mercedes C-Class 2022",
-      review:
-        "Exceptional battery replacement service. They tested my electrical system thoroughly and installed a high-quality battery. Professional and reliable service.",
-      customerName: "Lisa Martinez",
-      occupation: "Doctor",
-      avatar: ava5,
-    },
-    {
-      id: 6,
-      rating: 5,
-      carModel: "Audi A4 2021",
-      review:
-        "Impressive performance tuning service. My car's performance improved significantly. The technicians are skilled and use quality parts. Highly satisfied with the results.",
-      customerName: "James Wilson",
-      occupation: "Financial Advisor",
-      avatar: avatar,
-    },
-  ];
+  {
+    id: 1,
+    rating: 5,
+    carModel: "Toyota Camry 2022",
+    review: "Exceptional battery replacement service. They tested my entire electrical system before installing a high-quality battery. The team was prompt, professional, and very transparent. I highly recommend GAPA Fix",
+    customerName: "Tope A",
+    occupation: "Ikoyi",
+    avatar: ava1
+  },
+  {
+    id: 2,
+    rating: 5,
+    carModel: "BMW 3 Series 2020",
+    review: "GAPA Fix came to my office in Surulere to work on my brakes. They diagnosed the problem, sourced the parts, and fixed it same day. No stress, no back and forth. Honest pricing too!",
+    customerName: "David K",
+    occupation: "Surulere",
+    avatar: ava2
+  },
+  {
+    id: 3,
+    rating: 5,
+    carModel: "Honda Civic 2021",
+    review: "These guys know what they’re doing. They handled my Range Rover’s overheating issue with speed and precision. Their customer service was top-tier and the follow-up call the next day really impressed me",
+    customerName: "Chioma E",
+    occupation: "Lekki",
+    avatar: ava3
+  },
+  {
+    id: 4,
+    rating: 5,
+    carModel: "Ford F-150 2023",
+    review: "My car wouldn’t start, and they pulled up within the hour. The mechanic explained every step, fixed the ignition fault, and even gave tips to avoid future issues. Reliable and professional—10/10",
+    customerName: "Blessing M.",
+    occupation: "Ajah",
+    avatar: ava4
+  },
+  {
+    id: 5,
+    rating: 5,
+    carModel: "Mercedes-Benz C-Class 2019",
+    review: "GAPA Fix saved me when my car’s AC stopped working in the middle of Lagos traffic. They arrived quickly, diagnosed the issue, and had it fixed in no time. Super professional and great value for money!",
+    customerName: "Ahmed T",
+    occupation: "Victoria Island",
+    avatar: ava5
+  },
+  {
+    id: 6,
+    rating: 5,
+    carModel: "Nissan Altima 2020",
+    review: "I had a tire blowout on the highway, and GAPA Fix was there in under 30 minutes. They replaced the tire and checked the others for safety. Their service is fast, friendly, and trustworthy!",
+    customerName: "Funmi O",
+    occupation: "Ikeja",
+    avatar: avatar
+  }
+];
 
   // Desktop/Tablet slider functions (2 cards)
   const desktopSlideNext = () => {

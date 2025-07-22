@@ -5,8 +5,9 @@ const Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get form data from navigation state
+  // Get form data and trust data from navigation state
   const formData = location.state?.formData || {};
+  const trustData = location.state?.trustData || {};
 
   const handleBackToHome = () => {
     navigate("/");
@@ -67,6 +68,30 @@ const Success = () => {
               </span>
               <span className="text-[#666666] font-mono">
                 {formData.vin || "Not provided"}
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-[#333333] w-full sm:w-40 mb-1 sm:mb-0">
+                Vehicle Type:
+              </span>
+              <span className="text-[#666666]">
+                {trustData.vehicle || "Not provided"}
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-[#333333] w-full sm:w-40 mb-1 sm:mb-0">
+                Service:
+              </span>
+              <span className="text-[#666666]">
+                {trustData.service || "Not provided"}
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-[#333333] w-full sm:w-40 mb-1 sm:mb-0">
+                Location:
+              </span>
+              <span className="text-[#666666]">
+                {trustData.location || "Not provided"}
               </span>
             </div>
           </div>

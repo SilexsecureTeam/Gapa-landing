@@ -14,7 +14,7 @@ const TrustedSource = ({ onScheduleClick }) => {
       icon: "⚙️",
     },
     {
-      title: "Customer-Care First",
+      title: "Customer Care - First",
       text: "Fast, transparent, and tailored to your needs with professional service excellence.",
       icon: "🚗",
     },
