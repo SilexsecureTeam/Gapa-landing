@@ -11,54 +11,68 @@ const Profile = () => {
     vin: "",
   });
 
-  const [brands, setBrands] = useState([]);
-  const [models, setModels] = useState([]);
+  const [brands, setBrands] = useState([]); // Optional, if you want to show selected brand name
+  const [models, setModels] = useState([]); // Vehicle Make options
+  const [submodels, setSubmodels] = useState([]); // Vehicle Model options
+
   const [loadingModels, setLoadingModels] = useState(false);
+  const [loadingSubModels, setLoadingSubModels] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const trustData = location.state?.trustData || {};
 
-  // Fetch car brands (makes) on page load
+  // Fetch brands (optional, in case we want to display brand name later)
   useEffect(() => {
-    console.log("⏳ Fetching brands using axios...");
     axios
       .get("https://stockmgt.gapaautoparts.com/api/brand/all-brand")
-      .then((response) => {
-        console.log("✅ Brand fetch response:", response.data);
-        setBrands(response.data.brands || []);
-      })
-      .catch((err) => {
-        console.error("❌ Fetch error:", err);
-      });
+      .then((res) => setBrands(res.data.brands || []))
+      .catch((err) => console.error("❌ Error fetching brands", err));
   }, []);
 
-  // Fetch car models when a brand is selected
+  // Fetch models (Vehicle Make) using selected brand from Trust
+  useEffect(() => {
+    if (trustData.vehicle) {
+      const selectedBrand = brands.find(
+        (b) => b.name.toLowerCase() === trustData.vehicle.toLowerCase()
+      );
+
+      if (selectedBrand?.id) {
+        setLoadingModels(true);
+        axios
+          .get(
+            `https://stockmgt.gapaautoparts.com/api/getModelByBrandId?brand_id=${selectedBrand.id}`
+          )
+          .then((res) => {
+            setModels(res.data.result || []);
+            setLoadingModels(false);
+          })
+          .catch((err) => {
+            console.error("❌ Error fetching models", err);
+            setModels([]);
+            setLoadingModels(false);
+          });
+      }
+    }
+  }, [brands, trustData.vehicle]);
+
+  // Fetch submodels (Vehicle Model) using selected model
   useEffect(() => {
     if (form.vehicleMake) {
-      console.log("🚗 Fetching models for brand_id:", form.vehicleMake);
-      setLoadingModels(true);
+      setLoadingSubModels(true);
       axios
         .get(
-          `https://stockmgt.gapaautoparts.com/api/getModelByBrandId?brand_id=${form.vehicleMake}`
+          `https://stockmgt.gapaautoparts.com/api/getSubModelByModelId?model_id=${form.vehicleMake}`
         )
-        .then((response) => {
-          console.log("✅ Model fetch response:", response.data);
-          setModels(response.data.result || []);
-          setLoadingModels(false);
+        .then((res) => {
+          setSubmodels(res.data.result || []);
+          setLoadingSubModels(false);
         })
-        .catch((error) => {
-          console.error(
-            "❌ Error fetching car models:",
-            error.response?.status,
-            error.response?.data,
-            error.message
-          );
-          setModels([]);
-          setLoadingModels(false);
+        .catch((err) => {
+          console.error("❌ Error fetching submodels", err);
+          setSubmodels([]);
+          setLoadingSubModels(false);
         });
-    } else {
-      setModels([]);
     }
   }, [form.vehicleMake]);
 
@@ -73,8 +87,11 @@ const Profile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const selectedMake = brands.find((b) => b.id === form.vehicleMake);
-    const selectedModel = models.find((m) => m.id === form.vehicleModel);
+
+    const selectedMake = models.find((m) => m.id === form.vehicleMake);
+    const selectedModel = submodels.find(
+      (s) => s.id === Number(form.vehicleModel)
+    );
 
     navigate("/success", {
       state: {
@@ -114,7 +131,7 @@ const Profile = () => {
               />
             </div>
 
-            {/* Vehicle Make */}
+            {/* Vehicle Make (model list from brand) */}
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
                 Vehicle Make<span className="text-[#FF0000]">*</span>
@@ -124,18 +141,22 @@ const Profile = () => {
                 value={form.vehicleMake}
                 onChange={handleChange}
                 required
+                disabled={loadingModels || models.length === 0}
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
               >
                 <option value="">Select a make</option>
-                {brands.map((brand) => (
-                  <option key={brand.id} value={brand.id}>
-                    {brand.name}
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
                   </option>
                 ))}
               </select>
+              {loadingModels && (
+                <p className="text-sm text-gray-500 mt-1">Loading makes...</p>
+              )}
             </div>
 
-            {/* Vehicle Model */}
+            {/* Vehicle Model (submodels) */}
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
                 Vehicle Model<span className="text-[#FF0000]">*</span>
@@ -145,18 +166,20 @@ const Profile = () => {
                 value={form.vehicleModel}
                 onChange={handleChange}
                 required
-                disabled={!form.vehicleMake || loadingModels}
+                disabled={!form.vehicleMake || loadingSubModels}
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
               >
                 <option value="">Select a model</option>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name}
+                {submodels.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
                   </option>
                 ))}
               </select>
-              {loadingModels && (
-                <p className="text-sm text-gray-500 mt-1">Loading models...</p>
+              {loadingSubModels && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Loading vehicle models...
+                </p>
               )}
             </div>
 

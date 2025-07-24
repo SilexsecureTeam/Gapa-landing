@@ -1,29 +1,21 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
 import trust from "../assets/book.png";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Trust = ({ refProp }) => {
   const navigate = useNavigate();
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
+  const [brands, setBrands] = useState([]);
+
   const [dropdownOpen, setDropdownOpen] = useState({
     vehicle: false,
     service: false,
     location: false,
   });
-
-  const vehicles = [
-    "Sedan",
-    "SUV",
-    "Truck",
-    "Hatchback",
-    "Coupe",
-    "Convertible",
-    "Van",
-    "Motorcycle",
-  ];
 
   const services = [
     "Oil Service",
@@ -50,7 +42,6 @@ const Trust = ({ refProp }) => {
       return;
     }
 
-    // Navigate to profile page and pass Trust component data
     navigate("/profile", {
       state: {
         trustData: {
@@ -114,10 +105,10 @@ const Trust = ({ refProp }) => {
             {options.map((option, index) => (
               <button
                 key={index}
-                onClick={() => handleSelection(type, option)}
+                onClick={() => handleSelection(type, option.name)}
                 className="w-full px-4 py-3 text-left text-gray-700 hover:bg-[#F7CD3A] hover:text-[#492F92] transition-colors duration-200 text-sm md:text-base border-b border-gray-200 last:border-b-0"
               >
-                {option}
+                {option.name}
               </button>
             ))}
           </div>
@@ -126,8 +117,19 @@ const Trust = ({ refProp }) => {
     </div>
   );
 
+  useEffect(() => {
+    axios
+      .get("https://stockmgt.gapaautoparts.com/api/brand/all-brand")
+      .then((res) => {
+        setBrands(res.data.brands || []);
+      })
+      .catch((err) => {
+        console.error("Error fetching car brands", err);
+      });
+  }, []);
+
   // Close dropdowns when clicking outside
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest(".relative")) {
         setDropdownOpen({
@@ -159,17 +161,16 @@ const Trust = ({ refProp }) => {
               type="vehicle"
               icon={Car}
               placeholder="What do you drive?"
-              options={vehicles}
+              options={brands}
               selectedValue={selectedVehicle}
               isOpen={dropdownOpen.vehicle}
-              className="cursor-pointer"
             />
 
             <Dropdown
               type="service"
               icon={Wrench}
               placeholder="What service do you need?"
-              options={services}
+              options={services.map((s) => ({ name: s }))}
               selectedValue={selectedService}
               isOpen={dropdownOpen.service}
             />
@@ -178,11 +179,11 @@ const Trust = ({ refProp }) => {
               type="location"
               icon={MapPin}
               placeholder="Our Service Centers"
-              options={locations}
+              options={locations.map((l) => ({ name: l }))}
               selectedValue={selectedLocation}
               isOpen={dropdownOpen.location}
             />
-          </div>{" "}
+          </div>
           <button
             onClick={handleBookService}
             className="bg-[#F7CD3A] w-full cursor-pointer text-[#492F92] font-semibold py-3 md:py-4 px-4 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50 text-sm md:text-base lg:text-lg"
