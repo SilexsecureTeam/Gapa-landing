@@ -73,7 +73,19 @@ const Profile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate("/success", { state: { formData: form, trustData } });
+    const selectedMake = brands.find((b) => b.id === form.vehicleMake);
+    const selectedModel = models.find((m) => m.id === form.vehicleModel);
+
+    navigate("/success", {
+      state: {
+        formData: {
+          ...form,
+          vehicleMake: selectedMake?.name || form.vehicleMake,
+          vehicleModel: selectedModel?.name || form.vehicleModel,
+        },
+        trustData,
+      },
+    });
   };
 
   return (
