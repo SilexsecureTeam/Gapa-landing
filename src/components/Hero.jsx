@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import heroBg1 from "../assets/banner.png"; // Update with actual images if you have multiple
-import heroBg2 from "../assets/banner1.png"; // Update with actual images if you have multiple
-// import hero1 from "../assets/hero1.png";
-// import hero2 from "../assets/hero2.png";
-// import hero3 from "../assets/hero3.png";
+import heroBg1 from "../assets/banner.png";
+import heroBg2 from "../assets/banner1.png";
+import heroBg3 from "../assets/banner2.png";
 
 const Hero = () => {
-  // Memoize the images array to prevent recreation on every render
-  const images = useMemo(() => [heroBg1, heroBg2], []);
+  const images = useMemo(() => [heroBg1, heroBg2, heroBg3], []);
   const [currentImage, setCurrentImage] = useState(0);
   const [direction, setDirection] = useState(1);
   const totalImages = images.length;

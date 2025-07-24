@@ -3,6 +3,8 @@ import React, { Suspense, lazy } from "react";
 import "./App.css";
 import logo from "./assets/logo.png";
 import ScrollToTop from "./components/ScrollToTop";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -21,6 +23,7 @@ const Book3Page = lazy(() => import("./Pages/Book3Page"));
 const Book4Page = lazy(() => import("./Pages/Book4Page"));
 const Book5Page = lazy(() => import("./Pages/Book5Page"));
 const Success = lazy(() => import("./components/Success"));
+const Suc = lazy(() => import("./components/Suc"));
 const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
 
 function App() {
@@ -41,6 +44,7 @@ function App() {
             </div>
           }
         >
+          <ToastContainer position="top-right" autoClose={3000} />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
@@ -57,6 +61,7 @@ function App() {
             <Route path="/book-forth" element={<Book4Page />} />
             <Route path="/book-fifth" element={<Book5Page />} />
             <Route path="/success" element={<Success />} />
+            <Route path="/suc" element={<Suc />} />
             <Route path="/dashboard/*" element={<DashboardPage />} />
             <Route path="*" element={<NotFoundPage />} />{" "}
             {/* Updated to use NotFoundPage */}

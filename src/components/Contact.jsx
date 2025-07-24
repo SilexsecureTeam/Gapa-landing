@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { MapPin, Phone, User, Mail, MessageSquare } from "lucide-react";
 import contact from "../assets/contact1.png";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Contact = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -72,10 +75,11 @@ const Contact = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form submitted:", formData);
-      alert(
-        "Thank you! Your appointment request has been submitted successfully."
-      );
+      toast.success("Form submitted successfully!");
+
+      navigate("/suc", {
+        state: formData,
+      });
 
       setFormData({
         firstName: "",
@@ -86,12 +90,8 @@ const Contact = () => {
       });
       setErrors({});
     } catch (error) {
-      console.error("Submission error:", error);
-      alert(
-        "Sorry, there was an error submitting your request. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
+      console.error(error);
+      toast.error("Something went wrong. Try again.");
     }
   };
 

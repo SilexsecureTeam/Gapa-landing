@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { User, Mail, Phone, MessageSquare } from "lucide-react";
 import car from "../assets/talk.png";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const Car = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -72,10 +75,11 @@ const Car = () => {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form submitted:", formData);
-      alert(
-        "Thank you! Your appointment request has been submitted successfully."
-      );
+      toast.success("Form submitted successfully!");
+
+      navigate("/suc", {
+        state: formData,
+      });
 
       setFormData({
         firstName: "",
@@ -86,12 +90,8 @@ const Car = () => {
       });
       setErrors({});
     } catch (error) {
-      console.error("Submission error:", error);
-      alert(
-        "Sorry, there was an error submitting your request. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
+      console.error(error);
+      toast.error("Something went wrong. Try again.");
     }
   };
 
@@ -235,8 +235,9 @@ const Car = () => {
           </form>
         </div>
 
-        <div className="w-full md:w-1/2 rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
+        <div className="relative w-full md:w-1/2 rounded-b-lg md:rounded-r-lg md:rounded-bl-none overflow-hidden">
           <img src={car} alt="trust" className="w-full h-full object-cover" />
+          <div className="absolute bg-black/40 opacity-50 w-full h-full inset-0"></div>
         </div>
       </div>
     </section>

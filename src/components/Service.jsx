@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import service1 from "../assets/service1.png";
 import service2 from "../assets/service2.png";
-import service3 from "../assets/service3.png";
+import service3 from "../assets/services3.png";
 import oil from "../assets/oil.png";
 import brake from "../assets/brake.png";
 import tyre from "../assets/tyre.png";
@@ -148,7 +148,7 @@ const Service = () => {
           <img
             src={service.image}
             alt={service.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-110"
           />
           <div className="absolute top-4 left-4 backdrop-blur-sm">
             <service.icon className="w-8 h-8 text-[#E5E5E5]" />

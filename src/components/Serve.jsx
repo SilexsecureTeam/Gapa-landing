@@ -1,11 +1,11 @@
 import React from "react";
 import service from "../assets/repair.png";
-import serve from "../assets/serve.png";
-import serve1 from "../assets/serve1.png";
-import serve2 from "../assets/serve2.png";
-import serve3 from "../assets/serve3.png";
+import serve from "../assets/oil.png";
+import serve1 from "../assets/brake.png";
+import serve2 from "../assets/service1.png";
+import serve3 from "../assets/check.png";
 import serve4 from "../assets/wheel.png";
-import serve5 from "../assets/sub.png";
+import serve5 from "../assets/suspension.png";
 import { Link } from "react-router-dom";
 
 const Serve = () => {
