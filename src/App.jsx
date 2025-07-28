@@ -5,6 +5,7 @@ import logo from "./assets/logo.png";
 import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Calendar from "./components/Calendar";
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -60,6 +61,7 @@ function App() {
             <Route path="/book-third" element={<Book3Page />} />
             <Route path="/book-forth" element={<Book4Page />} />
             <Route path="/book-fifth" element={<Book5Page />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/success" element={<Success />} />
             <Route path="/suc" element={<Suc />} />
             <Route path="/dashboard/*" element={<DashboardPage />} />

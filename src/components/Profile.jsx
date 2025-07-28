@@ -93,7 +93,7 @@ const Profile = () => {
       (s) => s.id === Number(form.vehicleModel)
     );
 
-    navigate("/success", {
+    navigate("/calendar", {
       state: {
         formData: {
           ...form,
@@ -205,7 +205,7 @@ const Profile = () => {
               type="submit"
               className="w-full bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors"
             >
-              SUBMIT
+              Continue
             </button>
           </form>
         </div>

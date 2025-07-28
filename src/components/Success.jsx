@@ -6,8 +6,8 @@ const Success = () => {
   const navigate = useNavigate();
 
   // Get form data and trust data from navigation state
-  const formData = location.state?.formData || {};
-  const trustData = location.state?.trustData || {};
+  const { formData, trustData, appointmentDate, appointmentTime } =
+    location.state || {};
 
   const handleBackToHome = () => {
     navigate("/");
@@ -93,6 +93,21 @@ const Success = () => {
               <span className="text-[#666666]">
                 {trustData.location || "Not provided"}
               </span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-[#333333] w-full sm:w-40 mb-1 sm:mb-0">
+                Appointment Date:
+              </span>
+              <span className="text-[#666666]">
+                {appointmentDate?.day}/{appointmentDate?.month + 1}/
+                {appointmentDate?.year}
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row">
+              <span className="font-semibold text-[#333333] w-full sm:w-40 mb-1 sm:mb-0">
+                Appointment Time:
+              </span>
+              <span className="text-[#666666]">{appointmentTime}</span>
             </div>
           </div>
         </div>
