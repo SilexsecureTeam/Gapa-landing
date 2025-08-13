@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import Header from "../components/Header.jsx";
 import Hero from "../components/Hero.jsx";
-import Trust from "../components/Trust.jsx";
+// import Trust from "../components/Trust.jsx";
 import Service from "../components/Service.jsx";
 import BrandSection from "../components/BrandSection.jsx";
 import Work from "../components/Work.jsx";
@@ -22,9 +22,9 @@ const HomePage = () => {
   return (
     <div>
       <Header />
-      <Hero />
+      <Hero refProp={trustRef} />
       <TrustedSource onScheduleClick={scrollToTrust} />
-      <Trust refProp={trustRef} />
+      {/* <Trust refProp={trustRef} /> */}
       <Service />
       <BrandSection />
       <Work />

@@ -144,11 +144,11 @@ const Service = () => {
   const ServiceCard = ({ service }) => (
     <div className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 px-2 max-w-full">
       <div className="rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-        <div className="relative h-48 md:h-56 overflow-hidden">
+        <div className="relative h-48 md:h-68 overflow-hidden">
           <img
             src={service.image}
             alt={service.title}
-            className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-110"
+            className="w-full h-full object-cover object-top transition-transform duration-300 hover:scale-110"
           />
           <div className="absolute top-4 left-4 backdrop-blur-sm">
             <service.icon className="w-8 h-8 text-[#E5E5E5]" />

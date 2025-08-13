@@ -98,7 +98,7 @@ const Serve = () => {
               <img
                 src={service.image}
                 alt={service.title}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="px-5">
@@ -108,6 +108,12 @@ const Serve = () => {
               <p className="text-[#333333] text-base mt-1 leading-relaxed">
                 {service.text}
               </p>
+              <Link>
+                {" "}
+                <button className="bg-[#F7CD3A] px-3 py-2 text-medium text-black text-sm my-3">
+                  Get A Quote
+                </button>
+              </Link>
             </div>
           </div>
         ))}
