@@ -10,7 +10,7 @@ import {
   CircleDot,
   Car as CarIcon,
 } from "lucide-react";
-import heroBg1 from "../assets/banner.png";
+import heroBg1 from "../assets/banner3.png";
 import heroBg2 from "../assets/banner1.png";
 import heroBg3 from "../assets/banner2.png";
 

@@ -72,7 +72,7 @@ const Serve = () => {
             advanced part-matching technology. Our Lagos-based team ensures your
             vehicle performs at its peak, with services tailored to your needs.
           </p>
-          <Link to="/book-first">
+          <Link to="/">
             <button className="bg-[#492F92] text-center font-semibold text-xl w-[60%] py-4 text-white my-8 rounded cursor-pointer hover:bg-[#3d2578] transition-colors duration-300">
               Book Now
             </button>{" "}
@@ -108,10 +108,10 @@ const Serve = () => {
               <p className="text-[#333333] text-base mt-1 leading-relaxed">
                 {service.text}
               </p>
-              <Link>
+              <Link to="/">
                 {" "}
-                <button className="bg-[#F7CD3A] px-3 py-2 text-medium text-black text-sm my-3">
-                  Get A Quote
+                <button className="bg-[#F7CD3A] px-3 py-2 font-medium cursor-pointer text-black text-sm my-3">
+                  Book Now
                 </button>
               </Link>
             </div>
