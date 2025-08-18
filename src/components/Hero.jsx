@@ -221,14 +221,14 @@ const Hero = () => {
       </div>
 
       {/* Dark overlay for better readability */}
-      <div className="absolute inset-0 bg-black/40 z-0"></div>
+      <div className="absolute inset-0 bg-black/10 z-0"></div>
 
       {/* Centered form */}
       <div
-        className="absolute inset-0 flex items-start justify-center z-10 px-4"
+        className="absolute inset-0 flex items-start justify-center z-10 px-10"
         style={{ transform: "translateY(50px)" }}
       >
-        <div className="w-full max-w-lg p-6 bg-[#492F92]/95 rounded-lg shadow-xl">
+        <div className="w-full sm:max-w-lg  p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
           <h1 className="text-[#E5E5E5] font-bold text-xl md:text-2xl mb-6 leading-tight text-center">
             Book Trusted Car Care in Minutes
           </h1>
