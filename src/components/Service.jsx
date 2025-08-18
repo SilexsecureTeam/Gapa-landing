@@ -3,7 +3,7 @@ import service1 from "../assets/service1.png";
 import service2 from "../assets/service2.png";
 import service3 from "../assets/services3.png";
 import oil from "../assets/oil.png";
-import brake from "../assets/brake.png";
+import brake from "../assets/serve1.png";
 import tyre from "../assets/tyre.png";
 import {
   ChevronLeft,

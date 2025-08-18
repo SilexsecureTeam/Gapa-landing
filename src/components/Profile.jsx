@@ -111,7 +111,7 @@ const Profile = () => {
         {/* Left: Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center">
           <h2 className="text-2xl sm:text-[27px] font-bold text-[#141414] mb-8 ">
-            Tell us about yourself
+            Car Registration
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">

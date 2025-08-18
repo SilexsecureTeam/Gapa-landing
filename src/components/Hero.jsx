@@ -75,12 +75,13 @@ const Hero = () => {
     "Oil Service",
     "Brake System Service",
     "Diagnostic Services",
-    "Engine Check",
+    "Paint & Bodywork",
     "Wheel Balancing & Alignment",
-    "Suspension Systems",
     "Tyre Change",
     "Car Detailing",
+    "Suspension Systems",
     "Comprehensive Repairs",
+    "Engine Check",
   ];
 
   const locations = [
@@ -211,7 +212,7 @@ const Hero = () => {
         {extendedImages.map((image, index) => (
           <div
             key={index}
-            className="w-full h-full bg-center bg-no-repeat bg-cover"
+            className="w-full h-full bg-center bg-no-repeat bg-cover md:bg-cover"
             style={{
               backgroundImage: `url(${image})`,
               flex: `0 0 ${100 / extendedImages.length}%`,
@@ -244,7 +245,7 @@ const Hero = () => {
             <Dropdown
               type="service"
               icon={Wrench}
-              placeholder="What service do you need?"
+              placeholder="Required?"
               options={services.map((s) => ({ name: s }))}
               selectedValue={selectedService}
               isOpen={dropdownOpen.service}

@@ -1,7 +1,7 @@
 import React from "react";
 import service from "../assets/repair.png";
 import serve from "../assets/oil.png";
-import serve1 from "../assets/brake.png";
+import serve1 from "../assets/serve1.png";
 import serve2 from "../assets/service1.png";
 import serve3 from "../assets/check.png";
 import serve4 from "../assets/wheel.png";
@@ -55,6 +55,10 @@ const Serve = () => {
       title: "Comprehensive Repairs",
       text: "Complete fixes for all makes and models using genuine spare parts.",
     },
+    {
+      title: "Paint & Bodywork",
+      text: "From scratch removal to full resprays, we restore your car's shine and factory finish. Our team handles dents, scuffs, and faded paint with precision, using high-quality paints that last. Drive out looking brand new.",
+    },
   ];
 
   return (
@@ -98,7 +102,7 @@ const Serve = () => {
               <img
                 src={service.image}
                 alt={service.title}
-                className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="px-5">
