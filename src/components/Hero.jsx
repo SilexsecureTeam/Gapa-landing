@@ -226,7 +226,7 @@ const Hero = () => {
 
       {/* Centered form */}
       <div
-        className="absolute inset-0 flex items-start justify-center z-10 px-10"
+        className="absolute inset-0 flex items-start justify-end z-10 px-10"
         style={{ transform: "translateY(50px)" }}
       >
         <div className="w-full sm:max-w-lg  p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
@@ -245,7 +245,7 @@ const Hero = () => {
             <Dropdown
               type="service"
               icon={Wrench}
-              placeholder="Required?"
+              placeholder="What service do you require?"
               options={services.map((s) => ({ name: s }))}
               selectedValue={selectedService}
               isOpen={dropdownOpen.service}
