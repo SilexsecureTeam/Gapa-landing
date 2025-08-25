@@ -10,19 +10,46 @@ import {
   CircleDot,
   Car as CarIcon,
 } from "lucide-react";
-import heroBg1 from "../assets/banner3.png";
-import heroBg2 from "../assets/banner1.png";
-import heroBg3 from "../assets/banner2.png";
+import heroBg1 from "../assets/banner1.png";
+import heroBg2 from "../assets/banner2.png";
+import heroBg3 from "../assets/banner3.png";
+import heroBg4 from "../assets/banner4.png";
+import mobileBanner1 from "../assets/mbanner1.png";
+import mobileBanner2 from "../assets/mbanner2.png";
+import mobileBanner3 from "../assets/mbanner3.png";
+import mobileBanner4 from "../assets/mbanner4.png";
 
 const Hero = () => {
   const navigate = useNavigate();
 
-  // Slider logic
-  const images = useMemo(() => [heroBg1, heroBg2, heroBg3], []);
+  // Define image sets for desktop and mobile
+  const desktopImages = useMemo(() => [heroBg1, heroBg2, heroBg3, heroBg4], []);
+  const mobileImages = useMemo(
+    () => [mobileBanner1, mobileBanner2, mobileBanner3, mobileBanner4],
+    []
+  );
+
+  // State to track screen size
+  const [isMobile, setIsMobile] = useState(
+    window.matchMedia("(max-width: 767px)").matches
+  );
+
+  // Update isMobile state on window resize
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const handleResize = () => setIsMobile(mediaQuery.matches);
+
+    mediaQuery.addEventListener("change", handleResize);
+    return () => mediaQuery.removeEventListener("change", handleResize);
+  }, []);
+
+  // Select images based on screen size
+  const images = isMobile ? mobileImages : desktopImages;
   const [currentImage, setCurrentImage] = useState(0);
   const [direction, setDirection] = useState(1);
   const totalImages = images.length;
 
+  // Slider logic
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => {
@@ -41,13 +68,13 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, [direction, totalImages]);
 
-  // Preload images
+  // Preload images (both sets)
   useEffect(() => {
-    images.forEach((image) => {
+    [...desktopImages, ...mobileImages].forEach((image) => {
       const img = new Image();
       img.src = image;
     });
-  }, [images]);
+  }, [desktopImages, mobileImages]);
 
   const extendedImages = [...images, ...images];
 
@@ -181,6 +208,7 @@ const Hero = () => {
       })
       .catch((err) => {
         console.error("Error fetching car brands", err);
+        setBrands([{ name: "Toyota" }, { name: "Honda" }, { name: "Ford" }]); // Mock data for fallback
       });
   }, []);
 
@@ -212,7 +240,7 @@ const Hero = () => {
         {extendedImages.map((image, index) => (
           <div
             key={index}
-            className="w-full h-full bg-center bg-no-repeat bg-cover md:bg-cover"
+            className="w-full h-full bg-center bg-no-repeat bg-cover"
             style={{
               backgroundImage: `url(${image})`,
               flex: `0 0 ${100 / extendedImages.length}%`,
@@ -226,14 +254,14 @@ const Hero = () => {
 
       {/* Centered form */}
       <div
-        className="absolute inset-0 flex items-start justify-end z-10 px-10"
+        className="absolute inset-0 flex items-start justify-end z-10 px-4 sm:px-10"
         style={{ transform: "translateY(50px)" }}
       >
-        <div className="w-full sm:max-w-lg  p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
-          <h1 className="text-[#E5E5E5] font-bold text-xl md:text-2xl mb-6 leading-tight text-center">
+        <div className="w-full max-w-md sm:max-w-lg p-4 sm:p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
+          <h1 className="text-[#E5E5E5] font-bold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 leading-tight text-center">
             Book Trusted Car Care in Minutes
           </h1>
-          <div className="space-y-4 mb-6">
+          <div className="space-y-4 mb-4 sm:mb-6">
             <Dropdown
               type="vehicle"
               icon={Car}
@@ -261,7 +289,7 @@ const Hero = () => {
           </div>
           <button
             onClick={handleBookService}
-            className="bg-[#F7CD3A] w-full text-[#492F92] font-semibold py-3 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
+            className="bg-[#F7CD3A] w-full text-[#492F92] font-semibold py-2 sm:py-3 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
           >
             Book a Service
           </button>
@@ -270,20 +298,20 @@ const Hero = () => {
 
       {/* Services Icons Section */}
       <div className="absolute left-1/2 -translate-x-1/2 bg-[#492F92]/95 w-full md:w-[90%] z-20 mx-auto h-fit bottom-0 px-4 py-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
           {serviceIcons.map((service, idx) => (
             <Link
               key={idx}
               to="/service"
-              className={`flex flex-col items-center h-full text-center px-4 py-2 border-gray-300
-          ${idx !== serviceIcons.length - 1 && "md:border-r"} 
-          ${idx % 2 !== 1 && "sm:border-r"} 
-          ${idx >= serviceIcons.length - 2 && "sm:border-r-0"}`}
+              className={`flex flex-col items-center h-full text-center px-2 sm:px-4 py-2 border-gray-300
+                ${idx !== serviceIcons.length - 1 && "md:border-r"} 
+                ${idx % 2 !== 1 && "sm:border-r"} 
+                ${idx >= serviceIcons.length - 2 && "sm:border-r-0"}`}
             >
               {React.createElement(service.icon, {
-                className: "w-8 h-8 text-[#F7CD3A] mb-2",
+                className: "w-6 sm:w-8 h-6 sm:h-8 text-[#F7CD3A] mb-2",
               })}
-              <p className="text-sm md:text-base font-medium text-[#E5E5E5]">
+              <p className="text-xs sm:text-sm md:text-base font-medium text-[#E5E5E5]">
                 {service.title}
               </p>
             </Link>
