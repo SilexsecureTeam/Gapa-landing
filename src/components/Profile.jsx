@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -22,6 +22,7 @@ const Profile = () => {
   const [submodels, setSubmodels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingSubModels, setLoadingSubModels] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // New loading state
 
   // Define available services for multi-select
   const availableServices = [
@@ -112,7 +113,11 @@ const Profile = () => {
       toast.error("Please fill in all required fields in Step 1.");
       return;
     }
-    setStep(2);
+    setIsSubmitting(true); // Start loading
+    setTimeout(() => {
+      setStep(2);
+      setIsSubmitting(false); // Stop loading
+    }, 500); // Simulate delay for UX (adjust as needed)
   };
 
   const handleStep2Submit = async (e) => {
@@ -129,6 +134,7 @@ const Profile = () => {
       return;
     }
 
+    setIsSubmitting(true); // Start loading
     const selectedMake = models.find((m) => m.id === form.vehicleMake);
     const selectedModel = submodels.find(
       (s) => s.id === Number(form.vehicleModel)
@@ -178,6 +184,8 @@ const Profile = () => {
         error.response?.data?.errors?.additional_services?.[0] ||
         "Failed to register car. Please try again.";
       toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false); // Stop loading
     }
   };
 
@@ -278,9 +286,40 @@ const Profile = () => {
               {/* Submit Step 1 */}
               <button
                 type="submit"
-                className="w-full bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors"
+                className={`w-full bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors flex items-center justify-center ${
+                  isSubmitting || loadingModels || loadingSubModels
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                disabled={isSubmitting || loadingModels || loadingSubModels}
               >
-                Continue to Step 2
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 mr-2 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"
+                      ></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : (
+                  "Continue to Step 2"
+                )}
               </button>
             </form>
           ) : (
@@ -372,15 +411,45 @@ const Profile = () => {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="w-1/2 bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 font-semibold transition-colors"
+                  className="w-1/2 bg-gray-500 mt-3 text-white py-2 rounded-md hover:bg-gray-600 font-semibold transition-colors"
+                  disabled={isSubmitting}
                 >
                   Back
                 </button>
                 <button
                   type="submit"
-                  className="w-1/2 bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors"
+                  className={`w-1/2 bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors flex items-center justify-center ${
+                    isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  disabled={isSubmitting}
                 >
-                  Continue
+                  {isSubmitting ? (
+                    <>
+                      <svg
+                        className="animate-spin h-5 w-5 mr-2 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"
+                        ></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    "Continue"
+                  )}
                 </button>
               </div>
             </form>

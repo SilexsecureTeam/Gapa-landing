@@ -8,6 +8,7 @@ import {
   ScanLine,
   Gauge,
   CircleDot,
+  WrenchIcon,
   Car as CarIcon,
 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -80,12 +81,20 @@ const Hero = () => {
   const extendedImages = [...images, ...images];
 
   const serviceIcons = [
-    { title: "Oil Service", icon: Droplets },
-    { title: "Brake System Service", icon: Disc },
-    { title: "Diagnostic Services", icon: ScanLine },
-    { title: "Engine Check", icon: Gauge },
-    { title: "Wheel Balancing & Alignment", icon: CircleDot },
-    { title: "Suspension Systems", icon: CarIcon },
+    { title: "Oil Service", icon: Droplets, route: "/service" },
+    { title: "Brake System Service", icon: Disc, route: "/service" },
+    { title: "Diagnostic Services", icon: ScanLine, route: "/service" },
+    { title: "Engine Check", icon: Gauge, route: "/service" },
+    {
+      title: "Wheel Balancing & Alignment",
+      icon: CircleDot,
+      route: "/service",
+    },
+    {
+      title: "Car Part",
+      icon: WrenchIcon,
+      route: "https://gapaautoparts.com/",
+    },
   ];
 
   // Trust form logic
@@ -98,6 +107,7 @@ const Hero = () => {
     service: false,
     location: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false); // New loading state
 
   const services = [
     "Oil Service",
@@ -125,6 +135,7 @@ const Hero = () => {
       return;
     }
 
+    setIsSubmitting(true); // Start loading
     try {
       const response = await axios.post(
         "https://api.gapafix.com.ng/api/bookings/start",
@@ -150,6 +161,8 @@ const Hero = () => {
     } catch (error) {
       console.error("Error starting booking:", error);
       toast.error("Failed to start booking. Please try again.");
+    } finally {
+      setIsSubmitting(false); // Stop loading
     }
   };
 
@@ -183,6 +196,7 @@ const Hero = () => {
       <button
         onClick={() => toggleDropdown(type)}
         className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-3 text-left text-[#E5E5E5] hover:bg-white/15 transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
+        disabled={isSubmitting} // Disable dropdown during submission
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -207,6 +221,7 @@ const Hero = () => {
                 key={index}
                 onClick={() => handleSelection(type, option.name)}
                 className="w-full px-4 py-3 text-left text-gray-700 hover:bg-[#F7CD3A] hover:text-[#492F92] transition-colors duration-200 text-sm md:text-base border-b border-gray-200 last:border-b-0"
+                disabled={isSubmitting} // Disable options during submission
               >
                 {option.name}
               </button>
@@ -308,9 +323,38 @@ const Hero = () => {
           </div>
           <button
             onClick={handleBookService}
-            className="bg-[#F7CD3A] w-full text-[#492F92] font-semibold py-2 sm:py-3 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
+            className={`bg-[#F7CD3A] w-full text-[#492F92] font-semibold py-2 sm:py-3 rounded-lg hover:bg-[#F7CD3A]/90 transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50 flex items-center justify-center ${
+              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={isSubmitting}
           >
-            Book a Service
+            {isSubmitting ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5 mr-2 text-[#492F92]"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"
+                  ></path>
+                </svg>
+                Submitting...
+              </>
+            ) : (
+              "Book a Service"
+            )}
           </button>
         </div>
       </div>
@@ -321,7 +365,7 @@ const Hero = () => {
           {serviceIcons.map((service, idx) => (
             <Link
               key={idx}
-              to="/service"
+              to={service.route}
               className={`flex flex-col items-center h-full text-center px-2 sm:px-4 py-2 border-gray-300
                 ${idx !== serviceIcons.length - 1 && "md:border-r"} 
                 ${idx % 2 !== 1 && "sm:border-r"} 
