@@ -5,8 +5,7 @@ const Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get form data and trust data from navigation state
-  const { formData, trustData, appointmentDate, appointmentTime } =
+  const { formData, trustData, appointmentDate, appointmentTime, bookingId } =
     location.state || {};
 
   const handleBackToHome = () => {
@@ -22,20 +21,20 @@ const Success = () => {
             <CheckCircle className="w-16 h-16 text-green-500" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-[#141414] mb-4">
-            Thank You for Submitting!
+            Booking Confirmed!
           </h1>
           <p className="text-lg text-[#333333] mb-2">
-            Your information has been successfully received.
+            Your appointment has been successfully scheduled.
           </p>
           <p className="text-base text-[#666666]">
-            We will get back to you soon with further details.
+            Booking ID: {bookingId || "Not provided"}
           </p>
         </div>
 
         {/* Submitted Information */}
         <div className="bg-gray-50 rounded-lg p-6 mb-8">
           <h2 className="text-xl font-semibold text-[#141414] mb-4">
-            Submitted Information:
+            Booking Details:
           </h2>
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row">
@@ -43,7 +42,7 @@ const Success = () => {
                 Full Name:
               </span>
               <span className="text-[#666666]">
-                {formData.fullName || "Not provided"}
+                {formData?.fullName || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -51,7 +50,7 @@ const Success = () => {
                 Vehicle Make:
               </span>
               <span className="text-[#666666]">
-                {formData.vehicleMake || "Not provided"}
+                {formData?.vehicleMake || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -59,7 +58,7 @@ const Success = () => {
                 Vehicle Model:
               </span>
               <span className="text-[#666666]">
-                {formData.vehicleModel || "Not provided"}
+                {formData?.vehicleModel || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -67,7 +66,7 @@ const Success = () => {
                 VIN:
               </span>
               <span className="text-[#666666] font-mono">
-                {formData.vin || "Not provided"}
+                {formData?.vin || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -75,7 +74,7 @@ const Success = () => {
                 Vehicle Type:
               </span>
               <span className="text-[#666666]">
-                {trustData.vehicle || "Not provided"}
+                {trustData?.vehicle || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -83,7 +82,7 @@ const Success = () => {
                 Service:
               </span>
               <span className="text-[#666666]">
-                {trustData.service || "Not provided"}
+                {trustData?.service || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -91,7 +90,7 @@ const Success = () => {
                 Location:
               </span>
               <span className="text-[#666666]">
-                {trustData.location || "Not provided"}
+                {trustData?.location || "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
@@ -99,15 +98,20 @@ const Success = () => {
                 Appointment Date:
               </span>
               <span className="text-[#666666]">
-                {appointmentDate?.day}/{appointmentDate?.month + 1}/
-                {appointmentDate?.year}
+                {appointmentDate
+                  ? `${appointmentDate.day}/${appointmentDate.month + 1}/${
+                      appointmentDate.year
+                    }`
+                  : "Not provided"}
               </span>
             </div>
             <div className="flex flex-col sm:flex-row">
               <span className="font-semibold text-[#333333] w-full sm:w-40 mb-1 sm:mb-0">
                 Appointment Time:
               </span>
-              <span className="text-[#666666]">{appointmentTime}</span>
+              <span className="text-[#666666]">
+                {appointmentTime || "Not provided"}
+              </span>
             </div>
           </div>
         </div>

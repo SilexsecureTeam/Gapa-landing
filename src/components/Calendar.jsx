@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { isPast, isSameMonth, startOfMonth } from "date-fns";
+import { toast } from "react-toastify";
 
 // Helper to get days in month
 const getDaysInMonth = (year, month) => {
@@ -48,6 +50,7 @@ const Calendar = () => {
   const [selectedTime, setSelectedTime] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const bookingId = location.state?.trustData?.bookingId;
 
   const leftMonthObj = months[currentMonthIdx];
   const rightMonthObj = months[currentMonthIdx + 1];
@@ -66,27 +69,44 @@ const Calendar = () => {
     rightMonthObj.month
   );
 
-  const buildCalendarDays = (daysInMonth, firstDayOfWeek) => {
+  const buildCalendarDays = (daysInMonth, firstDayOfWeek, month, year) => {
     const calendarDays = [];
     for (let i = 0; i < firstDayOfWeek; i++) {
       calendarDays.push(null);
     }
     for (let d = 1; d <= daysInMonth; d++) {
-      calendarDays.push(d);
+      const date = new Date(year, month, d);
+      calendarDays.push({
+        day: d,
+        isPast: isPast(date) && !isSameMonth(date, today),
+      });
     }
     return calendarDays;
   };
 
   const leftCalendarDays = buildCalendarDays(
     leftDaysInMonth,
-    leftFirstDayOfWeek
+    leftFirstDayOfWeek,
+    leftMonthObj.month,
+    leftMonthObj.year
   );
   const rightCalendarDays = buildCalendarDays(
     rightDaysInMonth,
-    rightFirstDayOfWeek
+    rightFirstDayOfWeek,
+    rightMonthObj.month,
+    rightMonthObj.year
   );
 
   const handlePrevMonth = () => {
+    // Prevent navigation to months before the current month
+    if (
+      isSameMonth(
+        new Date(leftMonthObj.year, leftMonthObj.month),
+        startOfMonth(today)
+      )
+    ) {
+      return;
+    }
     const newMonth = new Date(leftMonthObj.year, leftMonthObj.month - 1);
     const newMonths = [...months];
     newMonths.unshift({
@@ -98,7 +118,7 @@ const Calendar = () => {
       year: newMonth.getFullYear(),
     });
     setMonths(newMonths);
-    setCurrentMonthIdx(currentMonthIdx + 1 - 1); // Keep visible month the same
+    setCurrentMonthIdx(currentMonthIdx + 1 - 1);
   };
 
   const handleNextMonth = () => {
@@ -117,6 +137,10 @@ const Calendar = () => {
   };
 
   const handleDateSelect = (day, month, year) => {
+    const selected = new Date(year, month, day);
+    if (isPast(selected) && !isSameMonth(selected, today)) {
+      return; // Prevent selecting past dates
+    }
     setSelectedDate({ day, month, year });
     setSelectedTime("");
   };
@@ -127,19 +151,24 @@ const Calendar = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDate || !selectedTime) {
+      toast.error("Please select a date and time.");
+      return;
+    }
 
+    // Navigate to success page without API call
     const appointment = {
       ...location.state,
       appointmentDate: selectedDate,
       appointmentTime: selectedTime,
+      bookingId,
     };
 
     navigate("/success", { state: appointment });
   };
 
   return (
-    <div className="py-4 lg:py-6 px-2 sm:px-4 md:px-8 lg:px-24 w-full mx-auto ">
+    <div className="py-4 lg:py-6 px-2 sm:px-4 md:px-8 lg:px-24 w-full mx-auto">
       <form
         onSubmit={handleSubmit}
         className="w-full bg-white rounded-lg p-2 sm:p-4 md:p-6 flex flex-col items-center shadow"
@@ -154,6 +183,10 @@ const Calendar = () => {
               onClick={handlePrevMonth}
               className="text-lg sm:text-xl font-bold px-1 sm:px-2 py-1 rounded text-[#492F92] hover:bg-gray-100"
               aria-label="Previous month"
+              disabled={isSameMonth(
+                new Date(leftMonthObj.year, leftMonthObj.month),
+                startOfMonth(today)
+              )}
             >
               {"<"}
             </button>
@@ -181,27 +214,35 @@ const Calendar = () => {
                     ))}
                   </div>
                   <div className="grid grid-cols-7 gap-0.5 sm:gap-1 w-full">
-                    {calendarDays.map((day, i) =>
-                      day ? (
+                    {calendarDays.map((entry, i) =>
+                      entry ? (
                         <button
                           key={i}
                           type="button"
                           className={`w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm
                             ${
                               selectedDate &&
-                              selectedDate.day === day &&
+                              selectedDate.day === entry.day &&
                               selectedDate.month === monthObj.month &&
                               selectedDate.year === monthObj.year
                                 ? "bg-[#FFD600] text-[#141414] font-bold"
+                                : entry.isPast
+                                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                 : "bg-transparent text-[#141414] hover:bg-[#f3f1f7]"
                             }
                           `}
                           onClick={() =>
-                            handleDateSelect(day, monthObj.month, monthObj.year)
+                            !entry.isPast &&
+                            handleDateSelect(
+                              entry.day,
+                              monthObj.month,
+                              monthObj.year
+                            )
                           }
-                          aria-label={`Select ${monthObj.name} ${day}`}
+                          aria-label={`Select ${monthObj.name} ${entry.day}`}
+                          disabled={entry.isPast}
                         >
-                          {day}
+                          {entry.day}
                         </button>
                       ) : (
                         <span

@@ -10,6 +10,7 @@ import {
   CircleDot,
   Car as CarIcon,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import heroBg1 from "../assets/banner1.png";
 import heroBg2 from "../assets/banner2.png";
 import heroBg3 from "../assets/banner3.png";
@@ -116,23 +117,40 @@ const Hero = () => {
     "Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout, Lekki, Lagos",
   ];
 
-  const handleBookService = () => {
+  const handleBookService = async () => {
     if (!selectedVehicle || !selectedService || !selectedLocation) {
-      alert(
+      toast.error(
         "Please select your vehicle, service, and location before proceeding."
       );
       return;
     }
 
-    navigate("/profile", {
-      state: {
-        trustData: {
-          vehicle: selectedVehicle,
-          service: selectedService,
-          location: selectedLocation,
+    try {
+      const response = await axios.post(
+        "https://api.gapafix.com.ng/api/bookings/start",
+        {
+          vehicle_type: selectedVehicle,
+          service_required: selectedService,
+          service_center: selectedLocation,
+        }
+      );
+
+      const bookingId = response.data.booking_id; // Adjust based on actual API response
+
+      navigate("/profile", {
+        state: {
+          trustData: {
+            vehicle: selectedVehicle,
+            service: selectedService,
+            location: selectedLocation,
+            bookingId,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error("Error starting booking:", error);
+      toast.error("Failed to start booking. Please try again.");
+    }
   };
 
   const toggleDropdown = (type) => {
@@ -208,7 +226,8 @@ const Hero = () => {
       })
       .catch((err) => {
         console.error("Error fetching car brands", err);
-        setBrands([{ name: "Toyota" }, { name: "Honda" }, { name: "Ford" }]); // Mock data for fallback
+        setBrands([{ name: "Toyota" }, { name: "Honda" }, { name: "Ford" }]);
+        toast.error("Failed to fetch car brands. Using fallback data.");
       });
   }, []);
 

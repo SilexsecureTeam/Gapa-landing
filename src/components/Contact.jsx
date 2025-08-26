@@ -49,9 +49,8 @@ const Contact = () => {
       newErrors.email = "Please enter a valid email address";
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^[+]?[\d\s()-]{7,16}$/.test(formData.phone)) {
+    // Phone is optional, only validate if provided
+    if (formData.phone.trim() && !/^[+]?[\d\s()-]{7,16}$/.test(formData.phone)) {
       newErrors.phone = "Please enter a valid phone number";
     }
 
@@ -74,9 +73,25 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success("Form submitted successfully!");
+      const response = await fetch("https://api.gapafix.com.ng/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstname: formData.firstName,
+          lastname: formData.lastName,
+          email: formData.email,
+          phonenumber: formData.phone,
+          message: formData.message,
+        }),
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to submit form");
+      }
+
+      toast.success("Form submitted successfully!");
       navigate("/suc", {
         state: formData,
       });
@@ -92,6 +107,8 @@ const Contact = () => {
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong. Try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
