@@ -50,7 +50,10 @@ const Contact = () => {
     }
 
     // Phone is optional, only validate if provided
-    if (formData.phone.trim() && !/^[+]?[\d\s()-]{7,16}$/.test(formData.phone)) {
+    if (
+      formData.phone.trim() &&
+      !/^[+]?[\d\s()-]{7,16}$/.test(formData.phone)
+    ) {
       newErrors.phone = "Please enter a valid phone number";
     }
 
@@ -168,7 +171,14 @@ const Contact = () => {
                 <div className="flex items-start gap-2">
                   <MapPin className="text-[#D5AB16] w-5 h-5" />
                   <p className="text-[#333333] text-base sm:text-lg">
-                    Giwa Barracks Car Park, Ikoyi, Lagos, Nigeria
+                    Giwa Barracks Car Park, Lagos, Nigeria
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <MapPin className="text-[#D5AB16] w-5 h-5" />
+                  <p className="text-[#333333] text-base sm:text-lg">
+                    Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout,
+                    Lekki, Lagos
                   </p>
                 </div>
                 <div className="flex items-start gap-2">

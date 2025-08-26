@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -24,19 +24,16 @@ import mobileBanner4 from "../assets/mbanner4.png";
 const Hero = () => {
   const navigate = useNavigate();
 
-  // Define image sets for desktop and mobile
   const desktopImages = useMemo(() => [heroBg1, heroBg2, heroBg3, heroBg4], []);
   const mobileImages = useMemo(
     () => [mobileBanner1, mobileBanner2, mobileBanner3, mobileBanner4],
     []
   );
 
-  // State to track screen size
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 767px)").matches
   );
 
-  // Update isMobile state on window resize
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
     const handleResize = () => setIsMobile(mediaQuery.matches);
@@ -45,13 +42,11 @@ const Hero = () => {
     return () => mediaQuery.removeEventListener("change", handleResize);
   }, []);
 
-  // Select images based on screen size
   const images = isMobile ? mobileImages : desktopImages;
   const [currentImage, setCurrentImage] = useState(0);
   const [direction, setDirection] = useState(1);
   const totalImages = images.length;
 
-  // Slider logic
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => {
@@ -70,7 +65,6 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, [direction, totalImages]);
 
-  // Preload images (both sets)
   useEffect(() => {
     [...desktopImages, ...mobileImages].forEach((image) => {
       const img = new Image();
@@ -102,7 +96,6 @@ const Hero = () => {
     },
   ];
 
-  // Trust form logic
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -112,7 +105,7 @@ const Hero = () => {
     service: false,
     location: false,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false); // New loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const services = [
     "Oil Service",
@@ -128,7 +121,7 @@ const Hero = () => {
   ];
 
   const locations = [
-    "Giwa Barracks Car Park, Ikoyi, Lagos",
+    "Giwa Barracks Car Park, Lagos -Nigeria",
     "Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout, Lekki, Lagos",
   ];
 
@@ -140,7 +133,7 @@ const Hero = () => {
       return;
     }
 
-    setIsSubmitting(true); // Start loading
+    setIsSubmitting(true);
     try {
       const response = await axios.post(
         "https://api.gapafix.com.ng/api/bookings/start",
@@ -151,7 +144,7 @@ const Hero = () => {
         }
       );
 
-      const bookingId = response.data.booking_id; // Adjust based on actual API response
+      const bookingId = response.data.booking_id;
 
       navigate("/profile", {
         state: {
@@ -167,7 +160,7 @@ const Hero = () => {
       console.error("Error starting booking:", error);
       toast.error("Failed to start booking. Please try again.");
     } finally {
-      setIsSubmitting(false); // Stop loading
+      setIsSubmitting(false);
     }
   };
 
@@ -189,6 +182,13 @@ const Hero = () => {
     }));
   };
 
+  const vehicleRef = useRef(null);
+  const serviceRef = useRef(null);
+  const locationRef = useRef(null);
+  const vehicleBtnRef = useRef(null);
+  const serviceBtnRef = useRef(null);
+  const locationBtnRef = useRef(null);
+
   const Dropdown = ({
     type,
     icon,
@@ -196,12 +196,16 @@ const Hero = () => {
     options,
     selectedValue,
     isOpen,
+    wrapperRef,
+    buttonRef,
   }) => (
-    <div className="relative">
+    <div className="relative" ref={wrapperRef}>
       <button
+        ref={buttonRef}
         onClick={() => toggleDropdown(type)}
+        type="button"
         className="w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-3 text-left text-[#E5E5E5] hover:bg-white/15 transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[#F7CD3A] focus:ring-opacity-50"
-        disabled={isSubmitting} // Disable dropdown during submission
+        disabled={isSubmitting}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -220,13 +224,14 @@ const Hero = () => {
 
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 overflow-hidden">
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-48 overflow-y-auto scroll-smooth">
             {options.map((option, index) => (
               <button
                 key={index}
+                type="button"
                 onClick={() => handleSelection(type, option.name)}
                 className="w-full px-4 py-3 text-left text-gray-700 hover:bg-[#F7CD3A] hover:text-[#492F92] transition-colors duration-200 text-sm md:text-base border-b border-gray-200 last:border-b-0"
-                disabled={isSubmitting} // Disable options during submission
+                disabled={isSubmitting}
               >
                 {option.name}
               </button>
@@ -237,7 +242,6 @@ const Hero = () => {
     </div>
   );
 
-  // Fetch car brands
   useEffect(() => {
     axios
       .get("https://stockmgt.gapaautoparts.com/api/brand/all-brand")
@@ -251,10 +255,19 @@ const Hero = () => {
       });
   }, []);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest(".relative")) {
+      if (
+        vehicleRef.current &&
+        !vehicleRef.current.contains(event.target) &&
+        !vehicleBtnRef.current.contains(event.target) &&
+        serviceRef.current &&
+        !serviceRef.current.contains(event.target) &&
+        !serviceBtnRef.current.contains(event.target) &&
+        locationRef.current &&
+        !locationRef.current.contains(event.target) &&
+        !locationBtnRef.current.contains(event.target)
+      ) {
         setDropdownOpen({ vehicle: false, service: false, location: false });
       }
     };
@@ -265,7 +278,6 @@ const Hero = () => {
 
   return (
     <section className="relative h-auto min-h-screen md:h-[90vh] overflow-hidden">
-      {/* Background slider */}
       <div
         className="absolute inset-0 flex"
         style={{
@@ -288,10 +300,8 @@ const Hero = () => {
         ))}
       </div>
 
-      {/* Dark overlay for better readability */}
       <div className="absolute inset-0 bg-black/10 z-0"></div>
 
-      {/* Centered form */}
       <div
         className="absolute inset-0 flex items-start justify-end z-10 px-4 sm:px-10"
         style={{ transform: "translateY(50px)" }}
@@ -308,6 +318,8 @@ const Hero = () => {
               options={brands}
               selectedValue={selectedVehicle}
               isOpen={dropdownOpen.vehicle}
+              wrapperRef={vehicleRef}
+              buttonRef={vehicleBtnRef}
             />
             <Dropdown
               type="service"
@@ -316,6 +328,8 @@ const Hero = () => {
               options={services.map((s) => ({ name: s }))}
               selectedValue={selectedService}
               isOpen={dropdownOpen.service}
+              wrapperRef={serviceRef}
+              buttonRef={serviceBtnRef}
             />
             <Dropdown
               type="location"
@@ -324,6 +338,8 @@ const Hero = () => {
               options={locations.map((l) => ({ name: l }))}
               selectedValue={selectedLocation}
               isOpen={dropdownOpen.location}
+              wrapperRef={locationRef}
+              buttonRef={locationBtnRef}
             />
           </div>
           <button
@@ -364,7 +380,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Services Icons Section */}
       <div className="absolute left-1/2 -translate-x-1/2 bg-[#492F92]/95 w-full md:w-[90%] z-20 mx-auto h-fit bottom-0 px-4 py-3">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
           {serviceIcons.map((service, idx) => (
