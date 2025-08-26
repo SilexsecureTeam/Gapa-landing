@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { isPast, isSameMonth, startOfMonth } from "date-fns";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 // Helper to get days in month
 const getDaysInMonth = (year, month) => {
@@ -13,7 +14,8 @@ const getFirstDayOfWeek = (year, month) => {
   return new Date(year, month, 1).getDay();
 };
 
-const availableTimes = [
+// Static fallback times
+const defaultTimes = [
   "9:00 AM",
   "10:00 AM",
   "11:00 AM",
@@ -21,6 +23,21 @@ const availableTimes = [
   "2:00 PM",
   "3:00 PM",
 ];
+
+// Helper to convert 12-hour AM/PM time to 24-hour H:i format
+const formatTimeTo24Hour = (time) => {
+  const [timePart, period] = time.split(" ");
+  const [hour, minute] = timePart.split(":");
+  let hourNum = parseInt(hour, 10);
+
+  if (period === "PM" && hourNum !== 12) {
+    hourNum += 12;
+  } else if (period === "AM" && hourNum === 12) {
+    hourNum = 0;
+  }
+
+  return `${hourNum.toString().padStart(2, "0")}:${minute}`;
+};
 
 const Calendar = () => {
   const today = new Date();
@@ -48,9 +65,33 @@ const Calendar = () => {
   const [currentMonthIdx, setCurrentMonthIdx] = useState(0);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState("");
+  const [availableTimes, setAvailableTimes] = useState(defaultTimes);
+  const [loading, setLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const bookingId = location.state?.trustData?.bookingId;
+
+  // Fetch available times when date is selected
+  useEffect(() => {
+    if (selectedDate) {
+      const serviceDate = `${selectedDate.year}-${String(
+        selectedDate.month + 1
+      ).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`;
+      axios
+        .get(
+          `https://api.gapafix.com.ng/api/bookings/available-times?date=${serviceDate}`
+        )
+        .then((res) => {
+          const times = res.data.times || defaultTimes;
+          setAvailableTimes(times);
+          setSelectedTime("");
+        })
+        .catch(() => {
+          toast.error("Failed to fetch available times. Using default times.");
+          setAvailableTimes(defaultTimes);
+        });
+    }
+  }, [selectedDate]);
 
   const leftMonthObj = months[currentMonthIdx];
   const rightMonthObj = months[currentMonthIdx + 1];
@@ -78,7 +119,7 @@ const Calendar = () => {
       const date = new Date(year, month, d);
       calendarDays.push({
         day: d,
-        isPast: isPast(date) && !isSameMonth(date, today),
+        isPast: isPast(date), // Mark all past dates as non-clickable
       });
     }
     return calendarDays;
@@ -98,7 +139,6 @@ const Calendar = () => {
   );
 
   const handlePrevMonth = () => {
-    // Prevent navigation to months before the current month
     if (
       isSameMonth(
         new Date(leftMonthObj.year, leftMonthObj.month),
@@ -138,8 +178,9 @@ const Calendar = () => {
 
   const handleDateSelect = (day, month, year) => {
     const selected = new Date(year, month, day);
-    if (isPast(selected) && !isSameMonth(selected, today)) {
-      return; // Prevent selecting past dates
+    if (isPast(selected)) {
+      // Prevent selecting any past date
+      return;
     }
     setSelectedDate({ day, month, year });
     setSelectedTime("");
@@ -149,22 +190,85 @@ const Calendar = () => {
     setSelectedTime(time);
   };
 
-  const handleSubmit = (e) => {
+  const retryRequest = async (url, data, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await axios.post(url, data);
+        return response;
+      } catch (error) {
+        if (error.response?.status === 500 && i < retries - 1) {
+          console.log(`Retrying request (${i + 1}/${retries})...`);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          continue;
+        }
+        throw error;
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedDate || !selectedTime) {
       toast.error("Please select a date and time.");
       return;
     }
+    if (!bookingId) {
+      toast.error(
+        "Invalid booking ID. Please start the booking process again."
+      );
+      navigate("/");
+      return;
+    }
 
-    // Navigate to success page without API call
-    const appointment = {
-      ...location.state,
-      appointmentDate: selectedDate,
-      appointmentTime: selectedTime,
-      bookingId,
-    };
+    setLoading(true);
+    try {
+      const serviceDate = `${selectedDate.year}-${String(
+        selectedDate.month + 1
+      ).padStart(2, "0")}-${String(selectedDate.day).padStart(2, "0")}`;
+      const formattedTime = formatTimeTo24Hour(selectedTime);
 
-    navigate("/success", { state: appointment });
+      console.log("Submitting payload:", {
+        bookingId,
+        service_date: serviceDate,
+        service_time: formattedTime,
+      });
+
+      const response = await retryRequest(
+        `https://api.gapafix.com.ng/api/bookings/${bookingId}/choose-date-time`,
+        {
+          service_date: serviceDate,
+          service_time: formattedTime,
+        }
+      );
+
+      console.log("API response:", response.data);
+      toast.success("Appointment scheduled successfully!");
+      navigate("/success", {
+        state: {
+          ...location.state,
+          appointmentDate: selectedDate,
+          appointmentTime: selectedTime,
+          bookingId,
+        },
+      });
+    } catch (error) {
+      console.error("Error submitting date/time:", error);
+      console.error("Error response:", error.response?.data);
+      const errorMessage =
+        error.response?.status === 500
+          ? "Server error occurred. Please try again later or contact support."
+          : error.response?.data?.message ||
+            "Failed to schedule appointment. Please try again.";
+      toast.error(errorMessage, {
+        action: {
+          label: "Contact Support",
+          onClick: () =>
+            (window.location.href = "mailto:support@gapafix.com.ng"),
+        },
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -274,7 +378,7 @@ const Calendar = () => {
                       ? "bg-[#492F92] text-white border-[#492F92]"
                       : "bg-white border-gray-300 text-[#141414] hover:border-[#492F92]"
                   } font-medium transition-colors`}
-                disabled={!selectedDate}
+                disabled={!selectedDate || loading}
               >
                 {time}
               </button>
@@ -284,10 +388,14 @@ const Calendar = () => {
 
         <button
           type="submit"
-          className="w-24 sm:w-32 px-3 sm:px-4 py-1 sm:py-2 bg-[#492F92] text-white rounded shadow hover:bg-[#3a236d] transition-colors font-semibold text-xs sm:text-sm"
-          disabled={!selectedDate || !selectedTime}
+          className={`w-24 sm:w-32 px-3 sm:px-4 py-1 sm:py-2 bg-[#492F92] text-white rounded shadow hover:bg-[#3a236d] transition-colors font-semibold text-xs sm:text-sm ${
+            loading || !selectedDate || !selectedTime
+              ? "opacity-50 cursor-not-allowed"
+              : ""
+          }`}
+          disabled={loading || !selectedDate || !selectedTime}
         >
-          Submit
+          {loading ? "Submitting..." : "Submit"}
         </button>
       </form>
     </div>
