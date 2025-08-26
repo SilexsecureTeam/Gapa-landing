@@ -26,7 +26,7 @@ const Success = () => {
           <p className="text-lg text-[#333333] mb-2">
             Your appointment has been successfully scheduled.
           </p>
-          <p className="text-base text-[#666666]">
+          <p className="text-base hidden text-[#666666]">
             Booking ID: {bookingId || "Not provided"}
           </p>
         </div>

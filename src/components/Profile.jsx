@@ -13,7 +13,7 @@ const Profile = () => {
     yearOfManufacture: "",
     phone: "",
     email: "",
-    additionalServices: [], // Initialized as array
+    additionalServices: [],
   });
 
   const [step, setStep] = useState(1);
@@ -22,9 +22,8 @@ const Profile = () => {
   const [submodels, setSubmodels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [loadingSubModels, setLoadingSubModels] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // New loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Define available services for multi-select
   const availableServices = [
     "Oil Change",
     "Tire Rotation",
@@ -33,10 +32,28 @@ const Profile = () => {
     "Wheel Alignment",
   ];
 
+  // Define year range for dropdown (1980 to current year, 2025)
+  const currentYear = 2025;
+  const years = Array.from(
+    { length: currentYear - 1980 + 1 },
+    (_, i) => currentYear - i
+  );
+
   const navigate = useNavigate();
   const location = useLocation();
   const trustData = location.state?.trustData || {};
   const bookingId = trustData.bookingId;
+
+  // Validate VIN format (17 characters, alphanumeric, excluding I/O/Q)
+  const isValidVIN = (vin) =>
+    /^[A-HJ-NPR-Z0-9]{17}$/i.test(vin) && vin.length === 17;
+
+  // Basic phone validation (e.g., +country code or 10+ digits)
+  const isValidPhone = (phone) => {
+    const cleanedPhone = phone.replace(/\s/g, "").trim(); // Remove spaces and trim
+    console.log("Cleaned phone for validation:", cleanedPhone); // Debug log
+    return /^(\+?\d{10,15})$/.test(cleanedPhone); // Allow + optional, 10-15 digits
+  };
 
   // Fetch brands
   useEffect(() => {
@@ -113,17 +130,29 @@ const Profile = () => {
       toast.error("Please fill in all required fields in Step 1.");
       return;
     }
-    setIsSubmitting(true); // Start loading
+    if (!isValidVIN(form.vin)) {
+      toast.error(
+        "Please enter a valid 17-character VIN (letters and numbers, no I/O/Q)."
+      );
+      return;
+    }
+    setIsSubmitting(true);
     setTimeout(() => {
       setStep(2);
-      setIsSubmitting(false); // Stop loading
-    }, 500); // Simulate delay for UX (adjust as needed)
+      setIsSubmitting(false);
+    }, 500);
   };
 
   const handleStep2Submit = async (e) => {
     e.preventDefault();
     if (!form.yearOfManufacture || !form.phone || !form.email) {
       toast.error("Please fill in all required fields in Step 2.");
+      return;
+    }
+    if (!isValidPhone(form.phone)) {
+      toast.error(
+        "Please enter a valid phone number (e.g., +2348012345678 or 10+ digits)."
+      );
       return;
     }
     if (!bookingId) {
@@ -134,72 +163,93 @@ const Profile = () => {
       return;
     }
 
-    setIsSubmitting(true); // Start loading
-    const selectedMake = models.find((m) => m.id === form.vehicleMake);
+    setIsSubmitting(true);
+    const selectedMake = models.find(
+      (m) => m.id.toString() === form.vehicleMake
+    ); // Ensure string comparison for ID
     const selectedModel = submodels.find(
-      (s) => s.id === Number(form.vehicleModel)
+      (s) => s.id.toString() === form.vehicleModel.toString()
     );
+
+    // Use names for make/model; fallback to selected values if no match
+    const vehicleMakeName =
+      selectedMake?.name || trustData.vehicle || form.vehicleMake;
+    const vehicleModelName = selectedModel?.name || form.vehicleModel;
+
+    const payload = {
+      full_name: form.fullName,
+      vehicle_make: vehicleMakeName, // Use name, not ID
+      vehicle_model: vehicleModelName || null,
+      vin_number: form.vin,
+      year_of_manufacture: form.yearOfManufacture,
+      phone: form.phone,
+      email: form.email,
+      additional_services:
+        form.additionalServices.length > 0
+          ? form.additionalServices.join(",")
+          : "None", // String format like Postman
+    };
+
+    // Stringify payload to ensure proper JSON serialization
+    const payloadString = JSON.stringify(payload);
 
     try {
       const response = await axios.post(
         `https://api.gapafix.com.ng/api/bookings/${bookingId}/register-car`,
+        payloadString, // Send as stringified JSON
         {
-          full_name: form.fullName,
-          vehicle_make: selectedMake?.name || form.vehicleMake,
-          vehicle_model: selectedModel?.name || form.vehicleModel || null,
-          vin_number: form.vin,
-          year_of_manufacture: form.yearOfManufacture,
-          phone: form.phone,
-          email: form.email,
-          additional_services:
-            form.additionalServices.length > 0 ? form.additionalServices : null,
+          headers: {
+            "Content-Type": "application/json",
+            // Uncomment and add token if required: "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          },
+          validateStatus: (status) => status < 600, // Don't throw on 500+ for better error capture
         }
       );
       console.log("Response:", response.data);
+      if (response.status === 500) {
+        throw new Error("Server internal error - check data validity");
+      }
       navigate("/calendar", {
         state: {
           formData: {
             ...form,
-            vehicleMake: selectedMake?.name || form.vehicleMake,
-            vehicleModel: selectedModel?.name || form.vehicleModel,
+            vehicleMake: vehicleMakeName,
+            vehicleModel: vehicleModelName,
           },
           trustData,
         },
       });
     } catch (error) {
       console.error("Error registering car:", error);
-      console.log("Response data:", error.response?.data);
-      console.log("Payload sent:", {
-        full_name: form.fullName,
-        vehicle_make: selectedMake?.name || form.vehicleMake,
-        vehicle_model: selectedModel?.name || form.vehicleModel || null,
-        vin_number: form.vin,
-        year_of_manufacture: form.yearOfManufacture,
-        phone: form.phone,
-        email: form.email,
-        additional_services: form.additionalServices,
-      });
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.errors?.additional_services?.[0] ||
-        "Failed to register car. Please try again.";
+      if (error.response) {
+        console.log("Response data:", error.response.data);
+        console.log("Response status:", error.response.status);
+        console.log("Response headers:", error.response.headers);
+      }
+      console.log("Payload sent:", payload);
+      let errorMessage =
+        "Failed to register car. Please try again later or contact support at support@gapafix.com.ng.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 500) {
+        errorMessage =
+          "Server error - invalid data (e.g., VIN, phone, or vehicle details). Try realistic test data like in Postman.";
+      }
       toast.error(errorMessage);
     } finally {
-      setIsSubmitting(false); // Stop loading
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen py-8 md:py-12 px-4 sm:px-8 md:px-16 lg:px-20">
       <div className="flex w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Left: Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col justify-center">
           <h2 className="text-2xl sm:text-[27px] font-bold text-[#141414] mb-8">
             Car Registration
           </h2>
           {step === 1 ? (
             <form onSubmit={handleStep1Submit} className="space-y-6">
-              {/* Full Name */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Full Name<span className="text-[#FF0000]">*</span>
@@ -214,8 +264,6 @@ const Profile = () => {
                   placeholder="Please enter your full name"
                 />
               </div>
-
-              {/* Vehicle Make */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Vehicle Make<span className="text-[#FF0000]">*</span>
@@ -239,8 +287,6 @@ const Profile = () => {
                   <p className="text-sm text-gray-500 mt-1">Loading makes...</p>
                 )}
               </div>
-
-              {/* Vehicle Model */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Vehicle Model<span className="text-[#FF0000]">*</span>
@@ -265,8 +311,6 @@ const Profile = () => {
                   </p>
                 )}
               </div>
-
-              {/* VIN */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Vehicle Identification Number (VIN)
@@ -278,12 +322,11 @@ const Profile = () => {
                   value={form.vin}
                   onChange={handleChange}
                   required
+                  maxLength={17}
                   className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="Enter your VIN"
+                  placeholder="Enter your 17-character VIN (e.g., 1HGCM82633A004352)"
                 />
               </div>
-
-              {/* Submit Step 1 */}
               <button
                 type="submit"
                 className={`w-full bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors flex items-center justify-center ${
@@ -324,23 +367,26 @@ const Profile = () => {
             </form>
           ) : (
             <form onSubmit={handleStep2Submit} className="space-y-6">
-              {/* Year of Manufacture */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Year of Manufacture<span className="text-[#FF0000]">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   name="yearOfManufacture"
                   value={form.yearOfManufacture}
                   onChange={handleChange}
                   required
+                  disabled={isSubmitting}
                   className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="Enter year (e.g., 2020)"
-                />
+                >
+                  <option value="">Select a year</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              {/* Phone */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Phone Number<span className="text-[#FF0000]">*</span>
@@ -352,11 +398,9 @@ const Profile = () => {
                   onChange={handleChange}
                   required
                   className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number (e.g., +2348012345678)"
                 />
               </div>
-
-              {/* Email */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Email Address<span className="text-[#FF0000]">*</span>
@@ -371,8 +415,6 @@ const Profile = () => {
                   placeholder="Enter your email"
                 />
               </div>
-
-              {/* Additional Services */}
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
                   Additional Services
@@ -399,14 +441,13 @@ const Profile = () => {
                           }));
                         }}
                         className="form-checkbox"
+                        disabled={isSubmitting}
                       />
                       <span>{service}</span>
                     </label>
                   ))}
                 </div>
               </div>
-
-              {/* Back and Submit Step 2 */}
               <div className="flex space-x-4">
                 <button
                   type="button"
@@ -455,8 +496,6 @@ const Profile = () => {
             </form>
           )}
         </div>
-
-        {/* Right: Image */}
         <div className="hidden md:block md:w-1/2">
           <img
             src={auth}

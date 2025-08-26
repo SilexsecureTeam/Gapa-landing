@@ -91,6 +91,11 @@ const Hero = () => {
       route: "/service",
     },
     {
+      title: "Supspension Services",
+      icon: CarIcon,
+      route: "/service",
+    },
+    {
       title: "Car Part",
       icon: WrenchIcon,
       route: "https://gapaautoparts.com/",
@@ -361,7 +366,7 @@ const Hero = () => {
 
       {/* Services Icons Section */}
       <div className="absolute left-1/2 -translate-x-1/2 bg-[#492F92]/95 w-full md:w-[90%] z-20 mx-auto h-fit bottom-0 px-4 py-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
           {serviceIcons.map((service, idx) => (
             <Link
               key={idx}
@@ -374,7 +379,7 @@ const Hero = () => {
               {React.createElement(service.icon, {
                 className: "w-6 sm:w-8 h-6 sm:h-8 text-[#F7CD3A] mb-2",
               })}
-              <p className="text-xs sm:text-sm md:text-base font-medium text-[#E5E5E5]">
+              <p className="text-xs sm:text-sm  font-medium text-[#E5E5E5]">
                 {service.title}
               </p>
             </Link>

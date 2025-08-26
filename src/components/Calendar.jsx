@@ -87,8 +87,9 @@ const Calendar = () => {
           setSelectedTime("");
         })
         .catch(() => {
-          toast.error("Failed to fetch available times. Using default times.");
+          // Silently fall back to default times without showing error
           setAvailableTimes(defaultTimes);
+          setSelectedTime("");
         });
     }
   }, [selectedDate]);
