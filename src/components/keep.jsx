@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -30,11 +24,6 @@ import mobileBanner4 from "../assets/mbanner4.png";
 const Hero = () => {
   const navigate = useNavigate();
 
-  // Store scroll position to prevent reset
-  const scrollPositionRef = useRef(0);
-  const intervalRef = useRef(null);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
-
   const desktopImages = useMemo(() => [heroBg1, heroBg2, heroBg3, heroBg4], []);
   const mobileImages = useMemo(
     () => [mobileBanner1, mobileBanner2, mobileBanner3, mobileBanner4],
@@ -58,59 +47,24 @@ const Hero = () => {
   const [direction, setDirection] = useState(1);
   const totalImages = images.length;
 
-  // Detect user scrolling to pause carousel if needed
   useEffect(() => {
-    let scrollTimeout;
-
-    const handleScroll = () => {
-      scrollPositionRef.current = window.scrollY;
-      setIsUserScrolling(true);
-
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        setIsUserScrolling(false);
-      }, 15000);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, []);
-
-  // Optimized carousel effect that respects user scrolling
-  useEffect(() => {
-    const startCarousel = () => {
-      intervalRef.current = setInterval(() => {
-        // Only update if user is not actively scrolling
-        if (!isUserScrolling) {
-          setCurrentImage((prev) => {
-            if (prev === totalImages - 1 && direction === 1) {
-              setDirection(-1);
-              return prev - 1;
-            } else if (prev === 0 && direction === -1) {
-              setDirection(1);
-              return prev + 1;
-            } else {
-              return prev + direction;
-            }
-          });
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => {
+        if (prev === totalImages - 1 && direction === 1) {
+          setDirection(-1);
+          return prev - 1;
+        } else if (prev === 0 && direction === -1) {
+          setDirection(1);
+          return prev + 1;
+        } else {
+          return prev + direction;
         }
-      }, 3000);
-    };
+      });
+    }, 3000);
 
-    startCarousel();
+    return () => clearInterval(interval);
+  }, [direction, totalImages]);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [direction, totalImages, isUserScrolling]);
-
-  // Preload images
   useEffect(() => {
     [...desktopImages, ...mobileImages].forEach((image) => {
       const img = new Image();
@@ -171,8 +125,7 @@ const Hero = () => {
     "Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout, Lekki, Lagos",
   ];
 
-  // Memoized handler to prevent unnecessary re-renders
-  const handleBookService = useCallback(async () => {
+  const handleBookService = async () => {
     if (!selectedVehicle || !selectedService || !selectedLocation) {
       toast.error(
         "Please select your vehicle, service, and location before proceeding."
@@ -181,10 +134,6 @@ const Hero = () => {
     }
 
     setIsSubmitting(true);
-
-    // Store current scroll position before navigation
-    const currentScroll = window.scrollY;
-
     try {
       const response = await axios.post(
         "https://api.gapafix.com.ng/api/bookings/start",
@@ -197,7 +146,6 @@ const Hero = () => {
 
       const bookingId = response.data.booking_id;
 
-      // Navigate while preserving scroll context
       navigate("/profile", {
         state: {
           trustData: {
@@ -206,7 +154,6 @@ const Hero = () => {
             location: selectedLocation,
             bookingId,
           },
-          preserveScroll: currentScroll, // Pass scroll position if needed
         },
       });
     } catch (error) {
@@ -215,17 +162,17 @@ const Hero = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedVehicle, selectedService, selectedLocation, navigate]);
+  };
 
-  const toggleDropdown = useCallback((type) => {
+  const toggleDropdown = (type) => {
     setDropdownOpen((prev) => ({
       vehicle: type === "vehicle" ? !prev.vehicle : false,
       service: type === "service" ? !prev.service : false,
       location: type === "location" ? !prev.location : false,
     }));
-  }, []);
+  };
 
-  const handleSelection = useCallback((type, value) => {
+  const handleSelection = (type, value) => {
     if (type === "vehicle") setSelectedVehicle(value);
     if (type === "service") setSelectedService(value);
     if (type === "location") setSelectedLocation(value);
@@ -234,7 +181,7 @@ const Hero = () => {
       ...prev,
       [type]: false,
     }));
-  }, []);
+  };
 
   const vehicleRef = useRef(null);
   const serviceRef = useRef(null);
@@ -242,18 +189,36 @@ const Hero = () => {
   const vehicleBtnRef = useRef(null);
   const serviceBtnRef = useRef(null);
   const locationBtnRef = useRef(null);
+  const vehicleScrollRef = useRef(0);
+  const serviceScrollRef = useRef(0);
+  const locationScrollRef = useRef(0);
 
-  const Dropdown = React.memo(
-    ({
-      type,
-      icon,
-      placeholder,
-      options,
-      selectedValue,
-      isOpen,
-      wrapperRef,
-      buttonRef,
-    }) => (
+  const Dropdown = ({
+    type,
+    icon,
+    placeholder,
+    options,
+    selectedValue,
+    isOpen,
+    wrapperRef,
+    buttonRef,
+  }) => {
+    const scrollContainerRef = useRef(null);
+
+    // Save scroll position when scrolling
+    const handleScroll = () => {
+      if (scrollContainerRef.current) {
+        const scrollRef =
+          type === "vehicle"
+            ? vehicleScrollRef
+            : type === "service"
+            ? serviceScrollRef
+            : locationScrollRef;
+        scrollRef.current = scrollContainerRef.current.scrollTop;
+      }
+    };
+
+    return (
       <div className="relative" ref={wrapperRef}>
         <button
           ref={buttonRef}
@@ -281,7 +246,20 @@ const Hero = () => {
 
         {isOpen && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 overflow-hidden">
-            <div className="max-h-48 overflow-y-auto">
+            <div
+              className="max-h-48 overflow-y-auto"
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              style={{
+                scrollBehavior: "auto",
+                scrollTop:
+                  type === "vehicle"
+                    ? vehicleScrollRef.current
+                    : type === "service"
+                    ? serviceScrollRef.current
+                    : locationScrollRef.current,
+              }}
+            >
               {options.map((option, index) => (
                 <button
                   key={index}
@@ -297,51 +275,35 @@ const Hero = () => {
           </div>
         )}
       </div>
-    )
-  );
+    );
+  };
 
-  // Fetch brands with better error handling
   useEffect(() => {
-    let isCancelled = false;
-
     axios
       .get("https://stockmgt.gapaautoparts.com/api/brand/all-brand")
       .then((res) => {
-        if (!isCancelled) {
-          setBrands(res.data.brands || []);
-        }
+        setBrands(res.data.brands || []);
       })
       .catch((err) => {
-        if (!isCancelled) {
-          console.error("Error fetching car brands", err);
-          setBrands([{ name: "Toyota" }, { name: "Honda" }, { name: "Ford" }]);
-          toast.error("Failed to fetch car brands. Using fallback data.");
-        }
+        console.error("Error fetching car brands", err);
+        setBrands([{ name: "Toyota" }, { name: "Honda" }, { name: "Ford" }]);
+        toast.error("Failed to fetch car brands. Using fallback data.");
       });
-
-    return () => {
-      isCancelled = true;
-    };
   }, []);
 
-  // Optimized click outside handler
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const refs = [
-        { wrapper: vehicleRef, button: vehicleBtnRef },
-        { wrapper: serviceRef, button: serviceBtnRef },
-        { wrapper: locationRef, button: locationBtnRef },
-      ];
-
-      const isOutside = refs.every(
-        ({ wrapper, button }) =>
-          wrapper.current &&
-          !wrapper.current.contains(event.target) &&
-          button.current &&
-          !button.current.contains(event.target)
-      );
-
-      if (isOutside) {
+      if (
+        vehicleRef.current &&
+        !vehicleRef.current.contains(event.target) &&
+        !vehicleBtnRef.current.contains(event.target) &&
+        serviceRef.current &&
+        !serviceRef.current.contains(event.target) &&
+        !serviceBtnRef.current.contains(event.target) &&
+        locationRef.current &&
+        !locationRef.current.contains(event.target) &&
+        !locationBtnRef.current.contains(event.target)
+      ) {
         setDropdownOpen({ vehicle: false, service: false, location: false });
       }
     };
@@ -352,13 +314,12 @@ const Hero = () => {
 
   return (
     <section className="relative h-auto min-h-screen md:h-[90vh] overflow-hidden">
-      {/* Carousel container with optimized transform */}
       <div
-        className="absolute inset-0 flex will-change-transform"
+        className="absolute inset-0 flex"
         style={{
-          transform: `translate3d(-${
+          transform: `translateX(-${
             (currentImage * 100) / (totalImages * 2)
-          }%, 0, 0)`,
+          }%)`,
           width: `${extendedImages.length * 100}%`,
           transition: "transform 700ms ease-in-out",
         }}
@@ -377,13 +338,9 @@ const Hero = () => {
 
       <div className="absolute inset-0 bg-black/10 z-0"></div>
 
-      {/* Form container - using transform3d for better performance */}
       <div
         className="absolute inset-0 flex items-start justify-end z-10 px-4 sm:px-10"
-        style={{
-          transform: "translate3d(0, 50px, 0)",
-          willChange: "auto", // Let browser optimize
-        }}
+        style={{ transform: "translateY(50px)" }}
       >
         <div className="w-full max-w-md sm:max-w-lg p-4 sm:p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
           <h1 className="text-[#E5E5E5] font-bold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 leading-tight text-center">
@@ -459,7 +416,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Service icons - optimized for performance */}
       <div className="absolute left-1/2 -translate-x-1/2 bg-[#492F92]/95 w-full md:w-[90%] z-20 mx-auto h-fit bottom-0 px-4 py-3">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
           {serviceIcons.map((service, idx) => (
@@ -486,3 +442,5 @@ const Hero = () => {
 };
 
 export default Hero;
+
+//keep
