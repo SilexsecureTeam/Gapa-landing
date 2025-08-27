@@ -24,25 +24,29 @@ const Profile = () => {
   const [loadingSubModels, setLoadingSubModels] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Original list of available services
   const availableServices = [
-    "Oil Change",
-    "Tire Rotation",
-    "Brake Inspection",
+    "Oil Service",
+    "Brake System Service",
+    "Diagnostic Services",
+    "Paint & Bodywork",
+    "Wheel Balancing & Alignment",
+    "Tyre Change",
     "Car Detailing",
-    "Wheel Alignment",
+    "Suspension Systems",
+    "Comprehensive Repairs",
+    "Engine Check",
   ];
-
-  // Define year range for dropdown (1980 to current year, 2025)
-  const currentYear = 2025;
-  const years = Array.from(
-    { length: currentYear - 1980 + 1 },
-    (_, i) => currentYear - i
-  );
 
   const navigate = useNavigate();
   const location = useLocation();
   const trustData = location.state?.trustData || {};
   const bookingId = trustData.bookingId;
+
+  // Filter availableServices to exclude the service selected in Hero
+  const filteredAvailableServices = availableServices.filter(
+    (service) => service.toLowerCase() !== trustData.service?.toLowerCase()
+  );
 
   // Validate VIN format (17 characters, alphanumeric, excluding I/O/Q)
   const isValidVIN = (vin) =>
@@ -50,9 +54,8 @@ const Profile = () => {
 
   // Basic phone validation (e.g., +country code or 10+ digits)
   const isValidPhone = (phone) => {
-    const cleanedPhone = phone.replace(/\s/g, "").trim(); // Remove spaces and trim
-    console.log("Cleaned phone for validation:", cleanedPhone); // Debug log
-    return /^(\+?\d{10,15})$/.test(cleanedPhone); // Allow + optional, 10-15 digits
+    const cleanedPhone = phone.replace(/\s/g, "").trim();
+    return /^(\+?\d{10,15})$/.test(cleanedPhone);
   };
 
   // Fetch brands
@@ -166,19 +169,18 @@ const Profile = () => {
     setIsSubmitting(true);
     const selectedMake = models.find(
       (m) => m.id.toString() === form.vehicleMake
-    ); // Ensure string comparison for ID
+    );
     const selectedModel = submodels.find(
       (s) => s.id.toString() === form.vehicleModel.toString()
     );
 
-    // Use names for make/model; fallback to selected values if no match
     const vehicleMakeName =
       selectedMake?.name || trustData.vehicle || form.vehicleMake;
     const vehicleModelName = selectedModel?.name || form.vehicleModel;
 
     const payload = {
       full_name: form.fullName,
-      vehicle_make: vehicleMakeName, // Use name, not ID
+      vehicle_make: vehicleMakeName,
       vehicle_model: vehicleModelName || null,
       vin_number: form.vin,
       year_of_manufacture: form.yearOfManufacture,
@@ -187,22 +189,20 @@ const Profile = () => {
       additional_services:
         form.additionalServices.length > 0
           ? form.additionalServices.join(",")
-          : "None", // String format like Postman
+          : "None",
     };
 
-    // Stringify payload to ensure proper JSON serialization
     const payloadString = JSON.stringify(payload);
 
     try {
       const response = await axios.post(
         `https://api.gapafix.com.ng/api/bookings/${bookingId}/register-car`,
-        payloadString, // Send as stringified JSON
+        payloadString,
         {
           headers: {
             "Content-Type": "application/json",
-            // Uncomment and add token if required: "Authorization": `Bearer ${localStorage.getItem('token')}`,
           },
-          validateStatus: (status) => status < 600, // Don't throw on 500+ for better error capture
+          validateStatus: (status) => status < 600,
         }
       );
       console.log("Response:", response.data);
@@ -380,7 +380,10 @@ const Profile = () => {
                   className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 >
                   <option value="">Select a year</option>
-                  {years.map((year) => (
+                  {Array.from(
+                    { length: 2025 - 1980 + 1 },
+                    (_, i) => 2025 - i
+                  ).map((year) => (
                     <option key={year} value={year}>
                       {year}
                     </option>
@@ -420,32 +423,38 @@ const Profile = () => {
                   Additional Services
                 </label>
                 <div className="w-full bg-[#F2F2F2] rounded-md px-3 py-2">
-                  {availableServices.map((service) => (
-                    <label
-                      key={service}
-                      className="flex items-center space-x-2 mb-2"
-                    >
-                      <input
-                        type="checkbox"
-                        value={service}
-                        checked={form.additionalServices.includes(service)}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setForm((prev) => ({
-                            ...prev,
-                            additionalServices: e.target.checked
-                              ? [...prev.additionalServices, value]
-                              : prev.additionalServices.filter(
-                                  (s) => s !== value
-                                ),
-                          }));
-                        }}
-                        className="form-checkbox"
-                        disabled={isSubmitting}
-                      />
-                      <span>{service}</span>
-                    </label>
-                  ))}
+                  {filteredAvailableServices.length > 0 ? (
+                    filteredAvailableServices.map((service) => (
+                      <label
+                        key={service}
+                        className="flex items-center space-x-2 mb-2"
+                      >
+                        <input
+                          type="checkbox"
+                          value={service}
+                          checked={form.additionalServices.includes(service)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setForm((prev) => ({
+                              ...prev,
+                              additionalServices: e.target.checked
+                                ? [...prev.additionalServices, value]
+                                : prev.additionalServices.filter(
+                                    (s) => s !== value
+                                  ),
+                            }));
+                          }}
+                          className="form-checkbox"
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-base">{service}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      No additional services available.
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex space-x-4">

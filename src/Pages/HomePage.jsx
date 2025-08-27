@@ -12,6 +12,7 @@ import Car from "../components/Car.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import Footer from "../components/Footer.jsx";
 import TrustedSource from "../components/TrustedSource.jsx";
+import { Helmet } from "@dr.pogodin/react-helmet";
 
 const HomePage = () => {
   const trustRef = useRef(null);
@@ -21,6 +22,15 @@ const HomePage = () => {
   };
   return (
     <div>
+      <Helmet>
+        <title>
+          GAPA Fix | Expert Car Repairs & Genuine Auto Spare Parts in Lagos
+        </title>
+        <meta
+          name="description"
+          content="Discover GAPA Fix – your trusted destination in Lagos for professional car repairs, maintenance, and authentic auto spare parts. Quality service, genuine parts, and reliable support to keep your vehicle running smoothly"
+        />
+      </Helmet>
       <Header />
       <Hero refProp={trustRef} />
       <TrustedSource onScheduleClick={scrollToTrust} />

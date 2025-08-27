@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
+import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import "./App.css";
 import logo from "./assets/logo.png";
 import ScrollToTop from "./components/ScrollToTop";
@@ -29,48 +30,50 @@ const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen w-full">
-        <ScrollToTop />
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-              <div className="relative">
-                <img
-                  src={logo}
-                  alt="Loading logo"
-                  className="w-20 h-20 animate-scale-pulse relative z-10"
-                />
+    <HelmetProvider>
+      <Router>
+        <div className="min-h-screen w-full">
+          <ScrollToTop />
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                <div className="relative">
+                  <img
+                    src={logo}
+                    alt="Loading logo"
+                    className="w-20 h-20 animate-scale-pulse relative z-10"
+                  />
+                </div>
               </div>
-            </div>
-          }
-        >
-          <ToastContainer position="top-right" autoClose={3000} />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/service" element={<ServicePage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/signin" element={<SigninPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile-mec" element={<ProfileMecPage />} />
-            <Route path="/book-first" element={<Book1Page />} />
-            <Route path="/book-second" element={<Book2Page />} />
-            <Route path="/book-third" element={<Book3Page />} />
-            <Route path="/book-forth" element={<Book4Page />} />
-            <Route path="/book-fifth" element={<Book5Page />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/success" element={<Success />} />
-            <Route path="/suc" element={<Suc />} />
-            <Route path="/dashboard/*" element={<DashboardPage />} />
-            <Route path="*" element={<NotFoundPage />} />{" "}
-            {/* Updated to use NotFoundPage */}
-          </Routes>
-        </Suspense>
-      </div>
-    </Router>
+            }
+          >
+            <ToastContainer position="top-right" autoClose={3000} />
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/team" element={<TeamPage />} />
+              <Route path="/service" element={<ServicePage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/signin" element={<SigninPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/profile-mec" element={<ProfileMecPage />} />
+              <Route path="/book-first" element={<Book1Page />} />
+              <Route path="/book-second" element={<Book2Page />} />
+              <Route path="/book-third" element={<Book3Page />} />
+              <Route path="/book-forth" element={<Book4Page />} />
+              <Route path="/book-fifth" element={<Book5Page />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/success" element={<Success />} />
+              <Route path="/suc" element={<Suc />} />
+              <Route path="/dashboard/*" element={<DashboardPage />} />
+              <Route path="*" element={<NotFoundPage />} />{" "}
+              {/* Updated to use NotFoundPage */}
+            </Routes>
+          </Suspense>
+        </div>
+      </Router>
+    </HelmetProvider>
   );
 }
 

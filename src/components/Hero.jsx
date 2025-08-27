@@ -197,6 +197,7 @@ const Hero = () => {
   }, [selectedVehicle, selectedService, selectedLocation, navigate]);
 
   // Dropdown component (keeps DOM mounted so scrollTop is preserved)
+  /* eslint-disable no-unused-vars */
   const Dropdown = ({
     type,
     Icon,
