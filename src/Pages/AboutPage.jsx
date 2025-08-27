@@ -21,14 +21,14 @@ const AboutPage = () => {
         <meta property="og:title" content="About Us | GAPA Fix – Car Repairs & Genuine Auto Spare Parts in Lagos" />
         <meta property="og:description" content="Learn more about GAPA Fix, Lagos’s premier destination for expert car repairs and authentic auto spare parts. Discover our mission, values, and commitment to keeping your vehicle safe and reliable" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://yourwebsite.com/about" />
-        <meta property="og:image" content="https://yourwebsite.com/assets/og-about.jpg" />
+        <meta property="og:url" content="https://gapafix.com.ng/about" />
+        <meta property="og:image" content="https://gapafix.com.ng/assets/logo.jpg" />
 
         {/* Twitter card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="About Us | GAPA Fix – Car Repairs & Genuine Auto Spare Parts in Lagos" />
         <meta name="twitter:description" content="Learn more about GAPA Fix, Lagos’s premier destination for expert car repairs and authentic auto spare parts. Discover our mission, values, and commitment to keeping your vehicle safe and reliable" />
-        <meta name="twitter:image" content="https://yourwebsite.com/assets/og-about.jpg" />
+        <meta name="twitter:image" content="https://gapafix.com.ng/assets/logo.jpg" />
         
       </Helmet>
 
