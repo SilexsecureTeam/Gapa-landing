@@ -22,6 +22,7 @@ const defaultTimes = [
   "1:00 PM",
   "2:00 PM",
   "3:00 PM",
+  "4:00 PM",
 ];
 
 // Helper to convert 12-hour AM/PM time to 24-hour H:i format
