@@ -302,7 +302,7 @@ const Profile = () => {
               </div>
               <div>
                 <label className="block text-base font-semibold text-[#333333] mb-1">
-                  Vehicle Identification Number (VIN)
+                  Chassis Number
                   <span className="text-[#FF0000]">*</span>
                 </label>
                 <input
