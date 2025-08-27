@@ -300,7 +300,10 @@ const Hero = () => {
       </div>
 
       {/* form */}
-      <div className="relative z-10 flex items-start justify-end inset-x-0 px-4 sm:px-10 py-10 md:py-0 transform md:translate-y-14">
+      <div
+        id="booking-form"
+        className="relative z-10 flex items-start justify-end inset-x-0 px-4 sm:px-10 py-10 md:py-0 transform md:translate-y-14"
+      >
         <div className="w-full max-w-md sm:max-w-lg p-4 sm:p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
           <h1 className="text-[#E5E5E5] font-bold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 leading-tight text-center">
             Book Trusted Car Care in Minutes
