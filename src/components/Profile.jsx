@@ -24,7 +24,6 @@ const Profile = () => {
   const [loadingSubModels, setLoadingSubModels] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Original list of available services
   const availableServices = [
     "Oil Service",
     "Brake System Service",
@@ -43,22 +42,18 @@ const Profile = () => {
   const trustData = location.state?.trustData || {};
   const bookingId = trustData.bookingId;
 
-  // Filter availableServices to exclude the service selected in Hero
   const filteredAvailableServices = availableServices.filter(
     (service) => service.toLowerCase() !== trustData.service?.toLowerCase()
   );
 
-  // Validate VIN format (17 characters, alphanumeric, excluding I/O/Q)
   const isValidVIN = (vin) =>
     /^[A-HJ-NPR-Z0-9]{17}$/i.test(vin) && vin.length === 17;
 
-  // Basic phone validation (e.g., +country code or 10+ digits)
   const isValidPhone = (phone) => {
     const cleanedPhone = phone.replace(/\s/g, "").trim();
     return /^(\+?\d{10,15})$/.test(cleanedPhone);
   };
 
-  // Fetch brands
   useEffect(() => {
     axios
       .get("https://stockmgt.gapaautoparts.com/api/brand/all-brand")
@@ -70,7 +65,6 @@ const Profile = () => {
       });
   }, []);
 
-  // Fetch models
   useEffect(() => {
     if (trustData.vehicle) {
       const selectedBrand = brands.find(
@@ -97,7 +91,6 @@ const Profile = () => {
     }
   }, [brands, trustData.vehicle]);
 
-  // Fetch submodels
   useEffect(() => {
     if (form.vehicleMake) {
       setLoadingSubModels(true);
@@ -187,17 +180,13 @@ const Profile = () => {
       phone: form.phone,
       email: form.email,
       additional_services:
-        form.additionalServices.length > 0
-          ? form.additionalServices.join(",")
-          : "None",
+        form.additionalServices.length > 0 ? form.additionalServices : [], // Send array directly
     };
-
-    const payloadString = JSON.stringify(payload);
 
     try {
       const response = await axios.post(
         `https://api.gapafix.com.ng/api/bookings/${bookingId}/register-car`,
-        payloadString,
+        payload, // Send payload directly as JSON object
         {
           headers: {
             "Content-Type": "application/json",
