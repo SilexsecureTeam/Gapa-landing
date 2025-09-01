@@ -7,6 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Calendar from "./components/Calendar";
+import FloatingContact from "./components/FloatingContact"; // Import the new component
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -67,10 +68,10 @@ function App() {
               <Route path="/success" element={<Success />} />
               <Route path="/suc" element={<Suc />} />
               <Route path="/dashboard/*" element={<DashboardPage />} />
-              <Route path="*" element={<NotFoundPage />} />{" "}
-              {/* Updated to use NotFoundPage */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
+          <FloatingContact /> {/* Add the FloatingContact component */}
         </div>
       </Router>
     </HelmetProvider>

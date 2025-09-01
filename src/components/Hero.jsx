@@ -1,9 +1,11 @@
+/* eslint-disable no-unused-vars */
 import React, {
   useState,
   useEffect,
   useMemo,
   useRef,
   useCallback,
+  forwardRef, // Import forwardRef
 } from "react";
 import { Car, Wrench, MapPin, ChevronDown } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,11 +20,9 @@ import {
   Wrench as WrenchIcon,
 } from "lucide-react";
 import { toast } from "react-toastify";
-
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
-
 import heroBg1 from "../assets/banner1.png";
 import heroBg2 from "../assets/banner2.png";
 import heroBg3 from "../assets/banner3.png";
@@ -35,7 +35,8 @@ import { locations, serviceIcons, services } from "../utils/formFields";
 
 const cx = (...parts) => parts.flat().filter(Boolean).join(" ");
 
-const Hero = () => {
+// Use forwardRef to allow the parent to pass a ref to this component
+const Hero = forwardRef(({ refProp }, ref) => {
   const navigate = useNavigate();
 
   // Responsive images
@@ -105,7 +106,6 @@ const Hero = () => {
         { wrapper: locationRef, button: locationBtnRef },
       ];
 
-      // If click is outside all wrappers and buttons, close all dropdowns
       const clickedInsideAny = refs.some(({ wrapper, button }) => {
         const w = wrapper.current;
         const b = button.current;
@@ -196,8 +196,7 @@ const Hero = () => {
     }
   }, [selectedVehicle, selectedService, selectedLocation, navigate]);
 
-  // Dropdown component (keeps DOM mounted so scrollTop is preserved)
-  /* eslint-disable no-unused-vars */
+  // Dropdown component
   const Dropdown = ({
     type,
     Icon,
@@ -232,8 +231,6 @@ const Hero = () => {
             />
           </div>
         </button>
-
-        {/* always mounted, visibility toggled via classes to preserve scroll */}
         <div
           className={cx(
             "absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 overflow-hidden transform transition-all duration-150",
@@ -302,13 +299,13 @@ const Hero = () => {
       {/* form */}
       <div
         id="booking-form"
+        ref={ref} // Attach the ref to the booking form
         className="relative z-10 flex items-start justify-end inset-x-0 px-4 sm:px-10 py-10 md:py-0 transform md:translate-y-14"
       >
         <div className="w-full max-w-md sm:max-w-lg p-4 sm:p-6 bg-[#492F92]/80 rounded-lg shadow-xl">
           <h1 className="text-[#E5E5E5] font-bold text-lg sm:text-xl md:text-2xl mb-4 sm:mb-6 leading-tight text-center">
             Book Trusted Car Care in Minutes
           </h1>
-
           <div className="space-y-4 mb-4 sm:mb-6">
             <Dropdown
               type="vehicle"
@@ -341,7 +338,6 @@ const Hero = () => {
               buttonRef={locationBtnRef}
             />
           </div>
-
           <button
             type="button"
             onClick={handleBookService}
@@ -380,6 +376,9 @@ const Hero = () => {
       </div>
     </section>
   );
-};
+});
+
+// Assign a display name for better debugging
+Hero.displayName = "Hero";
 
 export default Hero;
