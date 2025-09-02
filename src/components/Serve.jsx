@@ -8,7 +8,7 @@ import serve4 from "../assets/wheel.png";
 import serve5 from "../assets/suspension.png";
 import { Link } from "react-router-dom";
 
-const Serve = () => {
+const Serve = ({ onScheduleClick }) => {
   const services = [
     {
       image: serve,
@@ -79,7 +79,7 @@ const Serve = () => {
           <Link to="/">
             <button className="bg-[#492F92] text-center font-semibold text-xl w-[60%] py-4 text-white my-8 rounded cursor-pointer hover:bg-[#3d2578] transition-colors duration-300">
               Book Now
-            </button>{" "}
+            </button>
           </Link>
         </div>
         <div className="w-full md:w-1/2">
@@ -113,7 +113,6 @@ const Serve = () => {
                 {service.text}
               </p>
               <Link to="/">
-                {" "}
                 <button className="bg-[#F7CD3A] px-3 py-2 font-medium cursor-pointer text-black text-sm my-3">
                   Book Now
                 </button>
@@ -155,11 +154,12 @@ const Serve = () => {
           is ready to help keep your vehicle running smoothly.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/service">
-            <button className="bg-[#492F92] text-white font-semibold text-lg px-8 py-3 rounded hover:bg-[#3d2578] transition-colors duration-300">
-              Schedule Service
-            </button>{" "}
-          </Link>
+          <button
+            onClick={onScheduleClick}
+            className="bg-[#492F92] text-white font-semibold text-lg px-8 py-3 rounded hover:bg-[#3d2578] transition-colors duration-300"
+          >
+            Book Now
+          </button>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react"; // Add useEffect
 import Header from "../components/Header.jsx";
 import Hero from "../components/Hero.jsx";
 import Service from "../components/Service.jsx";
@@ -10,13 +10,22 @@ import Newsletter from "../components/Newsletter.jsx";
 import Footer from "../components/Footer.jsx";
 import TrustedSource from "../components/TrustedSource.jsx";
 import { Helmet } from "@dr.pogodin/react-helmet";
+import { useLocation } from "react-router-dom"; // Add useLocation
 
 const HomePage = () => {
   const trustRef = useRef(null);
+  const location = useLocation();
 
   const scrollToTrust = () => {
     trustRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Check if navigated with a state to scroll to the booking form
+  useEffect(() => {
+    if (location.state?.scrollToForm) {
+      scrollToTrust();
+    }
+  }, [location.state]);
 
   return (
     <div>
@@ -30,7 +39,7 @@ const HomePage = () => {
         />
       </Helmet>
       <Header />
-      <Hero ref={trustRef} /> {/* Pass trustRef to Hero */}
+      <Hero ref={trustRef} />
       <TrustedSource onScheduleClick={scrollToTrust} />
       <Service />
       <BrandSection />

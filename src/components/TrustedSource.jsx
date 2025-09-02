@@ -77,7 +77,7 @@ const TrustedSource = ({ onScheduleClick }) => {
             onClick={onScheduleClick}
             className="bg-white text-[#492F92] font-semibold text-lg px-8 py-3 rounded hover:bg-gray-100 transition-colors duration-300"
           >
-            Schedule Now
+            Book Now
           </button>{" "}
         </div>
       </div>
