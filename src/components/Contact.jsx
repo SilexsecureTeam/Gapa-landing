@@ -181,12 +181,26 @@ const Contact = () => {
                     Lekki, Lagos
                   </p>
                 </div>
-                <div className="flex items-start gap-2">
-                  <Phone className="text-[#D5AB16] w-5 h-5" />
-                  <p className="text-[#333333] text-base sm:text-lg">
-                    (234) 701 888 8307
-                  </p>
-                </div>
+              <div className="flex items-start gap-2">
+  <Phone className="text-[#D5AB16] w-5 h-5" />
+  <a
+    href="tel:07088885268"
+    className="text-[#333333] text-base sm:text-lg hover:underline"
+  >
+    07088885268
+  </a>
+</div>
+
+<div className="flex items-start gap-2">
+  <Phone className="text-[#D5AB16] w-5 h-5" />
+  <a
+    href="tel:07088885242"
+    className="text-[#333333] text-base sm:text-lg hover:underline"
+  >
+    07088885242
+  </a>
+</div>
+
                 <div className="flex items-start gap-2">
                   <Mail className="text-[#D5AB16] w-5 h-5" />
                   <p className="text-[#333333] text-base sm:text-lg">

@@ -17,7 +17,7 @@ const FloatingContact = () => {
           href="tel:+2347018888307"
           className="hover:underline text-sm md:text-base"
         >
-          (234) 701 888 8307
+          07088885268
         </a>
       </div>
     </div>

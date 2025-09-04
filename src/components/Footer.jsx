@@ -30,7 +30,7 @@ const Footer = () => {
             <img src={logo} alt="Logo" className="w-28 h-auto mb-2" />
             <p className="text-base text-[#503535] mb-2 md:w-4/5">
               Your go-to platform for trusted auto repairs, diagnostics, and car
-              maintenance — serving all car brands from Bentley to Honda.
+              maintenance — serving all car brands.
             </p>
             <div className="flex gap-3 justify-center md:justify-start">
               <a
