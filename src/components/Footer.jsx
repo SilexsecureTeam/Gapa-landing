@@ -1,16 +1,13 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for routing
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const Footer = () => {
-  const navigate = useNavigate(); // Initialize navigate hook
+  const navigate = useNavigate();
 
-  // Function to scroll to the booking form
   const handleScrollToForm = () => {
-    // Navigate to homepage first if not already there
     navigate("/");
-    // Use setTimeout to ensure the page has loaded before scrolling
     setTimeout(() => {
       const formElement = document.getElementById("booking-form");
       if (formElement) {
@@ -18,13 +15,13 @@ const Footer = () => {
       } else {
         console.error("Booking form element not found");
       }
-    }, 100); // Small delay to ensure DOM is ready
+    }, 100);
   };
 
   return (
     <footer className="pb-8 lg:px-20 md:px-16 sm:px-12 px-4">
-      <div className="bg-[#EFECE0] py-6 px-15">
-        <div className="flex flex-wrap md:justify-between gap-8 pb-10 border-b border-b-[#503535]">
+      <div className="bg-[#EFECE0] py-6 px-5">
+        <div className="flex flex-col md:flex-row md:justify-between gap-10 pb-10 border-b border-b-[#503535]">
           {/* 1. Logo, Text, Socials */}
           <div className="md:w-1/3 flex flex-col items-center md:items-start text-center md:text-left gap-6">
             <img src={logo} alt="Logo" className="w-28 h-auto mb-2" />
@@ -61,7 +58,7 @@ const Footer = () => {
           </div>
 
           {/* 2. Links Group 1 */}
-          <div className="flex-1">
+          <div className="flex-1 text-center md:text-left">
             <h3 className="uppercase font-bold mb-4 text-[#333333]">
               Gapa Auto Fix
             </h3>
@@ -88,7 +85,7 @@ const Footer = () => {
           </div>
 
           {/* 3. Links Group 2 */}
-          <div className="flex-1">
+          <div className="flex-1 text-center md:text-left">
             <h3 className="uppercase font-bold mb-4 text-[#333333]">
               Services
             </h3>
@@ -117,7 +114,7 @@ const Footer = () => {
           </div>
 
           {/* 4. Links Group 3 */}
-          <div className="flex-1">
+          <div className="flex-1 text-center md:text-left">
             <h3 className="uppercase font-bold mb-4 text-[#333333]">Company</h3>
             <ul className="space-y-2 text-[#333333]">
               <li>
@@ -157,10 +154,11 @@ const Footer = () => {
             </ul>
           </div>
         </div>
+
         {/* Copyright */}
-        <div className="mt-10 text-center text-xs text-black">
-          &copy; {new Date().getFullYear()} Your Company Name. All rights
-          reserved.
+        <div className="mt-10 text-center text-sm sm:text-base text-black">
+          (c) {new Date().getFullYear()} GAPAFIX LTD. A Georgie Auto Parts and
+          Accessories Ltd subsidiary. All right reserved.
         </div>
       </div>
     </footer>

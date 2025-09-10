@@ -28,6 +28,7 @@ const Book5Page = lazy(() => import("./Pages/Book5Page"));
 const PrivacyPage = lazy(() => import("./Pages/PrivacyPage"));
 const Success = lazy(() => import("./components/Success"));
 const Suc = lazy(() => import("./components/Suc"));
+const VehicleDashboard = lazy(() => import("./components/VehicleDashboard"));
 const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
 
 function App() {
@@ -70,6 +71,7 @@ function App() {
               <Route path="/suc" element={<Suc />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/dashboard/*" element={<DashboardPage />} />
+              <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>

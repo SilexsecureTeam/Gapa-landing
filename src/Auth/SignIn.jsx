@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Added for navigation
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
 import auth from "../assets/auth.png";
 
-// Google SVG Icon (inline for demo)
 const GoogleIcon = () => (
   <svg
     className="w-12 h-12 p-2 border border-gray-300 rounded-full"
@@ -29,7 +30,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// Apple SVG Icon (inline for demo)
 const AppleIcon = () => (
   <svg
     className="w-12 h-12 p-2 border border-gray-300 rounded-full"
@@ -51,26 +51,63 @@ const AppleIcon = () => (
 const SignIn = () => {
   const [form, setForm] = useState({
     email: "",
-    phone: "",
+    password: "",
   });
-  const navigate = useNavigate(); // Added for navigation
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Submit logic here
-    // alert(JSON.stringify(form, null, 2));
-    navigate("/"); // Navigate to homepage after submission
+    if (!form.email || !form.password) {
+      toast.error("Please fill in both email and password.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post(
+        "https://api.gapafix.com.ng/api/login",
+        {
+          email: form.email,
+          password: form.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const { token, user } = response.data;
+      localStorage.setItem("authToken", token);
+      toast.success("Login successful!");
+      navigate("/vehicle-dashboard", { state: { user } });
+    } catch (error) {
+      console.error("Login error:", error);
+      let errorMessage = "Failed to sign in. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 401) {
+        errorMessage = "Invalid email or password.";
+      }
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSSO = (provider) => {
+    toast.info(`Sign in with ${provider} is not implemented yet.`);
   };
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-8 md:px-16 lg:px-20">
       <div className="flex w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Left: Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:px-16 flex flex-col justify-center">
           <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center">
             Sign In
@@ -84,7 +121,6 @@ const SignIn = () => {
               Create a new one
             </a>
           </div>
-          {/* Controlled Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
@@ -96,47 +132,58 @@ const SignIn = () => {
                 value={form.email}
                 onChange={handleChange}
                 required
+                disabled={isSubmitting}
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 placeholder="Please enter your email"
               />
             </div>
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
-                Phone number<span className="text-[#FF0000]">*</span>
+                Password<span className="text-[#FF0000]">*</span>
               </label>
               <input
-                type="tel"
-                name="phone"
-                value={form.phone}
+                type="password"
+                name="password"
+                value={form.password}
                 onChange={handleChange}
                 required
+                disabled={isSubmitting}
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                placeholder="Phone number"
+                placeholder="Enter your password"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-[#492F92] mt-3 text-white py-2 rounded-md hover:bg-indigo-700 font-semibold transition-colors"
+              disabled={isSubmitting}
+              className={`w-full bg-[#492F92] mt-3 text-white py-2 rounded-md font-semibold transition-colors ${
+                isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-indigo-700"
+              }`}
             >
-              SIGN IN
+              {isSubmitting ? "Signing In..." : "SIGN IN"}
             </button>
           </form>
-          {/* OR Divider */}
           <div className="flex w-[80%] mx-auto items-center my-4">
             <div className="flex-grow border-t border-gray-300"></div>
             <span className="mx-2 text-gray-400 text-sm">or</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
           <div className="flex justify-center space-x-4 sm:space-x-6 w-full">
-            <button className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 transition-transform hover:scale-105">
+            <button
+              onClick={() => handleSSO("Google")}
+              className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 transition-transform hover:scale-105"
+            >
               <GoogleIcon />
             </button>
-            <button className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 transition-transform hover:scale-105">
+            <button
+              onClick={() => handleSSO("Apple")}
+              className="flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 transition-transform hover:scale-105"
+            >
               <AppleIcon />
             </button>
           </div>
         </div>
-        {/* Right: Image */}
         <div className="hidden md:block md:w-1/2">
           <img
             src={auth}
