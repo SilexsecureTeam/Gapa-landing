@@ -109,10 +109,10 @@ const SignIn = () => {
     <div className="min-h-screen py-8 px-4 sm:px-8 md:px-16 lg:px-20">
       <div className="flex w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:px-16 flex flex-col justify-center">
-          <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center">
+          <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center mb-8">
             Sign In
           </h2>
-          <div className="mt-2 text-sm text-center mb-8">
+          {/* <div className="mt-2 text-sm text-center mb-8">
             Do not have an account?{" "}
             <a
               href="/signup"
@@ -120,7 +120,7 @@ const SignIn = () => {
             >
               Create a new one
             </a>
-          </div>
+          </div> */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">

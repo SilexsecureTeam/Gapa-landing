@@ -155,6 +155,11 @@ const VehicleDashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <img src={logo} alt="CarFlex Logo" className="h-12" />
+              <div className="">
+                <h2 className="text-lg font-semibold text-[#575757]">
+                  Dear {vehicles[selectedVehicle]?.full_name || "N/A"}
+                </h2>
+              </div>
             </div>
             <div className="flex items-center space-x-4 sm:space-x-10">
               <button className="flex items-center space-x-2 text-black hover:text-gray-900 transition-colors">
@@ -239,6 +244,9 @@ const VehicleDashboard = () => {
                             </h3>
                             <p className="text-xs sm:text-sm text-gray-500">
                               VIN: {vehicle.vin_number}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              Booking ID: {vehicle.booking_id || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -363,14 +371,25 @@ const VehicleDashboard = () => {
                               Additional Services
                             </span>
                           </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.additional_services
-                              ?.length
-                              ? vehicles[
-                                  selectedVehicle
-                                ].additional_services.join(", ")
-                              : "None"}
-                          </p>
+                          {vehicles[selectedVehicle]?.additional_services
+                            ?.length ? (
+                            <ul className="list-disc pl-5 space-y-1">
+                              {vehicles[
+                                selectedVehicle
+                              ].additional_services.map((service, index) => (
+                                <li
+                                  key={index}
+                                  className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
+                                >
+                                  {service}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm font-semibold text-gray-900">
+                              None
+                            </p>
+                          )}
                         </div>
                         {/* <div>
                           <div className="flex items-center space-x-2 mb-2">
@@ -498,7 +517,10 @@ const VehicleDashboard = () => {
               <p className="text-[#575757] text-sm mb-4">
                 Get reminder notifications based on mileage and last service
               </p>
-              <div className="space-y-3">
+              <h3 className="text-lg font-medium text-[#575757] mb-2">
+                No upcoming maintenance yet.
+              </h3>
+              <div className="space-y-3 hidden">
                 {upcomingMaintenance.map((item, index) => (
                   <div
                     key={index}

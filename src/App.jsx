@@ -16,7 +16,7 @@ const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
 const TeamPage = lazy(() => import("./Pages/TeamPage"));
 const AboutPage = lazy(() => import("./Pages/AboutPage"));
 const ServicePage = lazy(() => import("./Pages/ServicePage"));
-const SignupPage = lazy(() => import("./Pages/SignupPage"));
+// const SignupPage = lazy(() => import("./Pages/SignupPage"));
 const SigninPage = lazy(() => import("./Pages/SigninPage"));
 const ProfilePage = lazy(() => import("./Pages/ProfilePage"));
 const ProfileMecPage = lazy(() => import("./Pages/ProfileMecPage"));
@@ -57,7 +57,7 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/team" element={<TeamPage />} />
               <Route path="/service" element={<ServicePage />} />
-              <Route path="/signup" element={<SignupPage />} />
+              {/* <Route path="/signup" element={<SignupPage />} /> */}
               <Route path="/signin" element={<SigninPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile-mec" element={<ProfileMecPage />} />
