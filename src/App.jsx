@@ -30,6 +30,8 @@ const Success = lazy(() => import("./components/Success"));
 const Suc = lazy(() => import("./components/Suc"));
 const VehicleDashboard = lazy(() => import("./components/VehicleDashboard"));
 const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
+const ForgotPassword = lazy(() => import("./Auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./Auth/ResetPassword"));
 
 function App() {
   return (
@@ -59,6 +61,8 @@ function App() {
               <Route path="/service" element={<ServicePage />} />
               {/* <Route path="/signup" element={<SignupPage />} /> */}
               <Route path="/signin" element={<SigninPage />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile-mec" element={<ProfileMecPage />} />
               <Route path="/book-first" element={<Book1Page />} />

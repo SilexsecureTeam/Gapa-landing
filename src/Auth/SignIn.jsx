@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Add Link
 import axios from "axios";
 import { toast } from "react-toastify";
 import auth from "../assets/auth.png";
+// import logo from "../assets/logo.png";
 
+// GoogleIcon and AppleIcon components remain unchanged
 const GoogleIcon = () => (
   <svg
     className="w-12 h-12 p-2 border border-gray-300 rounded-full"
@@ -112,15 +114,6 @@ const SignIn = () => {
           <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center mb-8">
             Sign In
           </h2>
-          {/* <div className="mt-2 text-sm text-center mb-8">
-            Do not have an account?{" "}
-            <a
-              href="/signup"
-              className="text-[#492F92] font-medium hover:underline"
-            >
-              Create a new one
-            </a>
-          </div> */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-base font-semibold text-[#333333] mb-1">
@@ -151,6 +144,14 @@ const SignIn = () => {
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter your password"
               />
+            </div>
+            <div className="text-sm text-right">
+              <Link
+                to="/forgot-password"
+                className="text-[#492F92] font-medium hover:underline"
+              >
+                Forgot Password?
+              </Link>
             </div>
             <button
               type="submit"
