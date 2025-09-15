@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import auth from "../assets/auth.png";
-import logo from "../assets/logo.png";
+// import logo from "../assets/logo.png";
 
 const ResetPassword = () => {
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
@@ -11,17 +11,17 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Extract token and email from URL query parameters
   const query = new URLSearchParams(location.search);
   const token = query.get("token");
   const email = query.get("email");
 
   useEffect(() => {
+    console.log("Query params:", { token, email }); // Log once on mount
     if (!token || !email) {
       toast.error("Invalid or missing reset link. Please request a new one.");
       navigate("/forgot-password");
     }
-  }, [token, email, navigate]);
+  }, []); // Empty dependency array to log only once
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,22 +40,34 @@ const ResetPassword = () => {
     }
 
     setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append("password", form.password);
+    formData.append("password_confirmation", form.confirmPassword);
+    // Include token and email in form-data if backend expects them
+    formData.append("token", token);
+    formData.append("email", email);
+
+    console.log("Sending reset request:", Object.fromEntries(formData)); // Log form-data
     try {
-      await axios.post(
+      const response = await axios.post(
         "https://api.gapafix.com.ng/api/reset-password",
-        { email, password: form.password, token },
-        { headers: { "Content-Type": "application/json" } }
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
+      console.log("Reset response:", response.data);
       toast.success("Password reset successfully!");
       navigate("/signin");
     } catch (error) {
-      console.error("Reset password error:", error);
+      console.error("Reset password error:", error.response?.data || error);
       let errorMessage = "Failed to reset password. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 401) {
         errorMessage =
           "Invalid or expired token. Please request a new reset link.";
+      } else if (error.response?.status === 500) {
+        errorMessage =
+          "Server error. Please try again later or contact support.";
       }
       toast.error(errorMessage);
     } finally {
@@ -65,16 +77,13 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-8 md:px-16 lg:px-20">
-      <div className="flex justify-end mb-4">
-        <img src={logo} alt="Logo" className="w-20" />
-      </div>
       <div className="flex w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:px-16 flex flex-col justify-center">
           <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center mb-8">
             Reset Password
           </h2>
           <p className="text-sm text-gray-500 text-center mb-6">
-            Enter your new password below.
+            Enter your new password below. This link expires in 20 minutes.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

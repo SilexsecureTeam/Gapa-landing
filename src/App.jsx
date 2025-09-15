@@ -32,6 +32,9 @@ const VehicleDashboard = lazy(() => import("./components/VehicleDashboard"));
 const DashboardPage = lazy(() => import("./Pages/DashboardPage"));
 const ForgotPassword = lazy(() => import("./Auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./Auth/ResetPassword"));
+const Invoice = lazy(() => import("./components/Invoice"));
+const ProfileChange = lazy(() => import("./components/ProfileChange"));
+const BookService = lazy(() => import("./components/BookService"));
 
 function App() {
   return (
@@ -76,6 +79,9 @@ function App() {
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/dashboard/*" element={<DashboardPage />} />
               <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
+              <Route path="/book-service" element={<BookService />} />
+              <Route path="/booking/:bookingId/invoice" element={<Invoice />} />
+              <Route path="/profile-change" element={<ProfileChange />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>

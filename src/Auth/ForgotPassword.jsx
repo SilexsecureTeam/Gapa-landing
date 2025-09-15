@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import auth from "../assets/auth.png";
-import logo from "../assets/logo.png";
+// import logo from "../assets/logo.png";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -42,9 +42,6 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-8 md:px-16 lg:px-20">
-      <div className="flex justify-end mb-4">
-        <img src={logo} alt="Logo" className="w-20" />
-      </div>
       <div className="flex w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:px-16 flex flex-col justify-center">
           <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center mb-8">

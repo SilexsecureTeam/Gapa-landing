@@ -11,17 +11,15 @@ import {
   LogOut,
 } from "lucide-react";
 import logo from "../assets/logo.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import AddVehicleModal from "./AddVehicleModal";
-import BookService from "./BookService";
 
 const VehicleDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedVehicle, setSelectedVehicle] = useState(0);
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
-  const [isBookServiceOpen, setIsBookServiceOpen] = useState(false);
   const [vehicles, setVehicles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -31,10 +29,7 @@ const VehicleDashboard = () => {
       const token = localStorage.getItem("authToken");
       if (!token) {
         toast.error("Please log in to view vehicles.", {
-          action: {
-            label: "Log In",
-            onClick: () => navigate("/signin"),
-          },
+          action: { label: "Log In", onClick: () => navigate("/signin") },
         });
         setIsLoading(false);
         return;
@@ -68,6 +63,7 @@ const VehicleDashboard = () => {
             status: v.status || "N/A",
             created_at: v.created_at || "N/A",
             updated_at: v.updated_at || "N/A",
+            total_amount: v.total_amount || 0,
           }))
         );
       } catch (err) {
@@ -75,10 +71,7 @@ const VehicleDashboard = () => {
         if (err.response?.status === 401) {
           localStorage.removeItem("authToken");
           toast.error("Session expired. Please log in again.", {
-            action: {
-              label: "Log In",
-              onClick: () => navigate("/signin"),
-            },
+            action: { label: "Log In", onClick: () => navigate("/signin") },
           });
         } else {
           toast.error("Failed to load vehicles. Please try again.");
@@ -88,7 +81,11 @@ const VehicleDashboard = () => {
       }
     };
     fetchOrders();
-  }, []);
+  }, [navigate]);
+
+  useEffect(() => {
+    console.log("Vehicles state:", vehicles);
+  }, [vehicles]);
 
   const upcomingMaintenance = [
     {
@@ -137,14 +134,20 @@ const VehicleDashboard = () => {
       if (err.response?.status === 401) {
         localStorage.removeItem("authToken");
         toast.error("Session expired. Please log in again.", {
-          action: {
-            label: "Log In",
-            onClick: () => navigate("/signin"),
-          },
+          action: { label: "Log In", onClick: () => navigate("/signin") },
         });
       } else {
         toast.error("Failed to log out. Please try again.");
       }
+    }
+  };
+
+  const handleViewInvoice = () => {
+    const bookingId = vehicles[selectedVehicle]?.booking_id;
+    if (bookingId && bookingId !== "N/A") {
+      navigate(`/booking/${bookingId}/invoice`);
+    } else {
+      toast.error("No booking ID available for this vehicle.");
     }
   };
 
@@ -154,7 +157,9 @@ const VehicleDashboard = () => {
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <img src={logo} alt="CarFlex Logo" className="h-12" />
+              <Link to="/">
+                <img src={logo} alt="CarFlex Logo" className="h-12" />
+              </Link>
               <div className="">
                 <h2 className="text-lg font-semibold text-[#575757]">
                   Dear {vehicles[selectedVehicle]?.full_name || "N/A"}
@@ -162,7 +167,10 @@ const VehicleDashboard = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4 sm:space-x-10">
-              <button className="flex items-center space-x-2 text-black hover:text-gray-900 transition-colors">
+              <button
+                onClick={() => navigate("/profile-change")}
+                className="flex items-center space-x-2 text-black hover:text-gray-900 transition-colors"
+              >
                 <Settings className="w-5 h-5" />
                 <span className="hidden sm:inline">Profile</span>
               </button>
@@ -188,7 +196,7 @@ const VehicleDashboard = () => {
       <div className="w-full mx-auto py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#F4F4F4] border border-[#EBEBEB] rounded-xl p-4  sm:p-6">
+            <div className="bg-[#F4F4F4] border border-[#EBEBEB] rounded-xl p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6">
                 <div>
                   <h1 className="text-xl font-semibold text-[#575757]">
@@ -199,7 +207,13 @@ const VehicleDashboard = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsBookServiceOpen(true)}
+                  onClick={() =>
+                    navigate("/book-service", {
+                      state: {
+                        selectedVehicleId: vehicles[selectedVehicle]?.id,
+                      },
+                    })
+                  }
                   className="mt-4 sm:mt-0 bg-[#492F92] text-white px-4 py-2 rounded-full text-sm hover:bg-[#3b2371] flex items-center space-x-2 transition-colors"
                 >
                   <Wrench className="w-4 h-4" />
@@ -211,7 +225,7 @@ const VehicleDashboard = () => {
                   <p className="text-gray-500 text-sm">Loading vehicles...</p>
                 </div>
               ) : vehicles.length === 0 ? (
-                <div className="text-center py-6 ">
+                <div className="text-center py-6">
                   <p className="text-gray-500 text-sm">
                     No vehicles found. Add a vehicle to get started.
                   </p>
@@ -355,16 +369,6 @@ const VehicleDashboard = () => {
                               "N/A"}
                           </p>
                         </div>
-                        {/* <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
-                              Service Center
-                            </span>
-                          </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.service_center || "N/A"}
-                          </p>
-                        </div> */}
                         <div>
                           <div className="flex items-center space-x-2 mb-2">
                             <span className="text-sm font-medium text-gray-600">
@@ -391,26 +395,6 @@ const VehicleDashboard = () => {
                             </p>
                           )}
                         </div>
-                        {/* <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
-                              Service Date
-                            </span>
-                          </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.service_date || "N/A"}
-                          </p>
-                        </div> */}
-                        {/* <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
-                              Service Time
-                            </span>
-                          </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.service_time || "N/A"}
-                          </p>
-                        </div> */}
                         <div>
                           <div className="flex items-center space-x-2 mb-2">
                             <span className="text-sm font-medium text-gray-600">
@@ -486,9 +470,12 @@ const VehicleDashboard = () => {
                     </p>
                     <div className="flex items-center justify-between p-4 sm:p-6">
                       <p className="text-2xl sm:text-3xl font-bold text-[#575757]">
-                        ₦0
+                        ₦{vehicles[selectedVehicle]?.total_amount || 0}
                       </p>
-                      <button className="bg-[#575757] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-900 transition-colors text-sm">
+                      <button
+                        onClick={handleViewInvoice}
+                        className="bg-[#575757] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-900 transition-colors text-sm"
+                      >
                         View Invoice
                       </button>
                     </div>
@@ -631,11 +618,6 @@ const VehicleDashboard = () => {
         isOpen={isAddVehicleOpen}
         onClose={() => setIsAddVehicleOpen(false)}
         setVehicles={setVehicles}
-      />
-      <BookService
-        isOpen={isBookServiceOpen}
-        onClose={() => setIsBookServiceOpen(false)}
-        vehicles={vehicles}
       />
     </div>
   );

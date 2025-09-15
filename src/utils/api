@@ -33,3 +33,14 @@ using the ID, if he/she has already registered a car, else the user can fully re
 
 
         Failed to fetch vehicles. Using default data.
+
+        'vehicle_type'  ,
+            'service_required',
+            'service_center' ,
+            'vehicle_make' ,
+            'vehicle_model',
+            'vin_number',
+            'year_of_manufacture',
+            'additional_services',
+            'service_date',
+            'service_time'
