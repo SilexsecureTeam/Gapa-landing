@@ -40,16 +40,27 @@ const SignIn = () => {
       );
 
       const { token, user } = response.data;
+      console.log("Login response:", response.data); // Debug
+      if (!user || !user.role) {
+        console.error("Login response missing user or role:", response.data);
+        toast.error("Invalid user data. Please contact support.");
+        return;
+      }
       localStorage.setItem("authToken", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      console.log(
+        "Stored user in localStorage:",
+        JSON.parse(localStorage.getItem("user"))
+      ); // Debug
       toast.success("Login successful!");
 
       // Redirect based on user role
-      const role = user.role || "user"; // Assume "user" if role is undefined
+      const role = user.role || "user";
       const redirectPath =
         role === "admin" ? "/admin-dashboard" : "/vehicle-dashboard";
       navigate(redirectPath, { state: { user } });
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error:", error.response?.data);
       let errorMessage = "Failed to sign in. Please try again.";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

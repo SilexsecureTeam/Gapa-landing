@@ -5,15 +5,108 @@ import { toast } from "react-toastify";
 import { FileText, Download, ArrowLeft } from "lucide-react";
 import logo from "../assets/logo.png";
 
+// Custom number formatter for Naira (e.g., ₦20,000.00)
+const formatNaira = (number) => {
+  return Number(number)
+    .toLocaleString("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    .replace("NGN", "₦");
+};
+
 const Invoice = () => {
   const [invoice, setInvoice] = useState(null);
+  const [vehicles, setVehicles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const navigate = useNavigate();
   const { bookingId } = useParams();
 
+  // Fetch all bookings to get numeric id
   useEffect(() => {
-    console.log("Fetching invoice for bookingId:", bookingId); // Log bookingId
+    const fetchAllBookings = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toast.error("Please log in to view the invoice.", {
+          action: { label: "Log In", onClick: () => navigate("/signin") },
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      let isMounted = true;
+      try {
+        const response = await axios.get("/api/bookings/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log(
+          "Bookings response:",
+          JSON.stringify(response.data, null, 2)
+        );
+        const fetchedBookings = response.data.data || [];
+        const uniqueVehicles = [];
+        const seenVins = new Set();
+        fetchedBookings.forEach((v) => {
+          if (!seenVins.has(v.vin_number)) {
+            seenVins.add(v.vin_number);
+            uniqueVehicles.push({
+              id: v.id || Date.now(),
+              booking_id: v.booking_id || "N/A",
+              vehicle_type: v.vehicle_type || "N/A",
+              make: v.vehicle_make || "N/A",
+              model: v.vehicle_model || "N/A",
+              vin_number: v.vin_number || "N/A",
+              full_name: v.full_name || "N/A",
+              year: v.year_of_manufacture || "N/A",
+              service_required: v.service_required || "N/A",
+              service_center: v.service_center || "N/A",
+              additional_services: v.additional_services || [],
+              service_date: v.service_date || "N/A",
+              status: v.status || "N/A",
+            });
+          }
+        });
+        if (isMounted) {
+          setVehicles(uniqueVehicles);
+          console.log(
+            "Available booking IDs:",
+            uniqueVehicles.map((v) => ({ booking_id: v.booking_id, id: v.id }))
+          );
+        }
+      } catch (err) {
+        console.error("Error fetching bookings:", {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+        });
+        if (isMounted) {
+          if (err.response?.status === 401) {
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("user");
+            toast.error("Session expired. Please log in again.", {
+              action: { label: "Log In", onClick: () => navigate("/signin") },
+            });
+          } else {
+            toast.error(
+              "Failed to load bookings. Invoice may not display correctly."
+            );
+          }
+        }
+      }
+      return () => {
+        isMounted = false;
+      };
+    };
+    fetchAllBookings();
+  }, [navigate]);
+
+  // Fetch invoice
+  useEffect(() => {
+    const selectedVehicle = vehicles.find((v) => v.booking_id === bookingId);
+
     const fetchInvoice = async () => {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -24,36 +117,114 @@ const Invoice = () => {
         return;
       }
 
+      if (vehicles.length > 0 && !selectedVehicle) {
+        toast.error(`Booking ID ${bookingId} not found.`);
+        setIsLoading(false);
+        return;
+      }
+
+      let isMounted = true;
+      setIsLoading(true);
+
+      const id = selectedVehicle?.id || bookingId;
       try {
-        const response = await axios.get(
-          `https://api.gapafix.com.ng/booking/${bookingId}/invoice/view`,
-          { headers: { Authorization: `Bearer ${token}` } }
+        console.log(
+          "Fetching invoice for bookingId:",
+          bookingId,
+          "numeric id:",
+          id
         );
-        console.log("Invoice response:", response.data); // Log API response
-        setInvoice(response.data.data || {});
+
+        const response = await axios.get(`/api/booking/${id}/invoice/view`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log(
+          "Invoice response:",
+          JSON.stringify(response.data, null, 2)
+        );
+
+        if (isMounted) {
+          const invoiceData = response.data.data || response.data || {};
+          if (Object.keys(invoiceData).length === 0) {
+            console.warn("Invoice data is empty:", invoiceData);
+            toast.warn("No invoice data returned from server.");
+          }
+          setInvoice(invoiceData);
+        }
       } catch (err) {
         console.error("Error fetching invoice:", {
           message: err.message,
           status: err.response?.status,
           data: err.response?.data,
-        }); // Detailed error logging
-        if (err.response?.status === 401) {
-          localStorage.removeItem("authToken");
-          toast.error("Session expired. Please log in again.", {
-            action: { label: "Log In", onClick: () => navigate("/signin") },
-          });
-        } else {
-          toast.error(
-            err.response?.data?.message ||
-              "Failed to load invoice. Please try again."
-          );
+        });
+        if (isMounted) {
+          if (err.message.includes("Network Error")) {
+            toast.error(
+              "CORS error: Server is blocking requests. Please contact the backend team to enable CORS for http://localhost:5173."
+            );
+          } else if (err.response?.status === 401) {
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("user");
+            toast.error("Session expired. Please log in again.", {
+              action: { label: "Log In", onClick: () => navigate("/signin") },
+            });
+          } else if (err.response?.status === 404 && id !== bookingId) {
+            toast.error(
+              `Invoice for numeric ID ${id} not found. Trying booking ID...`
+            );
+            try {
+              const fallbackResponse = await axios.get(
+                `/api/booking/${bookingId}/invoice/view`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              console.log(
+                "Fallback invoice response:",
+                JSON.stringify(fallbackResponse.data, null, 2)
+              );
+              if (isMounted) {
+                const fallbackData =
+                  fallbackResponse.data.data || fallbackResponse.data || {};
+                if (Object.keys(fallbackData).length === 0) {
+                  console.warn("Fallback invoice data is empty:", fallbackData);
+                  toast.warn("No invoice data returned from fallback request.");
+                }
+                setInvoice(fallbackData);
+              }
+            } catch (fallbackErr) {
+              console.error("Fallback error:", {
+                message: fallbackErr.message,
+                status: fallbackErr.response?.status,
+                data: fallbackErr.response?.data,
+              });
+              if (isMounted) {
+                toast.error(
+                  fallbackErr.response?.data?.message ||
+                    "Failed to load invoice with booking ID."
+                );
+              }
+            }
+          } else {
+            toast.error(
+              err.response?.data?.message ||
+                "Failed to load invoice. Please try again."
+            );
+          }
         }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
+
+      return () => {
+        isMounted = false;
+      };
     };
-    fetchInvoice();
-  }, [bookingId, navigate]);
+
+    if (bookingId) {
+      fetchInvoice();
+    }
+  }, [bookingId, vehicles, navigate]);
 
   const handleDownload = async () => {
     const token = localStorage.getItem("authToken");
@@ -64,45 +235,82 @@ const Invoice = () => {
       return;
     }
 
+    const selectedVehicle = vehicles.find((v) => v.booking_id === bookingId);
+    if (vehicles.length > 0 && !selectedVehicle) {
+      toast.error(`Booking ID ${bookingId} not found.`);
+      return;
+    }
+
+    let isMounted = true;
     setIsDownloading(true);
+
     try {
-      const response = await axios.get(
-        `https://api.gapafix.com.ng/booking/${bookingId}/invoice/download`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
+      const id = selectedVehicle?.id || bookingId;
+      console.log(
+        "Downloading invoice for bookingId:",
+        bookingId,
+        "numeric id:",
+        id
       );
-      console.log("Download response:", response); // Log download response
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `invoice_${bookingId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("Invoice downloaded successfully!");
+
+      const response = await axios.get(`/api/booking/${id}/invoice/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      console.log("Download response:", {
+        status: response.status,
+        headers: response.headers,
+      });
+
+      if (isMounted) {
+        if (response.headers["content-type"] !== "application/pdf") {
+          throw new Error("Invalid PDF response");
+        }
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `invoice_${bookingId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success("Invoice downloaded successfully!");
+      }
     } catch (err) {
       console.error("Error downloading invoice:", {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
       });
-      if (err.response?.status === 401) {
-        localStorage.removeItem("authToken");
-        toast.error("Session expired. Please log in again.", {
-          action: { label: "Log In", onClick: () => navigate("/signin") },
-        });
-      } else {
-        toast.error(
-          err.response?.data?.message ||
-            "Failed to download invoice. Please try again."
-        );
+      if (isMounted) {
+        if (err.message.includes("Network Error")) {
+          toast.error(
+            "CORS error: Server is blocking requests. Please contact the backend team to enable CORS for http://localhost:5173."
+          );
+        } else if (err.response?.status === 401) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
+          toast.error("Session expired. Please log in again.", {
+            action: { label: "Log In", onClick: () => navigate("/signin") },
+          });
+        } else if (err.response?.status === 404) {
+          toast.error(`Invoice for booking ID ${bookingId} not found.`);
+        } else {
+          toast.error(
+            err.response?.data?.message ||
+              "Failed to download invoice. Please try again."
+          );
+        }
       }
     } finally {
-      setIsDownloading(false);
+      if (isMounted) {
+        setIsDownloading(false);
+      }
     }
+
+    return () => {
+      isMounted = false;
+    };
   };
 
   return (
@@ -126,13 +334,12 @@ const Invoice = () => {
           </div>
         </div>
       </header>
-
       <div className="w-full mx-auto py-8">
         {isLoading ? (
           <div className="text-center py-6">
             <p className="text-gray-500 text-sm">Loading invoice...</p>
           </div>
-        ) : !invoice ? (
+        ) : !invoice || Object.keys(invoice).length === 0 ? (
           <div className="text-center py-6">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-sm">
@@ -205,7 +412,7 @@ const Invoice = () => {
                   Total Amount
                 </span>
                 <p className="font-semibold text-gray-900 text-sm">
-                  ₦{invoice.total_amount || "0"}
+                  {formatNaira(invoice.total_amount || "0")}
                 </p>
               </div>
               <div>
