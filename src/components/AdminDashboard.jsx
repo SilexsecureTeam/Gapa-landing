@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { Settings, LogOut, X } from "lucide-react";
@@ -277,7 +277,9 @@ const AdminDashboard = () => {
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <img src={logo} alt="CarFlex Logo" className="h-12" />
+              <Link to="/">
+                <img src={logo} alt="CarFlex Logo" className="h-12" />
+              </Link>
               <div>
                 <h2 className="text-lg font-semibold text-[#575757]">
                   Dear {vehicles[0]?.full_name || "Admin"}

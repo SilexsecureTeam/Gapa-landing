@@ -21,11 +21,12 @@ const VehicleDashboard = () => {
   const [selectedVehicle, setSelectedVehicle] = useState(0);
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
   const [vehicles, setVehicles] = useState([]);
+  const [upcomingMaintenance, setUpcomingMaintenance] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchOrdersAndQuotes = async () => {
       const token = localStorage.getItem("authToken");
       if (!token) {
         toast.error("Please log in to view vehicles.", {
@@ -34,7 +35,9 @@ const VehicleDashboard = () => {
         setIsLoading(false);
         return;
       }
+
       try {
+        // Fetch bookings
         const response = await axios.get(
           "https://api.gapafix.com.ng/api/orders",
           {
@@ -42,30 +45,89 @@ const VehicleDashboard = () => {
           }
         );
         const fetchedVehicles = response.data.data || [];
-        setVehicles(
-          fetchedVehicles.map((v) => ({
-            id: v.id || Date.now(),
-            booking_id: v.booking_id || "N/A",
-            vehicle_type: v.vehicle_type || "N/A",
-            make: v.vehicle_make || "N/A",
-            model: v.vehicle_model || "N/A",
-            vin_number: v.vin_number || "N/A",
-            full_name: v.full_name || "N/A",
-            year: v.year_of_manufacture || "N/A",
-            service_required: v.service_required || "N/A",
-            service_center: v.service_center || "N/A",
-            additional_services: v.additional_services || [],
-            service_date: v.service_date || "N/A",
-            service_time: v.service_time || "N/A",
-            phone: v.phone || "N/A",
-            email: v.email || "N/A",
-            user_id: v.user_id || "N/A",
-            status: v.status || "N/A",
-            created_at: v.created_at || "N/A",
-            updated_at: v.updated_at || "N/A",
-            total_amount: v.total_amount || 0,
-          }))
-        );
+        const vehiclesData = fetchedVehicles.map((v) => ({
+          id: v.id || Date.now(),
+          booking_id: v.booking_id || "N/A",
+          vehicle_type: v.vehicle_type || "N/A",
+          make: v.vehicle_make || "N/A",
+          model: v.vehicle_model || "N/A",
+          vin_number: v.vin_number || "N/A",
+          full_name: v.full_name || "N/A",
+          year: v.year_of_manufacture || "N/A",
+          service_required: v.service_required || "N/A",
+          service_center: v.service_center || "N/A",
+          additional_services: v.additional_services || [],
+          service_date: v.service_date || "N/A",
+          service_time: v.service_time || "N/A",
+          phone: v.phone || "N/A",
+          email: v.email || "N/A",
+          user_id: v.user_id || "N/A",
+          status: v.status || "N/A",
+          created_at: v.created_at || "N/A",
+          updated_at: v.updated_at || "N/A",
+          total_amount: v.total_amount || 0,
+        }));
+        setVehicles(vehiclesData);
+
+        // Fetch quotes for upcoming maintenance
+        const maintenanceData = [];
+        for (const vehicle of vehiclesData) {
+          if (vehicle.booking_id !== "N/A") {
+            try {
+              const quoteResponse = await axios.get(
+                `https://api.gapafix.com.ng/api/booking/${vehicle.booking_id}/invoice/view`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              let quoteData;
+              if (typeof quoteResponse.data === "string") {
+                // Parse text response
+                const lines = quoteResponse.data.split("\n");
+                quoteData = { parts: [], maintenance_start_date: null };
+                lines.forEach((line) => {
+                  if (line.startsWith("- ")) {
+                    const serviceMatch = line.match(
+                      /- (.+?)\s+Price: ₦([\d,.]+)\s+Qty: (\d+)/
+                    );
+                    if (serviceMatch) {
+                      quoteData.parts.push({
+                        name: serviceMatch[1].trim(),
+                        price:
+                          parseFloat(serviceMatch[2].replace(/,/g, "")) || 0,
+                        quantity: parseInt(serviceMatch[3]) || 1,
+                      });
+                    }
+                  }
+                });
+              } else {
+                quoteData = quoteResponse.data.data || quoteResponse.data || {};
+              }
+
+              if (quoteData.maintenance_start_date) {
+                const dueDate = new Date(quoteData.maintenance_start_date);
+                const today = new Date();
+                const dueInDays = Math.ceil(
+                  (dueDate - today) / (1000 * 60 * 60 * 24)
+                );
+                quoteData.parts.forEach((part) => {
+                  maintenanceData.push({
+                    type: part.name,
+                    dueIn: dueInDays >= 0 ? `${dueInDays} days` : "Overdue",
+                    icon: <Wrench className="w-4 h-4" />,
+                    booking_id: vehicle.booking_id,
+                  });
+                });
+              }
+            } catch (err) {
+              console.error(
+                `Error fetching quote for ${vehicle.booking_id}:`,
+                err
+              );
+            }
+          }
+        }
+        setUpcomingMaintenance(maintenanceData);
       } catch (err) {
         console.error("Error fetching orders", err);
         if (err.response?.status === 401) {
@@ -80,30 +142,13 @@ const VehicleDashboard = () => {
         setIsLoading(false);
       }
     };
-    fetchOrders();
+    fetchOrdersAndQuotes();
   }, [navigate]);
 
   useEffect(() => {
     console.log("Vehicles state:", vehicles);
-  }, [vehicles]);
-
-  const upcomingMaintenance = [
-    {
-      type: "Engine Oil & Filter",
-      dueIn: "45 days",
-      icon: <Wrench className="w-4 h-4" />,
-    },
-    {
-      type: "Brake Inspection",
-      dueIn: "60 days",
-      icon: <AlertTriangle className="w-4 h-4" />,
-    },
-    {
-      type: "Engine Oil & Filter",
-      dueIn: "45 days",
-      icon: <Wrench className="w-4 h-4" />,
-    },
-  ];
+    console.log("Upcoming maintenance:", upcomingMaintenance);
+  }, [vehicles, upcomingMaintenance]);
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -504,29 +549,32 @@ const VehicleDashboard = () => {
               <p className="text-[#575757] text-sm mb-4">
                 Get reminder notifications based on mileage and last service
               </p>
-              <h3 className="text-lg font-medium text-[#575757] mb-2">
-                No upcoming maintenance yet.
-              </h3>
-              <div className="space-y-3 hidden">
-                {upcomingMaintenance.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center space-x-3 p-3 rounded-lg transition-colors"
-                  >
-                    <div className="text-gray-400 bg-[#EBEBEB] p-2">
-                      {item.icon}
+              {upcomingMaintenance.length === 0 ? (
+                <h3 className="text-lg font-medium text-[#575757] mb-2">
+                  No upcoming maintenance yet.
+                </h3>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingMaintenance.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center space-x-3 p-3 rounded-lg transition-colors"
+                    >
+                      <div className="text-gray-400 bg-[#EBEBEB] p-2">
+                        {item.icon}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 text-sm">
+                          {item.type} (Booking #{item.booking_id})
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          Due in {item.dueIn}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900 text-sm">
-                        {item.type}
-                      </p>
-                      <p className="text-gray-500 text-xs">
-                        Due in {item.dueIn}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="bg-white rounded-xl border border-[#EBEBEB] p-4 sm:p-6">
               <h3 className="text-lg font-medium text-[#575757] mb-2">
@@ -567,24 +615,32 @@ const VehicleDashboard = () => {
             <p className="text-[#575757] text-sm mb-4">
               Get reminder notifications based on mileage and last service
             </p>
-            <div className="space-y-3">
-              {upcomingMaintenance.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-3 p-3 rounded-lg transition-colors"
-                >
-                  <div className="text-gray-400 bg-[#EBEBEB] p-2">
-                    {item.icon}
+            {upcomingMaintenance.length === 0 ? (
+              <h3 className="text-lg font-medium text-[#575757] mb-2">
+                No upcoming maintenance yet.
+              </h3>
+            ) : (
+              <div className="space-y-3">
+                {upcomingMaintenance.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center space-x-3 p-3 rounded-lg transition-colors"
+                  >
+                    <div className="text-gray-400 bg-[#EBEBEB] p-2">
+                      {item.icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {item.type} (Booking #{item.booking_id})
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        Due in {item.dueIn}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 text-sm">
-                      {item.type}
-                    </p>
-                    <p className="text-gray-500 text-xs">Due in {item.dueIn}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="bg-white rounded-xl border border-[#EBEBEB] p-4">
             <h3 className="text-lg font-medium text-[#575757] mb-2">

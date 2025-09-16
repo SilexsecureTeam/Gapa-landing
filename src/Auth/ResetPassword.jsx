@@ -76,7 +76,7 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-8 md:px-16 lg:px-20">
+    <div className="min-h-fit py-8 px-4 sm:px-8 md:px-16 lg:px-20">
       <div className="flex w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="w-full md:w-1/2 p-6 sm:p-8 md:p-12 lg:px-16 flex flex-col justify-center">
           <h2 className="text-xl sm:text-2xl text-[#3D3D3D] font-bold text-center mb-8">
