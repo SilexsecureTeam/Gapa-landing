@@ -1,10 +1,27 @@
 import React from "react";
 import profile from "../../assets/Profile.png";
 import { BellIcon, MailIcon, SearchIcon, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 
 const Header = ({ open, setOpen }) => {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // Determine the logo's destination based on authentication and role
+  const getLogoDestination = () => {
+    if (!user) {
+      return "/signin"; // Redirect to sign-in if not authenticated
+    }
+    return user.role === "admin" ? "/dashboard" : "/vehicle-dashboard";
+  };
+
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    const destination = getLogoDestination();
+    navigate(destination);
+  };
+
   return (
     <>
       {/* Mobile Header (<sm, enforced three rows) */}
@@ -25,7 +42,7 @@ const Header = ({ open, setOpen }) => {
           </button>
           <div>
             <h1 className="text-lg text-[#333333] font-semibold">
-              Welcome, Stella!
+              Welcome, {user?.name || "Guest"}!
             </h1>
             <p className="text-[#747681] font-light text-xs">
               Let’s check your Garage today
@@ -62,9 +79,9 @@ const Header = ({ open, setOpen }) => {
 
         {/* Row 3: Search, Notifications, Profile, Button */}
         <div className="flex flex-wrap justify-between items-center gap-2">
-          <Link to="/">
+          <a href={getLogoDestination()} onClick={handleLogoClick}>
             <img src={logo} alt="CarFlex Logo" className="h-10" />
-          </Link>
+          </a>
           <button className="text-white bg-[#4B3193] px-2 py-1 rounded-lg text-xs font-medium">
             Schedule Maintenance
           </button>
@@ -91,7 +108,7 @@ const Header = ({ open, setOpen }) => {
           </div>
           <div>
             <h1 className="text-xl sm:text-[22px] text-[#333333] font-semibold">
-              Welcome, Stella!
+              Welcome, {user?.name || "Guest"}!
             </h1>
             <p className="text-[#747681] font-light text-sm">
               Let’s check your Garage today
@@ -101,9 +118,9 @@ const Header = ({ open, setOpen }) => {
 
         {/* Center: Logo */}
         <div className="flex items-center">
-          <Link to="/">
+          <a href={getLogoDestination()} onClick={handleLogoClick}>
             <img src={logo} alt="CarFlex Logo" className="h-10" />
-          </Link>
+          </a>
         </div>
 
         {/* Right: Search, Notifications, Profile, Button */}
@@ -152,7 +169,7 @@ const Header = ({ open, setOpen }) => {
           </div>
           <div>
             <h1 className="text-xl md:text-[22px] text-[#333333] font-semibold">
-              Welcome, Stella!
+              Welcome, {user?.name || "Guest"}!
             </h1>
             <p className="text-[#747681] font-light text-sm">
               Let’s check your Garage today
@@ -186,9 +203,9 @@ const Header = ({ open, setOpen }) => {
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2">
             <div className="flex justify-between items-center h-12">
               <div className="flex items-center space-x-4">
-                <Link to="/">
+                <a href={getLogoDestination()} onClick={handleLogoClick}>
                   <img src={logo} alt="CarFlex Logo" className="h-10" />
-                </Link>
+                </a>
               </div>
               <button className="flex items-center text-white space-x-2 bg-[#4B3193] px-6 py-2 rounded-xl">
                 Schedule Maintenance

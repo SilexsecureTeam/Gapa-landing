@@ -1,4 +1,3 @@
-// src/components/Dashboard/SignOutModal.jsx
 import React, { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 
@@ -16,6 +15,13 @@ const SignOutModal = ({ isOpen, onClose, onConfirm }) => {
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleSignOut = () => {
+    // Clear authentication data from localStorage
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    onConfirm(); // Trigger navigation to /signin (handled in DashboardPage)
+  };
 
   return (
     <div
@@ -43,7 +49,7 @@ const SignOutModal = ({ isOpen, onClose, onConfirm }) => {
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleSignOut}
             className="px-4 py-2 cursor-pointer bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
           >
             Log Out

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import auth from "../assets/auth.png";
@@ -11,6 +11,7 @@ const SignIn = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,11 +55,11 @@ const SignIn = () => {
       ); // Debug
       toast.success("Login successful!");
 
-      // Redirect based on user role
-      const role = user.role || "user";
-      const redirectPath =
-        role === "admin" ? "/dashboard" : "/vehicle-dashboard";
-      navigate(redirectPath, { state: { user } });
+      // Redirect to the intended route (from state) or based on user role
+      const from =
+        location.state?.from ||
+        (user.role === "admin" ? "/dashboard" : "/vehicle-dashboard");
+      navigate(from, { state: { user }, replace: true });
     } catch (error) {
       console.error("Login error:", error.response?.data);
       let errorMessage = "Failed to sign in. Please try again.";

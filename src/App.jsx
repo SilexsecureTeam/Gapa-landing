@@ -7,7 +7,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Calendar from "./components/Calendar";
-import FloatingContact from "./components/FloatingContact"; // Import the new component
+import FloatingContact from "./components/FloatingContact";
+import ProtectedRoute from "./Auth/ProtectedRoute";
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("./Pages/HomePage"));
@@ -16,7 +17,6 @@ const NotFoundPage = lazy(() => import("./Pages/NotFoundPage"));
 const TeamPage = lazy(() => import("./Pages/TeamPage"));
 const AboutPage = lazy(() => import("./Pages/AboutPage"));
 const ServicePage = lazy(() => import("./Pages/ServicePage"));
-// const SignupPage = lazy(() => import("./Pages/SignupPage"));
 const SigninPage = lazy(() => import("./Pages/SigninPage"));
 const ProfilePage = lazy(() => import("./Pages/ProfilePage"));
 const ProfileMecPage = lazy(() => import("./Pages/ProfileMecPage"));
@@ -63,7 +63,6 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/team" element={<TeamPage />} />
               <Route path="/service" element={<ServicePage />} />
-              {/* <Route path="/signup" element={<SignupPage />} /> */}
               <Route path="/signin" element={<SigninPage />} />
               <Route path="/forgot-password" element={<ForgetPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -78,16 +77,25 @@ function App() {
               <Route path="/success" element={<Success />} />
               <Route path="/suc" element={<Suc />} />
               <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/dashboard/*" element={<DashboardPage />} />
-              <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
-              <Route path="/book-service" element={<BookService />} />
-              <Route path="/booking/:bookingId/invoice" element={<Invoice />} />
-              <Route path="/profile-change" element={<ProfileChange />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard/*" element={<DashboardPage />} />
+                <Route
+                  path="/vehicle-dashboard"
+                  element={<VehicleDashboard />}
+                />
+                <Route path="/admin-dashboard" element={<AdminDashboard />} />
+                <Route path="/book-service" element={<BookService />} />
+                <Route
+                  path="/booking/:bookingId/invoice"
+                  element={<Invoice />}
+                />
+                <Route path="/profile-change" element={<ProfileChange />} />
+              </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
-          <FloatingContact /> {/* Add the FloatingContact component */}
+          <FloatingContact />
         </div>
       </Router>
     </HelmetProvider>
