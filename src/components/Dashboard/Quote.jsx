@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown, Calendar, Plus } from "lucide-react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import detail from "../../assets/detail.png";
 
 const Quote = () => {
   const { fleetName } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [maintStartDate, setMaintStartDate] = useState("");
   const [maintEndDate, setMaintEndDate] = useState("");
@@ -14,33 +15,33 @@ const Quote = () => {
   const [partName, setPartName] = useState("");
   const [price, setPrice] = useState("");
   const [qty, setQty] = useState("");
-  const [maintenanceType, setMaintenanceType] = useState(""); // New state for maintenanceType
+  const [maintenanceType, setMaintenanceType] = useState("");
+  const [parts, setParts] = useState([]);
 
   useEffect(() => {
-    // Prefill form with data from navigation state
     if (location.state) {
-      const {
-        startDate,
-        endDate,
-        maintenanceType: mt,
-        totalCost: cost,
-      } = location.state;
+      const { startDate, endDate, maintenanceType: mt, totalCost: cost, newPart } = location.state;
       setSelectedCustomer(fleetName || "");
       setMaintStartDate(startDate || "");
       setMaintEndDate(endDate || "");
       setTotalCost(cost || "");
-      setMaintenanceType(mt || ""); // Prefill maintenanceType
+      setMaintenanceType(mt || "");
+      if (newPart) {
+        setParts((prev) => [...prev, newPart]);
+      }
     }
   }, [location.state, fleetName]);
 
+  const handleAddFleet = () => {
+    navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}/add-fleet`, {
+      state: { fleetName, selectedCustomer, maintenanceType, totalCost, maintStartDate, maintEndDate },
+    });
+  };
+
   return (
     <div className="w-full mx-auto p-6 bg-white overflow-y-auto custom-scrollbar">
-      {/* Select Customer Section */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-[#333333] mb-4">
-          Select Customer
-        </h2>
-
+        <h2 className="text-lg font-semibold text-[#333333] mb-4">Select Customer</h2>
         <div className="relative mb-4 max-w-4xl">
           <select
             className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -54,49 +55,29 @@ const Quote = () => {
           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
         </div>
         <h2 className="text-lg font-semibold text-[#333333] mb-4">Details</h2>
-        {/* Customer Details Card */}
         <div className="mb-6 max-w-4xl">
           <div className="flex flex-col md:flex-row space-y-4 items-center justify-between text-sm">
             <div className="flex items-center space-x-3 bg-[#F5CE4D] rounded-xl px-8 py-3">
               <img src={detail} alt="" />
               <div className="">
-                <span className="text-gray-800 font-medium">
-                  Toyota Corolla - 2019
-                </span>
-                <h2 className="text-xs text-gray-600 mt-1">
-                  Plate: LND-45JK · Petrol · Automatic
-                </h2>
+                <span className="text-gray-800 font-medium">Toyota Corolla - 2019</span>
+                <h2 className="text-xs text-gray-600 mt-1">Plate: LND-45JK · Petrol · Automatic</h2>
               </div>
-
-              <span className="text-gray-800 font-medium hidden">
-                {selectedCustomer || "Toyota Corolla - 2019"}
-              </span>
             </div>
             <div className="text-gray-700 text-left">
-              <div className="text-sm">
-                Fleet ID : <span className="font-medium">ALFR7656544</span>
-              </div>
-              <div className="text-sm">
-                Fleet Type: <span className="font-medium">SUV</span>
-              </div>
+              <div className="text-sm">Fleet ID : <span className="font-medium">ALFR7656544</span></div>
+              <div className="text-sm">Fleet Type: <span className="font-medium">SUV</span></div>
             </div>
             <div className="text-gray-700 text-right">
-              <div className="text-sm">
-                First Owner: <span className="font-medium">01-Jan-2020</span>
-              </div>
+              <div className="text-sm">First Owner: <span className="font-medium">01-Jan-2020</span></div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Details Section */}
       <div className="mb-8 max-w-3xl">
         <div className="grid grid-cols-2 gap-4 mb-4">
-          {/* Maintenance Start Date */}
           <div>
-            <label className="block text-base font-medium text-black mb-1">
-              Maintenance Start Date
-            </label>
+            <label className="block text-base font-medium text-black mb-1">Maintenance Start Date</label>
             <div className="relative">
               <input
                 type="text"
@@ -108,12 +89,8 @@ const Quote = () => {
               <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             </div>
           </div>
-
-          {/* Maintenance End Date */}
           <div>
-            <label className="block text-black font-medium text-base mb-1">
-              Maintenance End Date
-            </label>
+            <label className="block text-black font-medium text-base mb-1">Maintenance End Date</label>
             <div className="relative">
               <input
                 type="text"
@@ -126,16 +103,12 @@ const Quote = () => {
             </div>
           </div>
         </div>
-
-        {/* Description Input */}
         <div className="mb-4">
           <textarea
             placeholder="Message"
             className="w-full px-3 py-3 border border-[#BDBDBD] bg-[#FBF6F6] rounded-md text-sm h-30 overflow-auto resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-
-        {/* Maintenance Type Select */}
         <div className="relative mb-4">
           <select
             className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -148,13 +121,9 @@ const Quote = () => {
           </select>
           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
         </div>
-
         <div className="grid grid-cols-2 gap-4 mb-6">
-          {/* Total Cost */}
           <div>
-            <label className="block text-black font-medium text-base mb-1">
-              Total Cost
-            </label>
+            <label className="block text-black font-medium text-base mb-1">Total Cost</label>
             <input
               type="text"
               className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -162,12 +131,8 @@ const Quote = () => {
               onChange={(e) => setTotalCost(e.target.value)}
             />
           </div>
-
-          {/* Change Parts */}
           <div>
-            <label className="block text-black font-medium text-base mb-1">
-              Change Parts?
-            </label>
+            <label className="block text-black font-medium text-base mb-1">Change Parts?</label>
             <div className="relative">
               <select
                 className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -182,15 +147,10 @@ const Quote = () => {
             </div>
           </div>
         </div>
-
         <hr className="my-4 h-[1px] border-none bg-[#E0E0E0]" />
-
         <div className="grid grid-cols-3 gap-4 mb-4">
-          {/* Part Name */}
           <div>
-            <label className="block text-black font-medium text-base mb-1">
-              Part Name
-            </label>
+            <label className="block text-black font-medium text-base mb-1">Part Name</label>
             <div className="relative">
               <select
                 className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -204,12 +164,8 @@ const Quote = () => {
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
-
-          {/* Price */}
           <div>
-            <label className="block text-black font-medium text-base mb-1">
-              Price
-            </label>
+            <label className="block text-black font-medium text-base mb-1">Price</label>
             <div className="relative">
               <select
                 className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -223,12 +179,8 @@ const Quote = () => {
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
-
-          {/* Qty */}
           <div>
-            <label className="block text-black font-medium text-base mb-1">
-              Qty
-            </label>
+            <label className="block text-black font-medium text-base mb-1">Qty</label>
             <div className="relative">
               <select
                 className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -243,29 +195,34 @@ const Quote = () => {
             </div>
           </div>
         </div>
-
-        {/* Click Here to Choose Part Name Button */}
-        <button className="w-full bg-[#4B3193] text-white py-3 rounded-md text-sm font-medium hover:bg-[#3A256F] transition-colors mb-6">
+        <button
+          type="button"
+          onClick={handleAddFleet}
+          className="w-full bg-[#4B3193] text-white py-3 rounded-md text-sm font-medium hover:bg-[#3A256F] transition-colors mb-6"
+        >
           Click here to choose part name
         </button>
       </div>
-
-      {/* Parts Table */}
       <div className="mb-8 max-w-3xl px-3 bg-[#F9F9F9]">
         <div className="flex flex-wrap justify-between py-3 text-sm font-medium text-[#333333]">
           <div className="flex-1">Part Name</div>
           <div className="flex-1">Unit Price</div>
           <div className="flex-1">Qty</div>
-          <div className="flex-1 ">Total Price</div>
+          <div className="flex-1">Total Price</div>
         </div>
-
-        {/* Empty state - table body would go here */}
-        <div className="py-8 text-center text-gray-400 text-sm">
-          No parts added yet
-        </div>
+        {parts.length === 0 ? (
+          <div className="py-8 text-center text-gray-400 text-sm">No parts added yet</div>
+        ) : (
+          parts.map((part, index) => (
+            <div key={index} className="flex flex-wrap justify-between py-3 text-sm text-gray-600">
+              <div className="flex-1">{part.partName}</div>
+              <div className="flex-1">{part.price}</div>
+              <div className="flex-1">{part.qty}</div>
+              <div className="flex-1">{part.totalPrice}</div>
+            </div>
+          ))
+        )}
       </div>
-
-      {/* Generate Quote Button */}
       <div className="w-full max-w-3xl flex justify-end mb-14 md:mb-0">
         <button className="w-full max-w-sm bg-[#B80707] text-white py-3 rounded-md font-medium hover:bg-red-700 transition-colors">
           GENERATE QUOTE

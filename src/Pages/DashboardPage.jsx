@@ -7,10 +7,11 @@ import ServiceHistory from "../components/Dashboard/ServiceHistory";
 import Messages from "../components/Dashboard/Messages";
 import Settings from "../components/Dashboard/Settings";
 import SignOutModal from "../components/Dashboard/SignOutModal";
-import Quote from "../components/Dashboard/Quote"; // Assuming Quote is moved to components/Dashboard
+import Quote from "../components/Dashboard/Quote";
+import AddFleet from "../components/Dashboard/AddFleet";
 
 const DashboardPage = () => {
-  const [open, setOpen] = useState(false); // Initialize as false (Sidebar closed)
+  const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -36,7 +37,6 @@ const DashboardPage = () => {
           onClick={() => setOpen(false)}
         />
       )}
-
       <Header open={open} setOpen={setOpen} />
       <div className="flex flex-1">
         <Sidebar open={open} setOpen={setOpen} onSignOut={handleSignOutClick} />
@@ -51,8 +51,8 @@ const DashboardPage = () => {
             <Route path="service-history" element={<ServiceHistory />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="quote/:fleetName" element={<Quote />} />{" "}
-            {/* New route */}
+            <Route path="quote/:fleetName" element={<Quote />} />
+            <Route path="quote/:fleetName/add-fleet" element={<AddFleet />} />
             <Route
               path="fleet"
               element={<div>Fleet Management Placeholder</div>}
@@ -118,7 +118,6 @@ const DashboardPage = () => {
           scrollbar-color: #6b46c1 #f1f1f1;
         }
         @media (max-width: 1024px) {
-          /* lg breakpoint */
           main {
             height: calc(100vh - 90px) !important;
           }
