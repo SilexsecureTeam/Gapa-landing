@@ -57,7 +57,7 @@ const SignIn = () => {
       // Redirect based on user role
       const role = user.role || "user";
       const redirectPath =
-        role === "admin" ? "/admin-dashboard" : "/vehicle-dashboard";
+        role === "admin" ? "/dashboard" : "/vehicle-dashboard";
       navigate(redirectPath, { state: { user } });
     } catch (error) {
       console.error("Login error:", error.response?.data);
