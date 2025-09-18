@@ -1,5 +1,6 @@
+// src/components/Dashboard/Quote.jsx
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Calendar, Plus } from "lucide-react";
+import { ChevronDown, Calendar } from "lucide-react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import detail from "../../assets/detail.png";
 
@@ -12,23 +13,36 @@ const Quote = () => {
   const [maintEndDate, setMaintEndDate] = useState("");
   const [totalCost, setTotalCost] = useState("");
   const [changeParts, setChangeParts] = useState("");
-  const [partName, setPartName] = useState("");
-  const [price, setPrice] = useState("");
-  const [qty, setQty] = useState("");
   const [maintenanceType, setMaintenanceType] = useState("");
   const [parts, setParts] = useState([]);
 
   useEffect(() => {
     if (location.state) {
-      const { startDate, endDate, maintenanceType: mt, totalCost: cost, newPart } = location.state;
+      const { startDate, endDate, maintenanceType: mt, totalCost: cost, selectedParts } = location.state;
       setSelectedCustomer(fleetName || "");
       setMaintStartDate(startDate || "");
       setMaintEndDate(endDate || "");
       setTotalCost(cost || "");
       setMaintenanceType(mt || "");
-      if (newPart) {
-        setParts((prev) => [...prev, newPart]);
+
+      // Clear parts and populate only with valid selectedParts
+      const newParts = [];
+      if (selectedParts && selectedParts.length > 0) {
+        selectedParts.forEach((part) => {
+          if (part.name && part.price && part.quantity && part.id) {
+            newParts.push({
+              id: part.id,
+              name: part.name,
+              price: parseFloat(part.price),
+              quantity: parseInt(part.quantity),
+              totalPrice: parseFloat(part.totalPrice),
+            });
+          }
+        });
       }
+      setParts(newParts);
+    } else {
+      setParts([]);
     }
   }, [location.state, fleetName]);
 
@@ -135,61 +149,13 @@ const Quote = () => {
             <label className="block text-black font-medium text-base mb-1">Change Parts?</label>
             <div className="relative">
               <select
-                className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
                 value={changeParts}
                 onChange={(e) => setChangeParts(e.target.value)}
               >
                 <option value="">Select</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-        </div>
-        <hr className="my-4 h-[1px] border-none bg-[#E0E0E0]" />
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="block text-black font-medium text-base mb-1">Part Name</label>
-            <div className="relative">
-              <select
-                className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                value={partName}
-                onChange={(e) => setPartName(e.target.value)}
-              >
-                <option value="">Select Part</option>
-                <option value="brake-pads">Brake Pads</option>
-                <option value="oil-filter">Oil Filter</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-black font-medium text-base mb-1">Price</label>
-            <div className="relative">
-              <select
-                className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              >
-                <option value="">Select</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-black font-medium text-base mb-1">Qty</label>
-            <div className="relative">
-              <select
-                className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-                value={qty}
-                onChange={(e) => setQty(e.target.value)}
-              >
-                <option value="">Select</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
@@ -211,14 +177,19 @@ const Quote = () => {
           <div className="flex-1">Total Price</div>
         </div>
         {parts.length === 0 ? (
-          <div className="py-8 text-center text-gray-400 text-sm">No parts added yet</div>
+          <div className="py-8 text-center text-gray-400 text-sm">
+            No parts added yet
+          </div>
         ) : (
-          parts.map((part, index) => (
-            <div key={index} className="flex flex-wrap justify-between py-3 text-sm text-gray-600">
-              <div className="flex-1">{part.partName}</div>
-              <div className="flex-1">{part.price}</div>
-              <div className="flex-1">{part.qty}</div>
-              <div className="flex-1">{part.totalPrice}</div>
+          parts.map((part) => (
+            <div
+              key={part.id}
+              className="flex flex-wrap justify-between py-3 text-sm text-gray-600"
+            >
+              <div className="flex-1">{part.name}</div>
+              <div className="flex-1">₦{part.price.toLocaleString()}</div>
+              <div className="flex-1">{part.quantity}</div>
+              <div className="flex-1">₦{part.totalPrice.toLocaleString()}</div>
             </div>
           ))
         )}

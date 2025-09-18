@@ -9,6 +9,7 @@ import Settings from "../components/Dashboard/Settings";
 import SignOutModal from "../components/Dashboard/SignOutModal";
 import Quote from "../components/Dashboard/Quote";
 import AddFleet from "../components/Dashboard/AddFleet";
+import AutomotiveParts from "../components/Dashboard/AutomotiveParts";
 
 const DashboardPage = () => {
   const [open, setOpen] = useState(false);
@@ -53,6 +54,10 @@ const DashboardPage = () => {
             <Route path="settings" element={<Settings />} />
             <Route path="quote/:fleetName" element={<Quote />} />
             <Route path="quote/:fleetName/add-fleet" element={<AddFleet />} />
+            <Route
+                  path="quote/:fleetName/automotive-parts"
+                  element={<AutomotiveParts />}
+                />
             <Route
               path="fleet"
               element={<div>Fleet Management Placeholder</div>}

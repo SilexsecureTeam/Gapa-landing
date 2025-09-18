@@ -1,5 +1,7 @@
+// src/components/Dashboard/AddFleet.jsx
 import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const AddFleet = () => {
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -17,20 +19,20 @@ const AddFleet = () => {
   };
 
   const handleAddModel = () => {
-    if (!partNumber && (!selectedBrand || !model || !selectedSubModel)) {
-      alert(
-        "Please fill in either part number or brand, model, and sub-model."
-      );
+    const partName = partNumber || (selectedBrand && model && selectedSubModel ? `${selectedBrand} ${model} ${selectedSubModel}` : "");
+    if (!partName) {
+      toast.error("Please fill in either part number or brand, model, and sub-model.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
       return;
     }
-    const newPart = {
-      partName: partNumber || `${selectedBrand} ${model} ${selectedSubModel}`,
-      price: "100", // Placeholder, replace with actual logic
-      qty: "1", // Placeholder, replace with actual logic
-      totalPrice: "100", // Placeholder, replace with actual logic
-    };
-    navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}`, {
-      state: { ...location.state, newPart },
+    toast.success("Fleet model added, proceeding to select parts.", {
+      position: "top-right",
+      autoClose: 2000,
+    });
+    navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}/automotive-parts`, {
+      state: location.state,
     });
   };
 
@@ -59,10 +61,10 @@ const AddFleet = () => {
               className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
             >
               <option value="">Choose a brand...</option>
-              <option value="toyota">Toyota</option>
-              <option value="honda">Honda</option>
-              <option value="ford">Ford</option>
-              <option value="chevrolet">Chevrolet</option>
+              <option value="Toyota">Toyota</option>
+              <option value="Honda">Honda</option>
+              <option value="Ford">Ford</option>
+              <option value="Chevrolet">Chevrolet</option>
             </select>
           </div>
           <div>
@@ -87,17 +89,17 @@ const AddFleet = () => {
               className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
             >
               <option value="">Choose a sub model...</option>
-              <option value="base">Base</option>
-              <option value="premium">Premium</option>
-              <option value="sport">Sport</option>
-              <option value="luxury">Luxury</option>
+              <option value="Base">Base</option>
+              <option value="Premium">Premium</option>
+              <option value="Sport">Sport</option>
+              <option value="Luxury">Luxury</option>
             </select>
           </div>
           <button
             onClick={handleAddModel}
             className="w-full bg-[#4B3193] hover:bg-[#3A256F] text-white font-medium py-3 px-4 rounded-lg transition-colors"
           >
-            ADD MODEL
+            Find My Part
           </button>
           <div className="flex items-center justify-center py-2">
             <div className="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center">
@@ -106,7 +108,7 @@ const AddFleet = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
-              Search with part Number
+              Search with Part Number
             </label>
             <input
               type="text"
@@ -121,7 +123,7 @@ const AddFleet = () => {
               onClick={handleAddModel}
               className="w-full bg-[#4B3193] hover:bg-[#3A256F] text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
-              ADD MODEL
+              Find My Part
             </button>
           </div>
         </div>

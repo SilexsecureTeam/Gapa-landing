@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
 import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import "./App.css";
@@ -38,68 +38,70 @@ const BookService = lazy(() => import("./components/BookService"));
 const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
 
 function App() {
+  const location = useLocation();
+  const hideFloating = location.pathname.includes("dashboard");
+
   return (
     <HelmetProvider>
-      <Router>
-        <div className="min-h-screen w-full">
-          <ScrollToTop />
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <div className="relative">
-                  <img
-                    src={logo}
-                    alt="Loading logo"
-                    className="w-20 h-20 animate-scale-pulse relative z-10"
-                  />
-                </div>
+      <div className="min-h-screen w-full">
+        <ScrollToTop />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
+              <div className="relative">
+                <img
+                  src={logo}
+                  alt="Loading logo"
+                  className="w-20 h-20 animate-scale-pulse relative z-10"
+                />
               </div>
-            }
-          >
-            <ToastContainer position="top-right" autoClose={3000} />
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/team" element={<TeamPage />} />
-              <Route path="/service" element={<ServicePage />} />
-              <Route path="/signin" element={<SigninPage />} />
-              <Route path="/forgot-password" element={<ForgetPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/profile-mec" element={<ProfileMecPage />} />
-              <Route path="/book-first" element={<Book1Page />} />
-              <Route path="/book-second" element={<Book2Page />} />
-              <Route path="/book-third" element={<Book3Page />} />
-              <Route path="/book-forth" element={<Book4Page />} />
-              <Route path="/book-fifth" element={<Book5Page />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/success" element={<Success />} />
-              <Route path="/suc" element={<Suc />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              {/* Protected Routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard/*" element={<DashboardPage />} />
-                <Route
-                  path="/vehicle-dashboard"
-                  element={<VehicleDashboard />}
-                />
-                <Route path="/admin-dashboard" element={<AdminDashboard />} />
-                <Route path="/book-service" element={<BookService />} />
-                <Route
-                  path="/booking/:bookingId/invoice"
-                  element={<Invoice />}
-                />
-                <Route path="/profile-change" element={<ProfileChange />} />
-              </Route>
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-          <FloatingContact />
-        </div>
-      </Router>
+            </div>
+          }
+        >
+          <ToastContainer position="top-right" autoClose={3000} />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/service" element={<ServicePage />} />
+            <Route path="/signin" element={<SigninPage />} />
+            <Route path="/forgot-password" element={<ForgetPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile-mec" element={<ProfileMecPage />} />
+            <Route path="/book-first" element={<Book1Page />} />
+            <Route path="/book-second" element={<Book2Page />} />
+            <Route path="/book-third" element={<Book3Page />} />
+            <Route path="/book-forth" element={<Book4Page />} />
+            <Route path="/book-fifth" element={<Book5Page />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/suc" element={<Suc />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard/*" element={<DashboardPage />} />
+              <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/book-service" element={<BookService />} />
+              <Route path="/booking/:bookingId/invoice" element={<Invoice />} />
+              <Route path="/profile-change" element={<ProfileChange />} />
+            </Route>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+        {!hideFloating && <FloatingContact />}
+      </div>
     </HelmetProvider>
   );
 }
 
-export default App;
+// Wrap App in Router so `useLocation` works
+export default function AppWrapper() {
+  return (
+    <Router>
+      <App />
+    </Router>
+  );
+}
