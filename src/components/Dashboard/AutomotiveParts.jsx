@@ -16,16 +16,18 @@ import logoplaceholder from "../../assets/logoplaceholder.png";
 import iconplaceholder from "../../assets/iconplaceholder.png";
 
 const AutomotiveParts = () => {
+  const { fleetName } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const bookingId = location.state?.booking_id || fleetName;
+
+  // Initialize cartItems based on bookingId
   const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem("cartItems");
+    const savedCart = localStorage.getItem(`cartItems_${bookingId}`);
     return savedCart ? JSON.parse(savedCart) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [quantities, setQuantities] = useState({});
-
-  const { fleetName } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const products = [
     {
@@ -67,44 +69,57 @@ const AutomotiveParts = () => {
     },
   ];
 
+  // Save cartItems to localStorage with bookingId-specific key
   useEffect(() => {
-    localStorage.setItem("cartItems", JSON.stringify(cartItems));
-  }, [cartItems]);
+    localStorage.setItem(`cartItems_${bookingId}`, JSON.stringify(cartItems));
+  }, [cartItems, bookingId]);
 
-  const addToCart = useCallback((product) => {
-    const quantity = quantities[product.id] || 1;
-    setCartItems((prev) => {
-      const existingItem = prev.find((item) => item.id === product.id);
-      let updatedItems;
-      if (existingItem) {
-        updatedItems = prev.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + quantity,
-                totalPrice: item.price * (item.quantity + quantity),
-              }
-            : item
-        );
-      } else {
-        const newItem = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          quantity,
-          totalPrice: product.price * quantity,
-        };
-        updatedItems = [...prev, newItem];
-      }
-      toast.success(`${product.name} (Qty: ${quantity}) added to cart!`, {
-        position: "top-right",
-        autoClose: 2000,
-        toastId: `add-to-cart-${product.id}`, // Prevent duplicate toasts
+  // Clear cart for new booking if no saved cart exists
+  useEffect(() => {
+    const savedCart = localStorage.getItem(`cartItems_${bookingId}`);
+    if (!savedCart) {
+      setCartItems([]);
+      setQuantities({});
+    }
+  }, [bookingId]);
+
+  const addToCart = useCallback(
+    (product) => {
+      const quantity = quantities[product.id] || 1;
+      setCartItems((prev) => {
+        const existingItem = prev.find((item) => item.id === product.id);
+        let updatedItems;
+        if (existingItem) {
+          updatedItems = prev.map((item) =>
+            item.id === product.id
+              ? {
+                  ...item,
+                  quantity: item.quantity + quantity,
+                  totalPrice: item.price * (item.quantity + quantity),
+                }
+              : item
+          );
+        } else {
+          const newItem = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            quantity,
+            totalPrice: product.price * quantity,
+          };
+          updatedItems = [...prev, newItem];
+        }
+        toast.success(`${product.name} (Qty: ${quantity}) added to cart!`, {
+          position: "top-right",
+          autoClose: 2000,
+          toastId: `add-to-cart-${product.id}`,
+        });
+        return updatedItems;
       });
-      return updatedItems;
-    });
-  }, [quantities]);
+    },
+    [quantities]
+  );
 
   const removeFromCart = (id) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
@@ -116,7 +131,7 @@ const AutomotiveParts = () => {
 
   const clearCart = () => {
     setCartItems([]);
-    localStorage.removeItem("cartItems");
+    localStorage.removeItem(`cartItems_${bookingId}`);
     toast.info("Cart cleared", {
       position: "top-right",
       autoClose: 2000,
@@ -144,22 +159,11 @@ const AutomotiveParts = () => {
     }));
   };
 
-  const handleProceedToCheckout = () => {
-    navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}`, {
-      state: { ...location.state, selectedParts: cartItems },
-    });
-    setIsCartOpen(false);
-  };
-
   const handleViewCart = () => {
     navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}`, {
       state: { ...location.state, selectedParts: cartItems },
     });
     setIsCartOpen(false);
-  };
-
-  const toggleCart = () => {
-    setIsCartOpen(!isCartOpen);
   };
 
   const subtotal = cartItems.reduce(
@@ -173,7 +177,7 @@ const AutomotiveParts = () => {
       {isCartOpen && (
         <div
           className="fixed inset-0 bg-black/30 z-30"
-          onClick={toggleCart}
+          onClick={() => setIsCartOpen(false)}
         />
       )}
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
@@ -186,7 +190,7 @@ const AutomotiveParts = () => {
           </div>
           <div className="flex justify-between items-center mb-4">
             <button
-              onClick={toggleCart}
+              onClick={() => setIsCartOpen(!isCartOpen)}
               className="relative flex items-center gap-2 p-2 hover:bg-gray-100 rounded"
               aria-label="Toggle cart"
               aria-expanded={isCartOpen}
@@ -214,7 +218,7 @@ const AutomotiveParts = () => {
               Shopping Cart ({totalItems})
             </h2>
             <button
-              onClick={toggleCart}
+              onClick={() => setIsCartOpen(false)}
               className="text-gray-400 hover:text-gray-600"
             >
               <X className="w-6 h-6" />
@@ -223,7 +227,9 @@ const AutomotiveParts = () => {
 
           <div className="space-y-4 mb-6 flex-1 overflow-y-auto custom-scrollbar">
             {cartItems.length === 0 ? (
-              <div className="text-center text-gray-500">Your cart is empty</div>
+              <div className="text-center text-gray-500">
+                Your cart is empty
+              </div>
             ) : (
               cartItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3">
@@ -274,13 +280,6 @@ const AutomotiveParts = () => {
           </div>
 
           <div className="space-y-3">
-            <button
-              onClick={handleProceedToCheckout}
-              className="w-full bg-[#F7CD3A] hover:bg-yellow-500 text-black font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2"
-            >
-              PROCEED TO CHECKOUT
-              <ArrowRight className="w-4 h-4" />
-            </button>
             <button
               onClick={handleViewCart}
               className="w-full border border-gray-300 hover:border-gray-400 text-gray-700 font-medium py-3 px-4 rounded-lg"

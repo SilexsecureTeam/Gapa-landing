@@ -19,21 +19,34 @@ const AddFleet = () => {
   };
 
   const handleAddModel = () => {
-    const partName = partNumber || (selectedBrand && model && selectedSubModel ? `${selectedBrand} ${model} ${selectedSubModel}` : "");
+    const partName =
+      partNumber ||
+      (selectedBrand && model && selectedSubModel
+        ? `${selectedBrand} ${model} ${selectedSubModel}`
+        : "");
     if (!partName) {
-      toast.error("Please fill in either part number or brand, model, and sub-model.", {
-        position: "top-right",
-        autoClose: 2000,
-      });
+      toast.error(
+        "Please fill in either part number or brand, model, and sub-model.",
+        {
+          position: "top-right",
+          autoClose: 2000,
+        }
+      );
       return;
     }
     toast.success("Fleet model added, proceeding to select parts.", {
       position: "top-right",
       autoClose: 2000,
     });
-    navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}/automotive-parts`, {
-      state: location.state,
-    });
+    navigate(
+      `/dashboard/quote/${encodeURIComponent(fleetName)}/automotive-parts`,
+      {
+        state: {
+          ...location.state,
+          booking_id: location.state?.booking_id || fleetName,
+        },
+      }
+    );
   };
 
   return (

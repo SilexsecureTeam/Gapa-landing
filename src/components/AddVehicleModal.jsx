@@ -348,6 +348,43 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 placeholder="Enter your 17-character VIN"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Service Date<span className="text-[#FF0000]">*</span>
+              </label>
+              <input
+                type="date"
+                name="service_date"
+                value={form.service_date}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select Service<span className="text-[#FF0000]">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  name="service_required"
+                  value={form.service_required}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                >
+                  <option value="">Select a service</option>
+                  {services.map((service, index) => (
+                    <option key={index} value={service}>
+                      {service}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             <div
@@ -407,29 +444,6 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Service<span className="text-[#FF0000]">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="service_required"
-                    value={form.service_required}
-                    onChange={handleChange}
-                    required={isExpanded}
-                    disabled={isSubmitting}
-                    className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
-                  >
-                    <option value="">Select a service</option>
-                    {services.map((service, index) => (
-                      <option key={index} value={service}>
-                        {service}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Select Location<span className="text-[#FF0000]">*</span>
                 </label>
                 <div className="relative">
@@ -450,20 +464,6 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Service Date<span className="text-[#FF0000]">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="service_date"
-                  value={form.service_date}
-                  onChange={handleChange}
-                  required={isExpanded}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
