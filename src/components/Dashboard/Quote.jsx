@@ -45,6 +45,31 @@ const Quote = () => {
     const user = localStorage.getItem("user");
 
     if (!token || !user) {
+      toast.error("Please sign in to access this page.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      navigate("/signin", { state: { from: window.location.pathname } });
+      return;
+    }
+
+    // Verify admin role
+    let userRole;
+    try {
+      userRole = JSON.parse(user).role;
+      if (userRole !== "admin") {
+        toast.error("Only admins can access this page.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        navigate("/dashboard");
+        return;
+      }
+    } catch {
+      toast.error("Invalid user data. Please sign in again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       navigate("/signin", { state: { from: window.location.pathname } });
       return;
     }
@@ -93,9 +118,9 @@ const Quote = () => {
       const newParts = (selectedParts || cartItems || []).map((part) => ({
         id: part.id,
         name: part.name,
-        price: parseFloat(part.price),
-        quantity: parseInt(part.quantity),
-        totalPrice: parseFloat(part.totalPrice),
+        price: parseFloat(part.price) || 0,
+        quantity: parseInt(part.quantity) || 1,
+        totalPrice: parseFloat(part.totalPrice) || 0,
       }));
       setParts(newParts);
     } else {
@@ -177,6 +202,43 @@ const Quote = () => {
     }
   };
 
+  const checkQuoteExists = async (bookingId) => {
+    const token = localStorage.getItem("authToken");
+    const numericalId = parseInt(bookingId);
+    if (!token || isNaN(numericalId)) return false;
+
+    try {
+      const response = await axios.get(
+        `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log(
+        "Check quote response:",
+        JSON.stringify(response.data, null, 2)
+      );
+      return (
+        response.data.status &&
+        response.data.data &&
+        Object.keys(response.data.data).length > 0
+      );
+    } catch (err) {
+      if (err.response?.status === 404) {
+        return false; // No quote exists
+      }
+      if (
+        err.response?.data?.status === false &&
+        err.response?.data?.message ===
+          "A quote already exists for this booking"
+      ) {
+        return true; // Quote exists, backend returned specific error
+      }
+      console.error("Error checking quote:", err.message, err.response?.data);
+      return false;
+    }
+  };
+
   const validateBookingId = async (id) => {
     const token = localStorage.getItem("authToken");
     const numericalId = parseInt(id);
@@ -202,29 +264,11 @@ const Quote = () => {
     }
   };
 
-  const handleUpdateQuantity = (partId, change) => {
-    setParts((prevParts) =>
-      prevParts.map((part) => {
-        if (part.id === partId) {
-          const newQuantity = Math.max(1, part.quantity + change); // Minimum quantity is 1
-          return {
-            ...part,
-            quantity: newQuantity,
-            totalPrice: part.price * newQuantity,
-          };
-        }
-        return part;
-      })
-    );
-    toast.info(`Quantity updated`, {
-      position: "top-right",
-      autoClose: 2000,
-    });
-  };
-
   const handleGenerateQuote = async () => {
     const token = localStorage.getItem("authToken");
     const bookingId = parseInt(location.state?.id);
+    const booking_id = location.state?.booking_id || "N/A";
+
     if (!token || !bookingId || isNaN(bookingId)) {
       toast.error("Missing or invalid booking ID", {
         position: "top-right",
@@ -234,9 +278,20 @@ const Quote = () => {
       return;
     }
 
+    // Validate booking ID
     const isValidBooking = await validateBookingId(bookingId);
     if (!isValidBooking) {
-      toast.error("Invalid or non-existent booking ID", {
+      toast.error(`Invalid or non-existent booking ID: ${booking_id}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    // Check if quote already exists
+    const quoteExists = await checkQuoteExists(bookingId);
+    if (quoteExists) {
+      toast.warn(`A quote already exists for booking #${booking_id}`, {
         position: "top-right",
         autoClose: 3000,
       });
@@ -283,7 +338,7 @@ const Quote = () => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("booking_id", location.state.booking_id || "");
+      formData.append("booking_id", booking_id);
       formData.append("message", message);
       formData.append(
         "maintenance_start_date",
@@ -358,7 +413,17 @@ const Quote = () => {
         err.response?.data
       );
       let errorMessage = "Failed to generate quote";
-      if (err.response?.status === 404) {
+      if (
+        err.response?.data?.status === false &&
+        err.response?.data?.message ===
+          "A quote already exists for this booking"
+      ) {
+        toast.warn(`A quote already exists for booking #${booking_id}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        return;
+      } else if (err.response?.status === 404) {
         errorMessage =
           "Booking not found or invalid endpoint. Please check the booking ID or contact support.";
       } else if (err.response?.status === 422 && err.response?.data?.errors) {
@@ -366,6 +431,7 @@ const Quote = () => {
           .flat()
           .join(", ");
       } else if (err.response?.status === 401) {
+        errorMessage = "Session expired. Please sign in again.";
         localStorage.removeItem("authToken");
         localStorage.removeItem("user");
         navigate("/signin", { state: { from: window.location.pathname } });
@@ -430,6 +496,26 @@ const Quote = () => {
     setManualQuantity(1);
     setManualUnitPrice("");
     setShowManualAdd(false);
+  };
+
+  const handleUpdateQuantity = (partId, change) => {
+    setParts((prevParts) =>
+      prevParts.map((part) => {
+        if (part.id === partId) {
+          const newQuantity = Math.max(1, part.quantity + change);
+          return {
+            ...part,
+            quantity: newQuantity,
+            totalPrice: part.price * newQuantity,
+          };
+        }
+        return part;
+      })
+    );
+    toast.info(`Quantity updated`, {
+      position: "top-right",
+      autoClose: 2000,
+    });
   };
 
   const handleDeletePart = (id) => {

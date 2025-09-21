@@ -67,6 +67,8 @@ const Invoice = () => {
         if (isMounted) {
           // Handle JSON response
           const invoiceData = response.data.data || response.data || {};
+          console.log("Invoice data extracted:", invoiceData);
+
           const normalizedInvoice = {
             booking_id:
               invoiceData.booking_id || location.state?.booking_id || "N/A",
@@ -82,12 +84,15 @@ const Invoice = () => {
             maintenance_end_date: invoiceData.maintenance_end_date || "N/A",
           };
 
+          // Log normalized invoice for debugging
+          console.log("Normalized invoice:", normalizedInvoice);
+
           // Set booking details from location.state or fetch /orders
           if (location.state) {
             setBooking({
               vehicle_type: location.state.vehicle_type || "N/A",
-              make: location.state.make || "",
-              model: location.state.model || "",
+              make: location.state.vehicle_make || "",
+              model: location.state.vehicle_model || "",
               service_required: location.state.service_required || "N/A",
               service_center: location.state.service_center || "N/A",
               service_date: location.state.service_date || "N/A",
@@ -119,14 +124,18 @@ const Invoice = () => {
             }
           }
 
+          // Check if invoice is valid (relaxed condition)
           if (
             !invoiceData ||
             Object.keys(invoiceData).length === 0 ||
-            (normalizedInvoice.service_fee.length === 0 &&
-              normalizedInvoice.total_amount === 0)
+            (normalizedInvoice.total_amount === 0 &&
+              normalizedInvoice.service_fee.length === 0 &&
+              normalizedInvoice.workmanship === 0 &&
+              !normalizedInvoice.maintenance_end_date)
           ) {
+            console.log("Invoice considered invalid due to empty or zero data");
             toast.warn(
-              `No invoice yet for booking #${normalizedInvoice.booking_id}. Please wait for an admin to generate a quote.`,
+              `No invoice available for booking #${bookingId}. Contact support if this is an error.`,
               {
                 position: "top-right",
                 autoClose: 3000,
@@ -146,7 +155,7 @@ const Invoice = () => {
         if (isMounted) {
           if (err.message.includes("Network Error")) {
             toast.error(
-              "Network error: Unable to connect to the server. Please check your connection or contact the backend team.",
+              "Network error: Unable to connect to the server. Please check your connection or contact support.",
               {
                 position: "top-right",
                 autoClose: 3000,
@@ -169,10 +178,9 @@ const Invoice = () => {
               action: { label: "Log In", onClick: () => navigate("/signin") },
             });
           } else if (err.response?.status === 404) {
+            console.log("Invoice not found (404)");
             toast.warn(
-              `No invoice yet for booking #${
-                location.state?.booking_id || bookingId
-              }. Please wait for an admin to generate a quote.`,
+              `No invoice available for booking #${bookingId}. Contact support if this is an error.`,
               {
                 position: "top-right",
                 autoClose: 3000,
@@ -266,7 +274,7 @@ const Invoice = () => {
       if (isMounted) {
         if (err.message.includes("Network Error")) {
           toast.error(
-            "Network error: Unable to connect to the server. Please check your connection or contact the backend team.",
+            "Network error: Unable to connect to the server. Please check your connection or contact support.",
             {
               position: "top-right",
               autoClose: 3000,
@@ -289,10 +297,9 @@ const Invoice = () => {
             action: { label: "Log In", onClick: () => navigate("/signin") },
           });
         } else if (err.response?.status === 404) {
+          console.log("Invoice not found for download (404)");
           toast.warn(
-            `No invoice yet for booking #${
-              location.state?.booking_id || bookingId
-            }. Please wait for an admin to generate a quote.`,
+            `No invoice available for booking #${bookingId}. Contact support if this is an error.`,
             {
               position: "top-right",
               autoClose: 3000,
@@ -330,7 +337,7 @@ const Invoice = () => {
                 <img src={logo} alt="CarFlex Logo" className="h-12" />
               </Link>
               <h2 className="text-lg font-semibold text-[#575757]">
-                Invoice for Booking #{location.state?.booking_id || bookingId}
+                Invoice for Booking #{bookingId}
               </h2>
             </div>
             <button
@@ -352,9 +359,8 @@ const Invoice = () => {
           <div className="text-center py-6">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-sm">
-              No invoice yet for booking #
-              {location.state?.booking_id || bookingId}. Please wait for an
-              admin to generate a quote.
+              No invoice available for booking #{bookingId}. Contact support if
+              this is an error.
             </p>
             <button
               onClick={() => navigate("/vehicle-dashboard")}

@@ -20,6 +20,21 @@ const Overview = () => {
       return;
     }
 
+    // Verify admin role
+    let userRole;
+    try {
+      userRole = JSON.parse(user).role;
+      if (userRole !== "admin") {
+        setError("Only admins can access this page.");
+        navigate("/dashboard");
+        return;
+      }
+    } catch {
+      setError("Invalid user data. Please sign in again.");
+      navigate("/signin", { state: { from: window.location.pathname } });
+      return;
+    }
+
     const fetchBookings = async () => {
       try {
         const response = await axios.get(
@@ -30,10 +45,52 @@ const Overview = () => {
           let bookings = response.data.data.map((item) => ({
             ...item,
             id: parseInt(item.id), // Ensure ID is numerical
+            maintenance_end_date: item.maintenance_end_date || null,
+            total_amount: item.total_amount
+              ? parseFloat(item.total_amount)
+              : null,
           }));
 
-          // Merge updates from localStorage
-          bookings = bookings.map((booking) => {
+          // Fetch quote data for each booking
+          const quotePromises = bookings.map(async (booking) => {
+            try {
+              const quoteResponse = await axios.get(
+                `https://api.gapafix.com.ng/api/booking/${booking.id}/invoice/view`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              console.log(
+                `Quote response for booking ${booking.id}:`,
+                JSON.stringify(quoteResponse.data, null, 2)
+              );
+              if (quoteResponse.data.status && quoteResponse.data.data) {
+                return {
+                  ...booking,
+                  maintenance_end_date:
+                    quoteResponse.data.data.maintenance_end_date ||
+                    booking.maintenance_end_date,
+                  total_amount: quoteResponse.data.data.total_amount
+                    ? parseFloat(quoteResponse.data.data.total_amount)
+                    : booking.total_amount,
+                };
+              }
+              return booking;
+            } catch (err) {
+              if (err.response?.status === 404) {
+                return booking; // No quote exists, use booking data
+              }
+              console.error(
+                `Error fetching quote for booking ${booking.id}:`,
+                err.message,
+                err.response?.data
+              );
+              return booking;
+            }
+          });
+
+          const updatedBookings = await Promise.all(quotePromises);
+
+          // Merge with localStorage updates (as a fallback)
+          const finalBookings = updatedBookings.map((booking) => {
             const updatedBooking = localStorage.getItem(
               `updatedBooking_${booking.id}`
             );
@@ -43,17 +100,24 @@ const Overview = () => {
                 ...booking,
                 maintenance_end_date:
                   updates.maintenance_end_date || booking.maintenance_end_date,
-                total_amount: updates.total_amount || booking.total_amount,
+                total_amount: updates.total_amount
+                  ? parseFloat(updates.total_amount)
+                  : booking.total_amount,
               };
             }
             return booking;
           });
 
-          setMaintenanceData(bookings);
+          setMaintenanceData(finalBookings);
         } else {
           setError("Failed to retrieve bookings");
         }
       } catch (err) {
+        console.error(
+          "Error fetching bookings:",
+          err.message,
+          err.response?.data
+        );
         if (err.response?.status === 401) {
           setError("Session expired. Please sign in again.");
           localStorage.removeItem("authToken");
@@ -90,31 +154,22 @@ const Overview = () => {
       return;
     }
 
-    if (!id) {
-      toast.error("Invalid booking ID.", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-      return;
-    }
-
     let userRole;
     try {
       userRole = JSON.parse(user).role;
+      if (userRole !== "admin") {
+        toast.error("Only admins can delete bookings.", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        return;
+      }
     } catch {
       toast.error("Invalid user data. Please sign in again.", {
         position: "top-right",
         autoClose: 2000,
       });
       navigate("/signin", { state: { from: window.location.pathname } });
-      return;
-    }
-
-    if (userRole !== "admin") {
-      toast.error("Only admins can delete bookings.", {
-        position: "top-right",
-        autoClose: 2000,
-      });
       return;
     }
 
@@ -130,8 +185,13 @@ const Overview = () => {
         position: "top-right",
         autoClose: 2000,
       });
+      localStorage.removeItem(`updatedBooking_${id}`);
     } catch (err) {
-      console.error("Failed to delete booking:", err.message);
+      console.error(
+        "Failed to delete booking:",
+        err.message,
+        err.response?.data
+      );
       let errorMessage = "Failed to delete booking";
       if (err.response?.status === 401) {
         errorMessage = "Session expired. Please sign in again.";
@@ -232,7 +292,7 @@ const Overview = () => {
                     : "N/A"}
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-900 font-medium">
-                  {item.total_amount
+                  {item.total_amount != null
                     ? `₦${item.total_amount.toLocaleString()}`
                     : "-"}
                 </td>
