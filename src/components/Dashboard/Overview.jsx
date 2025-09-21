@@ -1,4 +1,3 @@
-// src/components/Dashboard/Overview.jsx
 import React, { useState, useEffect } from "react";
 import { Eye, Trash2, ArrowDownUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +27,29 @@ const Overview = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.status) {
-          setMaintenanceData(response.data.data);
+          let bookings = response.data.data.map((item) => ({
+            ...item,
+            id: parseInt(item.id), // Ensure ID is numerical
+          }));
+
+          // Merge updates from localStorage
+          bookings = bookings.map((booking) => {
+            const updatedBooking = localStorage.getItem(
+              `updatedBooking_${booking.id}`
+            );
+            if (updatedBooking) {
+              const updates = JSON.parse(updatedBooking);
+              return {
+                ...booking,
+                maintenance_end_date:
+                  updates.maintenance_end_date || booking.maintenance_end_date,
+                total_amount: updates.total_amount || booking.total_amount,
+              };
+            }
+            return booking;
+          });
+
+          setMaintenanceData(bookings);
         } else {
           setError("Failed to retrieve bookings");
         }
@@ -50,10 +71,10 @@ const Overview = () => {
   }, [navigate]);
 
   const handleView = (item) => {
+    console.log("Navigating with ID:", item.id, "Booking ID:", item.booking_id);
     navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
       state: { ...item },
     });
-    console.log("Navigating to Quote for:", item);
   };
 
   const handleDelete = async (id) => {
@@ -194,7 +215,9 @@ const Overview = () => {
                 <td className="py-4 px-4 text-sm text-gray-600">
                   {item.service_date || "N/A"}
                 </td>
-                <td className="py-4 px-4 text-sm text-gray-600">-</td>
+                <td className="py-4 px-4 text-sm text-gray-600">
+                  {item.maintenance_end_date || "-"}
+                </td>
                 <td className="py-4 px-4 text-sm text-gray-600 w-70">
                   {item.service_required
                     ? `${item.service_required}${
@@ -209,11 +232,13 @@ const Overview = () => {
                     : "N/A"}
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-900 font-medium">
-                  -
+                  {item.total_amount
+                    ? `₦${item.total_amount.toLocaleString()}`
+                    : "-"}
                 </td>
                 <td className="py-4 px-4 text-sm">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    Pending
+                    {item.status || "Pending"}
                   </span>
                 </td>
                 <td className="py-4 px-4">

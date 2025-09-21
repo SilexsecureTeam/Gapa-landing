@@ -1,6 +1,12 @@
-// src/components/Dashboard/Quote.jsx
 import React, { useState, useEffect } from "react";
-import { ChevronDown, Calendar, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Calendar,
+  Plus,
+  Trash2,
+  PlusCircle,
+  MinusCircle,
+} from "lucide-react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { format, isBefore } from "date-fns";
 import DatePicker from "react-datepicker";
@@ -23,7 +29,6 @@ const Quote = () => {
   const [parts, setParts] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [maintenanceOptions, setMaintenanceOptions] = useState([]);
-
   const [showManualAdd, setShowManualAdd] = useState(false);
   const [manualPartName, setManualPartName] = useState("");
   const [manualQuantity, setManualQuantity] = useState(1);
@@ -45,7 +50,7 @@ const Quote = () => {
     }
 
     if (location.state) {
-      console.log("location.state:", location.state); // Debug: Log location.state
+      console.log("location.state:", location.state);
       const {
         service_date,
         service_required,
@@ -53,7 +58,24 @@ const Quote = () => {
         full_name,
         selectedParts,
         id,
+        // booking_id,
       } = location.state;
+
+      // Validate id
+      const numericalId = parseInt(id);
+      if (!id || isNaN(numericalId)) {
+        console.error("Invalid or missing booking ID:", id);
+        toast.error(
+          "Invalid or missing booking ID. Please select a valid booking.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
+        navigate("/dashboard");
+        return;
+      }
+
       setCustomerName(full_name || "");
       setMaintStartDate(service_date ? new Date(service_date) : null);
       setMaintEndDate(null);
@@ -66,7 +88,7 @@ const Quote = () => {
       );
       setMaintenanceOptions(options);
 
-      const savedCart = localStorage.getItem(`cartItems_${id}`);
+      const savedCart = localStorage.getItem(`cartItems_${numericalId}`);
       const cartItems = savedCart ? JSON.parse(savedCart) : [];
       const newParts = (selectedParts || cartItems || []).map((part) => ({
         id: part.id,
@@ -89,14 +111,22 @@ const Quote = () => {
 
   useEffect(() => {
     if (location.state?.id) {
-      localStorage.setItem(
-        `cartItems_${location.state.id}`,
-        JSON.stringify(parts)
-      );
+      const numericalId = parseInt(location.state.id);
+      if (!isNaN(numericalId)) {
+        localStorage.setItem(`cartItems_${numericalId}`, JSON.stringify(parts));
+      }
     }
   }, [parts, location.state]);
 
   const handleAddFleet = () => {
+    const numericalId = parseInt(location.state?.id);
+    if (!numericalId || isNaN(numericalId)) {
+      toast.error("Invalid booking ID.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
     navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}/add-fleet`, {
       state: {
         fleetName,
@@ -105,14 +135,15 @@ const Quote = () => {
         labourCost,
         maintStartDate,
         maintEndDate,
-        id: location.state?.id,
+        id: numericalId,
       },
     });
   };
 
   const handleUpdateEndDate = async () => {
     const token = localStorage.getItem("authToken");
-    if (!token || !location.state?.id || !maintEndDate) return;
+    const numericalId = parseInt(location.state?.id);
+    if (!token || !numericalId || isNaN(numericalId) || !maintEndDate) return;
 
     if (maintStartDate && isBefore(maintEndDate, maintStartDate)) {
       toast.error("Maintenance end date must be after or equal to start date", {
@@ -124,7 +155,7 @@ const Quote = () => {
 
     try {
       await axios.patch(
-        `https://api.gapafix.com.ng/api/bookings/${location.state.id}`,
+        `https://api.gapafix.com.ng/api/bookings/${numericalId}`,
         { maintenance_end_date: format(maintEndDate, "yyyy-MM-dd") },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -148,29 +179,54 @@ const Quote = () => {
 
   const validateBookingId = async (id) => {
     const token = localStorage.getItem("authToken");
+    const numericalId = parseInt(id);
+    if (isNaN(numericalId)) {
+      console.error("Invalid booking ID format:", id);
+      return false;
+    }
     try {
       const response = await axios.get(
-        `https://api.gapafix.com.ng/api/bookings/${id}`,
+        "https://api.gapafix.com.ng/api/bookings/all",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("Booking validation response:", response.data); // Debug: Log response
-      return true;
-    } catch (err) {
-      console.error(
-        "Booking ID validation failed:",
-        err.message,
-        err.response?.data
+      const exists = response.data.data.some(
+        (booking) => booking.id === numericalId
       );
+      console.log(`Booking ${numericalId} exists in all bookings?`, exists);
+      return exists;
+    } catch (err) {
+      console.error("Validation failed:", err.message, err.response?.data);
       return false;
     }
   };
 
+  const handleUpdateQuantity = (partId, change) => {
+    setParts((prevParts) =>
+      prevParts.map((part) => {
+        if (part.id === partId) {
+          const newQuantity = Math.max(1, part.quantity + change); // Minimum quantity is 1
+          return {
+            ...part,
+            quantity: newQuantity,
+            totalPrice: part.price * newQuantity,
+          };
+        }
+        return part;
+      })
+    );
+    toast.info(`Quantity updated`, {
+      position: "top-right",
+      autoClose: 2000,
+    });
+  };
+
   const handleGenerateQuote = async () => {
     const token = localStorage.getItem("authToken");
-    if (!token || !location.state?.id) {
-      toast.error("Missing booking ID or authentication", {
+    const bookingId = parseInt(location.state?.id);
+    if (!token || !bookingId || isNaN(bookingId)) {
+      toast.error("Missing or invalid booking ID", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -178,7 +234,7 @@ const Quote = () => {
       return;
     }
 
-    const isValidBooking = await validateBookingId(location.state.id);
+    const isValidBooking = await validateBookingId(bookingId);
     if (!isValidBooking) {
       toast.error("Invalid or non-existent booking ID", {
         position: "top-right",
@@ -227,7 +283,7 @@ const Quote = () => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("booking_id", location.state.id); // Adjust if API expects "id"
+      formData.append("booking_id", location.state.booking_id || "");
       formData.append("message", message);
       formData.append(
         "maintenance_start_date",
@@ -260,7 +316,7 @@ const Quote = () => {
       }
 
       const response = await axios.post(
-        `https://api.gapafix.com.ng/api/admin/bookings/${location.state.id}/quote`,
+        `https://api.gapafix.com.ng/api/admin/bookings/${bookingId}/quote`,
         formData,
         {
           headers: {
@@ -275,8 +331,26 @@ const Quote = () => {
         position: "top-right",
         autoClose: 2000,
       });
-      localStorage.removeItem(`cartItems_${location.state.id}`);
-      navigate("/dashboard");
+
+      // Save updates for Overview page
+      localStorage.setItem(
+        `updatedBooking_${bookingId}`,
+        JSON.stringify({
+          id: bookingId,
+          maintenance_end_date: maintEndDate
+            ? format(maintEndDate, "yyyy-MM-dd")
+            : null,
+          total_amount: parseFloat(mainTotalCost),
+        })
+      );
+
+      // Reset form fields but stay on page
+      setParts([]);
+      setLabourCost("");
+      setMessage("");
+      setChangeParts("");
+      setMaintEndDate(null);
+      localStorage.removeItem(`cartItems_${bookingId}`);
     } catch (err) {
       console.error(
         "Failed to generate quote:",
@@ -603,7 +677,23 @@ const Quote = () => {
               >
                 <div className="flex-1">{part.name}</div>
                 <div className="flex-1">₦{part.price.toLocaleString()}</div>
-                <div className="flex-1">{part.quantity}</div>
+                <div className="flex-1 flex items-center gap-2">
+                  <button
+                    onClick={() => handleUpdateQuantity(part.id, -1)}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    aria-label={`Decrease quantity for ${part.name}`}
+                  >
+                    <MinusCircle className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <span>{part.quantity}</span>
+                  <button
+                    onClick={() => handleUpdateQuantity(part.id, 1)}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    aria-label={`Increase quantity for ${part.name}`}
+                  >
+                    <PlusCircle className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
                 <div className="flex-1">
                   ₦{part.totalPrice.toLocaleString()}
                 </div>

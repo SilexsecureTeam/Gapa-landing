@@ -1,6 +1,5 @@
-// src/components/Dashboard/Invoice.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FileText, Download, ArrowLeft } from "lucide-react";
@@ -18,66 +17,6 @@ const formatNaira = (number) => {
     .replace("NGN", "₦");
 };
 
-// Parse text response to extract invoice details
-const parseTextInvoice = (text) => {
-  const invoiceData = {
-    booking_id: "N/A",
-    full_name: "N/A",
-    email: "N/A",
-    message: "N/A",
-    change_part: false,
-    parts: [],
-    service_fee: [],
-    workmanship: 0,
-    total_amount: 0,
-    maintenance_start_date: "N/A",
-    maintenance_end_date: "N/A",
-  };
-
-  const lines = text.split("\n");
-  lines.forEach((line) => {
-    if (line.startsWith("Booking ID: ")) {
-      invoiceData.booking_id = line.replace("Booking ID: ", "").trim();
-    } else if (line.startsWith("Customer: ")) {
-      const customerMatch = line.match(/Customer: (.+) \((.+)\)/);
-      if (customerMatch) {
-        invoiceData.full_name = customerMatch[1].trim();
-        invoiceData.email = customerMatch[2].trim();
-      }
-    } else if (line.startsWith("Total: ₦")) {
-      const total = line.replace("Total: ₦", "").replace(/,/g, "").trim();
-      invoiceData.total_amount = parseFloat(total) || 0;
-    } else if (line.startsWith("Workmanship: ₦")) {
-      const workmanship = line
-        .replace("Workmanship: ₦", "")
-        .replace(/,/g, "")
-        .trim();
-      invoiceData.workmanship = parseFloat(workmanship) || 0;
-    } else if (line.startsWith("Maintenance Start Date: ")) {
-      invoiceData.maintenance_start_date = line
-        .replace("Maintenance Start Date: ", "")
-        .trim();
-    } else if (line.startsWith("Maintenance End Date: ")) {
-      invoiceData.maintenance_end_date = line
-        .replace("Maintenance End Date: ", "")
-        .trim();
-    } else if (line.startsWith("- ")) {
-      const serviceMatch = line.match(
-        /- (.+?)\s+Price: ₦([\d,.]+)\s+Qty: (\d+)/
-      );
-      if (serviceMatch) {
-        invoiceData.service_fee.push({
-          name: serviceMatch[1].trim(),
-          price: parseFloat(serviceMatch[2].replace(/,/g, "")) || 0,
-          quantity: parseInt(serviceMatch[3]) || 1,
-        });
-      }
-    }
-  });
-
-  return invoiceData;
-};
-
 const Invoice = () => {
   const [invoice, setInvoice] = useState(null);
   const [booking, setBooking] = useState(null);
@@ -85,12 +24,15 @@ const Invoice = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const navigate = useNavigate();
   const { bookingId } = useParams();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchInvoiceAndBooking = async () => {
       const token = localStorage.getItem("authToken");
       if (!token) {
         toast.error("Please log in to view the invoice.", {
+          position: "top-right",
+          autoClose: 3000,
           action: { label: "Log In", onClick: () => navigate("/signin") },
         });
         setIsLoading(false);
@@ -101,34 +43,18 @@ const Invoice = () => {
       setIsLoading(true);
 
       try {
-        // Fetch booking details from /orders
-        const ordersResponse = await axios.get(
-          "https://api.gapafix.com.ng/api/orders",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const fetchedBookings = ordersResponse.data.data || [];
-        const selectedBooking = fetchedBookings.find(
-          (b) => b.booking_id === bookingId
-        );
-        if (selectedBooking) {
-          setBooking({
-            vehicle_type: selectedBooking.vehicle_type || "N/A",
-            make: selectedBooking.vehicle_make || "",
-            model: selectedBooking.vehicle_model || "",
-            service_required: selectedBooking.service_required || "N/A",
-            service_center: selectedBooking.service_center || "N/A",
-            service_date: selectedBooking.service_date || "N/A",
-            status: selectedBooking.status || "N/A",
-            additional_services: selectedBooking.additional_services || [],
-          });
+        // Validate bookingId is numerical
+        const numericalId = parseInt(bookingId);
+        if (isNaN(numericalId)) {
+          throw new Error(
+            `Invalid booking ID: ${bookingId}. Must be numerical.`
+          );
         }
 
         // Fetch invoice
-        console.log("Fetching invoice for bookingId:", bookingId);
+        console.log("Fetching invoice for ID:", numericalId);
         const response = await axios.get(
-          `https://api.gapafix.com.ng/api/booking/${bookingId}/invoice/view`,
+          `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -139,40 +65,68 @@ const Invoice = () => {
         );
 
         if (isMounted) {
-          let invoiceData;
-          if (typeof response.data === "string") {
-            // Handle text response
-            invoiceData = parseTextInvoice(response.data);
+          // Handle JSON response
+          const invoiceData = response.data.data || response.data || {};
+          const normalizedInvoice = {
+            booking_id:
+              invoiceData.booking_id || location.state?.booking_id || "N/A",
+            full_name:
+              invoiceData.full_name || location.state?.full_name || "N/A",
+            email: invoiceData.email || location.state?.email || "N/A",
+            message: invoiceData.message || "No message provided",
+            change_part: invoiceData.change_part || false,
+            service_fee: invoiceData.service_fee || [],
+            workmanship: parseFloat(invoiceData.workmanship) || 0,
+            total_amount: parseFloat(invoiceData.total_amount) || 0,
+            maintenance_start_date: invoiceData.maintenance_start_date || "N/A",
+            maintenance_end_date: invoiceData.maintenance_end_date || "N/A",
+          };
+
+          // Set booking details from location.state or fetch /orders
+          if (location.state) {
+            setBooking({
+              vehicle_type: location.state.vehicle_type || "N/A",
+              make: location.state.make || "",
+              model: location.state.model || "",
+              service_required: location.state.service_required || "N/A",
+              service_center: location.state.service_center || "N/A",
+              service_date: location.state.service_date || "N/A",
+              status: location.state.status || "N/A",
+              additional_services: location.state.additional_services || [],
+            });
           } else {
-            // Handle JSON response
-            invoiceData = response.data.data || response.data || {};
-            invoiceData = {
-              booking_id: invoiceData.booking_id || bookingId,
-              full_name: invoiceData.full_name || "N/A",
-              email: invoiceData.email || "N/A",
-              message: invoiceData.message || "No message provided",
-              change_part: invoiceData.change_part || false,
-              parts: invoiceData.parts || [],
-              service_fee: invoiceData.service_fee || [],
-              workmanship: invoiceData.workmanship || 0,
-              total_amount: invoiceData.total_amount || 0,
-              maintenance_start_date:
-                invoiceData.maintenance_start_date || "N/A",
-              maintenance_end_date: invoiceData.maintenance_end_date || "N/A",
-            };
+            const ordersResponse = await axios.get(
+              "https://api.gapafix.com.ng/api/orders",
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            const fetchedBookings = ordersResponse.data.data || [];
+            const selectedBooking = fetchedBookings.find(
+              (b) => b.id === numericalId
+            );
+            if (selectedBooking) {
+              setBooking({
+                vehicle_type: selectedBooking.vehicle_type || "N/A",
+                make: selectedBooking.vehicle_make || "",
+                model: selectedBooking.vehicle_model || "",
+                service_required: selectedBooking.service_required || "N/A",
+                service_center: selectedBooking.service_center || "N/A",
+                service_date: selectedBooking.service_date || "N/A",
+                status: selectedBooking.status || "N/A",
+                additional_services: selectedBooking.additional_services || [],
+              });
+            }
           }
 
           if (
             !invoiceData ||
             Object.keys(invoiceData).length === 0 ||
-            (invoiceData.service_fee.length === 0 &&
-              invoiceData.parts.length === 0 &&
-              invoiceData.total_amount === 0)
+            (normalizedInvoice.service_fee.length === 0 &&
+              normalizedInvoice.total_amount === 0)
           ) {
             toast.warn(
-              "No invoice yet for booking #" +
-                bookingId +
-                ". Please wait for an admin to generate a quote.",
+              `No invoice yet for booking #${normalizedInvoice.booking_id}. Please wait for an admin to generate a quote.`,
               {
                 position: "top-right",
                 autoClose: 3000,
@@ -180,7 +134,7 @@ const Invoice = () => {
             );
             setInvoice(null);
           } else {
-            setInvoice(invoiceData);
+            setInvoice(normalizedInvoice);
           }
         }
       } catch (err) {
@@ -192,19 +146,33 @@ const Invoice = () => {
         if (isMounted) {
           if (err.message.includes("Network Error")) {
             toast.error(
-              "Network error: Unable to connect to the server. Please check your connection or contact the backend team."
+              "Network error: Unable to connect to the server. Please check your connection or contact the backend team.",
+              {
+                position: "top-right",
+                autoClose: 3000,
+              }
+            );
+          } else if (err.message.includes("Invalid booking ID")) {
+            toast.error(
+              `Invalid booking ID: ${bookingId}. Please check the ID and try again.`,
+              {
+                position: "top-right",
+                autoClose: 3000,
+              }
             );
           } else if (err.response?.status === 401) {
             localStorage.removeItem("authToken");
             localStorage.removeItem("user");
             toast.error("Session expired. Please log in again.", {
+              position: "top-right",
+              autoClose: 3000,
               action: { label: "Log In", onClick: () => navigate("/signin") },
             });
           } else if (err.response?.status === 404) {
             toast.warn(
-              "No invoice yet for booking #" +
-                bookingId +
-                ". Please wait for an admin to generate a quote.",
+              `No invoice yet for booking #${
+                location.state?.booking_id || bookingId
+              }. Please wait for an admin to generate a quote.`,
               {
                 position: "top-right",
                 autoClose: 3000,
@@ -214,7 +182,11 @@ const Invoice = () => {
           } else {
             toast.error(
               err.response?.data?.message ||
-                "Failed to load invoice. Please try again."
+                "Failed to load invoice. Please try again.",
+              {
+                position: "top-right",
+                autoClose: 3000,
+              }
             );
             setInvoice(null);
           }
@@ -233,12 +205,14 @@ const Invoice = () => {
     if (bookingId) {
       fetchInvoiceAndBooking();
     }
-  }, [bookingId, navigate]);
+  }, [bookingId, navigate, location.state]);
 
   const handleDownload = async () => {
     const token = localStorage.getItem("authToken");
     if (!token) {
       toast.error("Please log in to download the invoice.", {
+        position: "top-right",
+        autoClose: 3000,
         action: { label: "Log In", onClick: () => navigate("/signin") },
       });
       return;
@@ -248,9 +222,14 @@ const Invoice = () => {
     setIsDownloading(true);
 
     try {
-      console.log("Downloading invoice for bookingId:", bookingId);
+      const numericalId = parseInt(bookingId);
+      if (isNaN(numericalId)) {
+        throw new Error(`Invalid booking ID: ${bookingId}. Must be numerical.`);
+      }
+
+      console.log("Downloading invoice for ID:", numericalId);
       const response = await axios.get(
-        `https://api.gapafix.com.ng/api/booking/${bookingId}/invoice/download`,
+        `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/download`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
@@ -268,12 +247,15 @@ const Invoice = () => {
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `invoice_${bookingId}.pdf`);
+        link.setAttribute("download", `invoice_${numericalId}.pdf`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        toast.success("Invoice downloaded successfully!");
+        toast.success("Invoice downloaded successfully!", {
+          position: "top-right",
+          autoClose: 2000,
+        });
       }
     } catch (err) {
       console.error("Error downloading invoice:", {
@@ -284,19 +266,33 @@ const Invoice = () => {
       if (isMounted) {
         if (err.message.includes("Network Error")) {
           toast.error(
-            "Network error: Unable to connect to the server. Please check your connection or contact the backend team."
+            "Network error: Unable to connect to the server. Please check your connection or contact the backend team.",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        } else if (err.message.includes("Invalid booking ID")) {
+          toast.error(
+            `Invalid booking ID: ${bookingId}. Please check the ID and try again.`,
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
           );
         } else if (err.response?.status === 401) {
           localStorage.removeItem("authToken");
           localStorage.removeItem("user");
           toast.error("Session expired. Please log in again.", {
+            position: "top-right",
+            autoClose: 3000,
             action: { label: "Log In", onClick: () => navigate("/signin") },
           });
         } else if (err.response?.status === 404) {
           toast.warn(
-            "No invoice yet for booking #" +
-              bookingId +
-              ". Please wait for an admin to generate a quote.",
+            `No invoice yet for booking #${
+              location.state?.booking_id || bookingId
+            }. Please wait for an admin to generate a quote.`,
             {
               position: "top-right",
               autoClose: 3000,
@@ -305,7 +301,11 @@ const Invoice = () => {
         } else {
           toast.error(
             err.response?.data?.message ||
-              "Failed to download invoice. Please try again."
+              "Failed to download invoice. Please try again.",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
           );
         }
       }
@@ -330,7 +330,7 @@ const Invoice = () => {
                 <img src={logo} alt="CarFlex Logo" className="h-12" />
               </Link>
               <h2 className="text-lg font-semibold text-[#575757]">
-                Invoice for Booking #{bookingId}
+                Invoice for Booking #{location.state?.booking_id || bookingId}
               </h2>
             </div>
             <button
@@ -352,8 +352,9 @@ const Invoice = () => {
           <div className="text-center py-6">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-sm">
-              No invoice yet for booking #{bookingId}. Please wait for an admin
-              to generate a quote.
+              No invoice yet for booking #
+              {location.state?.booking_id || bookingId}. Please wait for an
+              admin to generate a quote.
             </p>
             <button
               onClick={() => navigate("/vehicle-dashboard")}
@@ -495,25 +496,6 @@ const Invoice = () => {
                       >
                         {service.name} - {formatNaira(service.price)} x{" "}
                         {service.quantity}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {invoice.parts?.length > 0 && (
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="text-sm font-medium text-gray-600">
-                    Parts
-                  </span>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {invoice.parts.map((part, index) => (
-                      <li
-                        key={index}
-                        className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
-                      >
-                        {part.name} -{" "}
-                        {formatNaira(part.unit_price || part.price)} x{" "}
-                        {part.quantity}
                       </li>
                     ))}
                   </ul>

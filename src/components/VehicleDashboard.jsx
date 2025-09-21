@@ -72,45 +72,23 @@ const VehicleDashboard = () => {
         // Fetch quotes for upcoming maintenance
         const maintenanceData = [];
         for (const vehicle of vehiclesData) {
-          if (vehicle.booking_id !== "N/A") {
+          if (vehicle.id !== "N/A") {
             try {
               const quoteResponse = await axios.get(
-                `https://api.gapafix.com.ng/api/booking/${vehicle.booking_id}/invoice/view`,
+                `https://api.gapafix.com.ng/api/booking/${vehicle.id}/invoice/view`,
                 {
                   headers: { Authorization: `Bearer ${token}` },
                 }
               );
-              let quoteData;
-              if (typeof quoteResponse.data === "string") {
-                // Parse text response
-                const lines = quoteResponse.data.split("\n");
-                quoteData = { parts: [], maintenance_start_date: null };
-                lines.forEach((line) => {
-                  if (line.startsWith("- ")) {
-                    const serviceMatch = line.match(
-                      /- (.+?)\s+Price: ₦([\d,.]+)\s+Qty: (\d+)/
-                    );
-                    if (serviceMatch) {
-                      quoteData.parts.push({
-                        name: serviceMatch[1].trim(),
-                        price:
-                          parseFloat(serviceMatch[2].replace(/,/g, "")) || 0,
-                        quantity: parseInt(serviceMatch[3]) || 1,
-                      });
-                    }
-                  }
-                });
-              } else {
-                quoteData = quoteResponse.data.data || quoteResponse.data || {};
-              }
-
+              let quoteData =
+                quoteResponse.data.data || quoteResponse.data || {};
               if (quoteData.maintenance_start_date) {
                 const dueDate = new Date(quoteData.maintenance_start_date);
                 const today = new Date();
                 const dueInDays = Math.ceil(
                   (dueDate - today) / (1000 * 60 * 60 * 24)
                 );
-                quoteData.parts.forEach((part) => {
+                (quoteData.service_fee || []).forEach((part) => {
                   maintenanceData.push({
                     type: part.name,
                     dueIn: dueInDays >= 0 ? `${dueInDays} days` : "Overdue",
@@ -121,7 +99,7 @@ const VehicleDashboard = () => {
               }
             } catch (err) {
               console.error(
-                `Error fetching quote for ${vehicle.booking_id}:`,
+                `Error fetching quote for booking ID ${vehicle.id}:`,
                 err
               );
             }
@@ -188,11 +166,19 @@ const VehicleDashboard = () => {
   };
 
   const handleViewInvoice = () => {
-    const bookingId = vehicles[selectedVehicle]?.booking_id;
-    if (bookingId && bookingId !== "N/A") {
-      navigate(`/booking/${bookingId}/invoice`);
+    const vehicle = vehicles[selectedVehicle];
+    if (vehicle?.id && vehicle.id !== "N/A") {
+      console.log(
+        "Navigating to invoice with ID:",
+        vehicle.id,
+        "Booking ID:",
+        vehicle.booking_id
+      );
+      navigate(`/booking/${vehicle.id}/invoice`, {
+        state: { ...vehicle },
+      });
     } else {
-      toast.error("No booking ID available for this vehicle.");
+      toast.error("No valid booking ID available for this vehicle.");
     }
   };
 
