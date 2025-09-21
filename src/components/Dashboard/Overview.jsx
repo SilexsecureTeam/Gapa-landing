@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, Trash2, ArrowDownUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const Overview = () => {
   const [maintenanceData, setMaintenanceData] = useState([]);
@@ -24,13 +25,8 @@ const Overview = () => {
       try {
         const response = await axios.get(
           "https://api.gapafix.com.ng/api/bookings/all",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
         if (response.data.status) {
           setMaintenanceData(response.data.data);
         } else {
@@ -54,14 +50,82 @@ const Overview = () => {
   }, [navigate]);
 
   const handleView = (item) => {
-    navigate(`/dashboard/quote/${encodeURIComponent(item.booking_id)}`, {
-      state: { ...item, booking_id: item.booking_id },
+    navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
+      state: { ...item },
     });
     console.log("Navigating to Quote for:", item);
   };
 
-  const handleDelete = (id) => {
-    console.log(`Delete booking with id: ${id}`);
+  const handleDelete = async (id) => {
+    const token = localStorage.getItem("authToken");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
+      toast.error("User is not authenticated. Please sign in.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      navigate("/signin", { state: { from: window.location.pathname } });
+      return;
+    }
+
+    if (!id) {
+      toast.error("Invalid booking ID.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    let userRole;
+    try {
+      userRole = JSON.parse(user).role;
+    } catch {
+      toast.error("Invalid user data. Please sign in again.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      navigate("/signin", { state: { from: window.location.pathname } });
+      return;
+    }
+
+    if (userRole !== "admin") {
+      toast.error("Only admins can delete bookings.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `https://api.gapafix.com.ng/api/admin/bookings/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setMaintenanceData((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Booking deleted successfully", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (err) {
+      console.error("Failed to delete booking:", err.message);
+      let errorMessage = "Failed to delete booking";
+      if (err.response?.status === 401) {
+        errorMessage = "Session expired. Please sign in again.";
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        navigate("/signin", { state: { from: window.location.pathname } });
+      } else if (err.response?.status === 403) {
+        errorMessage = "Only admins can delete bookings.";
+      } else if (err.response?.status === 404) {
+        errorMessage = "Booking not found.";
+      } else if (err.message.includes("Network Error")) {
+        errorMessage = "Network error: Unable to connect to the server.";
+      }
+      toast.error(errorMessage, { position: "top-right", autoClose: 2000 });
+    }
   };
 
   if (loading) {
@@ -91,26 +155,23 @@ const Overview = () => {
               </th>
               <th className="text-left py-3 px-4 font-semibold text-[#333333] text-sm">
                 <div className="inline-flex items-center gap-1">
-                  <ArrowDownUp size={16} className="text-gray-600" />
-                  Start Date
+                  <ArrowDownUp size={16} className="text-gray-600" /> Start Date
                 </div>
               </th>
               <th className="text-left py-3 px-4 font-semibold text-[#333333] text-sm">
                 <div className="inline-flex items-center gap-1">
-                  <ArrowDownUp size={16} className="text-gray-600" />
-                  End Date
+                  <ArrowDownUp size={16} className="text-gray-600" /> End Date
                 </div>
               </th>
               <th className="text-left py-3 px-4 font-semibold text-[#333333] text-sm w-70">
                 <div className="inline-flex items-center gap-1">
-                  <ArrowDownUp size={16} className="text-gray-600" />
+                  <ArrowDownUp size={16} className="text-gray-600" />{" "}
                   Maintenance Type
                 </div>
               </th>
               <th className="text-left py-3 px-4 font-semibold text-[#333333] text-sm">
                 <div className="inline-flex items-center gap-1">
-                  <ArrowDownUp size={16} className="text-gray-600" />
-                  Total Cost
+                  <ArrowDownUp size={16} className="text-gray-600" /> Total Cost
                 </div>
               </th>
               <th className="text-left py-3 px-4 font-semibold text-[#333333] text-sm">
@@ -177,7 +238,7 @@ const Overview = () => {
         </table>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @media (max-width: 640px) {
           table {
             font-size: 0.85rem;

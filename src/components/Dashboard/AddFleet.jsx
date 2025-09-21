@@ -1,16 +1,104 @@
 // src/components/Dashboard/AddFleet.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const AddFleet = () => {
   const [selectedBrand, setSelectedBrand] = useState("");
   const [model, setModel] = useState("");
   const [selectedSubModel, setSelectedSubModel] = useState("");
   const [partNumber, setPartNumber] = useState("");
+  const [brands, setBrands] = useState([]);
+  const [models, setModels] = useState([]);
+  const [submodels, setSubmodels] = useState([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [loadingSubModels, setLoadingSubModels] = useState(false);
+
   const navigate = useNavigate();
   const { fleetName } = useParams();
   const location = useLocation();
+
+  // Fetch brands
+  useEffect(() => {
+    let cancelled = false;
+    axios
+      .get("https://stockmgt.gapaautoparts.com/api/brand/all-brand")
+      .then((res) => {
+        if (cancelled) return;
+        const raw = res.data?.brands ?? [];
+        const normalized = raw.map((b) =>
+          typeof b === "string"
+            ? { name: b }
+            : b?.name
+            ? b
+            : { name: String(b) }
+        );
+        setBrands(normalized);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Error fetching car brands", err);
+        setBrands([{ name: "Toyota" }, { name: "Honda" }, { name: "Ford" }]);
+        toast.error("Failed to fetch car brands. Using fallback data.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fetch models based on selected brand
+  useEffect(() => {
+    if (selectedBrand) {
+      const selectedBrandObj = brands.find(
+        (b) => b.name.toLowerCase() === selectedBrand.toLowerCase()
+      );
+      if (selectedBrandObj?.id) {
+        setLoadingModels(true);
+        axios
+          .get(
+            `https://stockmgt.gapaautoparts.com/api/getModelByBrandId?brand_id=${selectedBrandObj.id}`
+          )
+          .then((res) => {
+            setModels(res.data.result || []);
+            setLoadingModels(false);
+          })
+          .catch((err) => {
+            console.error("Error fetching models", err);
+            setModels([]);
+            setLoadingModels(false);
+            toast.error("Failed to fetch vehicle models.");
+          });
+      }
+    } else {
+      setModels([]);
+      setModel("");
+    }
+  }, [selectedBrand, brands]);
+
+  // Fetch submodels based on selected model
+  useEffect(() => {
+    if (model) {
+      setLoadingSubModels(true);
+      axios
+        .get(
+          `https://stockmgt.gapaautoparts.com/api/getSubModelByModelId?model_id=${model}`
+        )
+        .then((res) => {
+          setSubmodels(res.data.result || []);
+          setLoadingSubModels(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching submodels", err);
+          setSubmodels([]);
+          setLoadingSubModels(false);
+          toast.error("Failed to fetch vehicle submodels.");
+        });
+    } else {
+      setSubmodels([]);
+      setSelectedSubModel("");
+    }
+  }, [model]);
 
   const handleCancel = () => {
     navigate(`/dashboard/quote/${encodeURIComponent(fleetName)}`, {
@@ -22,7 +110,9 @@ const AddFleet = () => {
     const partName =
       partNumber ||
       (selectedBrand && model && selectedSubModel
-        ? `${selectedBrand} ${model} ${selectedSubModel}`
+        ? `${selectedBrand} ${models.find((m) => m.id.toString() === model)?.name || model} ${
+            submodels.find((s) => s.id.toString() === selectedSubModel)?.name || selectedSubModel
+          }`
         : "");
     if (!partName) {
       toast.error(
@@ -74,23 +164,33 @@ const AddFleet = () => {
               className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
             >
               <option value="">Choose a brand...</option>
-              <option value="Toyota">Toyota</option>
-              <option value="Honda">Honda</option>
-              <option value="Ford">Ford</option>
-              <option value="Chevrolet">Chevrolet</option>
+              {brands.map((brand) => (
+                <option key={brand.id || brand.name} value={brand.name}>
+                  {brand.name}
+                </option>
+              ))}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
-              Enter Model
+              Select Model
             </label>
-            <input
-              type="text"
+            <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              placeholder="Enter model name..."
-              className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-            />
+              disabled={loadingModels || !selectedBrand || models.length === 0}
+              className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+            >
+              <option value="">Choose a model...</option>
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+            {loadingModels && (
+              <p className="text-sm text-gray-500 mt-1">Loading models...</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
@@ -99,14 +199,19 @@ const AddFleet = () => {
             <select
               value={selectedSubModel}
               onChange={(e) => setSelectedSubModel(e.target.value)}
+              disabled={loadingSubModels || !model || submodels.length === 0}
               className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
             >
               <option value="">Choose a sub model...</option>
-              <option value="Base">Base</option>
-              <option value="Premium">Premium</option>
-              <option value="Sport">Sport</option>
-              <option value="Luxury">Luxury</option>
+              {submodels.map((submodel) => (
+                <option key={submodel.id} value={submodel.id}>
+                  {submodel.name}
+                </option>
+              ))}
             </select>
+            {loadingSubModels && (
+              <p className="text-sm text-gray-500 mt-1">Loading submodels...</p>
+            )}
           </div>
           <button
             onClick={handleAddModel}
