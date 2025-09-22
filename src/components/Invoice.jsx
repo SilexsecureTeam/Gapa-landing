@@ -26,6 +26,73 @@ const Invoice = () => {
   const { bookingId } = useParams();
   const location = useLocation();
 
+  // Text-to-JSON parser for invoice response
+  const parseTextToJson = (text) => {
+    try {
+      const lines = text.split("\n");
+      const json = {
+        logo: "",
+        booking_id: "",
+        full_name: "",
+        email: "",
+        service_fee: [],
+        workmanship: 0,
+        total_amount: 0,
+        download_link: "",
+        maintenance_start_date: "N/A", // Default for missing date
+        maintenance_end_date: "N/A", // Default for missing date
+        message: "No message provided",
+        change_part: false,
+      };
+      let currentService = null;
+      lines.forEach((line) => {
+        line = line.trim();
+        if (line.startsWith("Logo: ")) json.logo = line.replace("Logo: ", "");
+        if (line.startsWith("Booking ID: "))
+          json.booking_id = line.replace("Booking ID: ", "");
+        if (line.startsWith("Customer: ")) {
+          const [name, email] = line.replace("Customer: ", "").split(" (");
+          json.full_name = name;
+          json.email = email ? email.replace(")", "") : "";
+        }
+        if (line.match(/^- /)) {
+          currentService = { name: line.replace("- ", "").trim() };
+          json.service_fee.push(currentService);
+        }
+        if (line.match(/Price: ₦/)) {
+          currentService.price = parseFloat(
+            line.replace("Price: ₦", "").replace(/,/g, "")
+          );
+        }
+        if (line.match(/Qty: /)) {
+          currentService.quantity = parseInt(line.replace("Qty: ", ""));
+        }
+        if (line.match(/Subtotal: ₦/)) {
+          currentService.subtotal = parseFloat(
+            line.replace("Subtotal: ₦", "").replace(/,/g, "")
+          );
+        }
+        if (line.match(/Workmanship: ₦/)) {
+          json.workmanship = parseFloat(
+            line.replace("Workmanship: ₦", "").replace(/,/g, "")
+          );
+        }
+        if (line.match(/Total: ₦/)) {
+          json.total_amount = parseFloat(
+            line.replace("Total: ₦", "").replace(/,/g, "")
+          );
+        }
+        if (line.startsWith("Download Invoice (PDF): ")) {
+          json.download_link = line.replace("Download Invoice (PDF): ", "");
+        }
+      });
+      return json;
+    } catch (e) {
+      console.error("Failed to parse text to JSON:", e);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const fetchInvoiceAndBooking = async () => {
       const token = localStorage.getItem("authToken");
@@ -65,8 +132,26 @@ const Invoice = () => {
         );
 
         if (isMounted) {
-          // Handle JSON response
-          const invoiceData = response.data.data || response.data || {};
+          let invoiceData = response.data.data || response.data || {};
+          // Handle text response
+          if (typeof response.data === "string") {
+            console.warn(
+              "Invoice response is a string, attempting to parse as JSON."
+            );
+            try {
+              invoiceData = JSON.parse(response.data);
+            } catch (parseError) {
+              console.warn(
+                "Failed to parse as JSON, using text parser:",
+                response.data
+              );
+              invoiceData = parseTextToJson(response.data);
+              if (!invoiceData) {
+                throw new Error("Failed to parse invoice text response.");
+              }
+            }
+          }
+
           console.log("Invoice data extracted:", invoiceData);
 
           const normalizedInvoice = {
@@ -82,6 +167,7 @@ const Invoice = () => {
             total_amount: parseFloat(invoiceData.total_amount) || 0,
             maintenance_start_date: invoiceData.maintenance_start_date || "N/A",
             maintenance_end_date: invoiceData.maintenance_end_date || "N/A",
+            download_link: invoiceData.download_link || "",
           };
 
           // Log normalized invoice for debugging
@@ -127,11 +213,11 @@ const Invoice = () => {
           // Check if invoice is valid (relaxed condition)
           if (
             !invoiceData ||
-            Object.keys(invoiceData).length === 0 ||
-            (normalizedInvoice.total_amount === 0 &&
+            (Object.keys(invoiceData).length === 0 &&
+              !normalizedInvoice.booking_id &&
               normalizedInvoice.service_fee.length === 0 &&
               normalizedInvoice.workmanship === 0 &&
-              !normalizedInvoice.maintenance_end_date)
+              normalizedInvoice.total_amount === 0)
           ) {
             console.log("Invoice considered invalid due to empty or zero data");
             toast.warn(
@@ -181,6 +267,16 @@ const Invoice = () => {
             console.log("Invoice not found (404)");
             toast.warn(
               `No invoice available for booking #${bookingId}. Contact support if this is an error.`,
+              {
+                position: "top-right",
+                autoClose: 3000,
+              }
+            );
+            setInvoice(null);
+          } else if (err.response?.status === 500) {
+            console.log("Server error (500) for invoice fetch");
+            toast.error(
+              `Server error: Unable to retrieve invoice for booking #${bookingId}. Please contact support.`,
               {
                 position: "top-right",
                 autoClose: 3000,
@@ -300,6 +396,15 @@ const Invoice = () => {
           console.log("Invoice not found for download (404)");
           toast.warn(
             `No invoice available for booking #${bookingId}. Contact support if this is an error.`,
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        } else if (err.response?.status === 500) {
+          console.log("Server error (500) for invoice download");
+          toast.error(
+            `Server error: Unable to download invoice for booking #${bookingId}. Please contact support.`,
             {
               position: "top-right",
               autoClose: 3000,
@@ -475,18 +580,18 @@ const Invoice = () => {
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-600">
-                  Total Amount
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {formatNaira(invoice.total_amount)}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
                   Workmanship
                 </span>
                 <p className="font-semibold text-gray-900 text-sm">
                   {formatNaira(invoice.workmanship)}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-600">
+                  Total Amount
+                </span>
+                <p className="font-semibold text-gray-900 text-sm">
+                  {formatNaira(invoice.total_amount)}
                 </p>
               </div>
               {invoice.service_fee?.length > 0 && (
@@ -501,7 +606,7 @@ const Invoice = () => {
                         className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
                       >
                         {service.name} - {formatNaira(service.price)} x{" "}
-                        {service.quantity}
+                        {service.quantity} = {formatNaira(service.subtotal)}
                       </li>
                     ))}
                   </ul>
@@ -525,20 +630,27 @@ const Invoice = () => {
                 </div>
               )}
             </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleDownload}
-                disabled={isDownloading}
-                className={`flex items-center space-x-2 bg-[#492F92] text-white px-4 py-2 rounded-full text-sm hover:bg-[#3b2371] transition-colors ${
-                  isDownloading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                <Download className="w-4 h-4" />
-                <span>
-                  {isDownloading ? "Downloading..." : "Download Invoice"}
-                </span>
-              </button>
-            </div>
+            {invoice.download_link && (
+              <div className="mt-6 flex justify-end">
+                <a
+                  href={invoice.download_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center space-x-2 bg-[#492F92] text-white px-4 py-2 rounded-full text-sm hover:bg-[#3b2371] transition-colors ${
+                    isDownloading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  onClick={(e) => {
+                    if (isDownloading) e.preventDefault();
+                    else handleDownload();
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                  <span>
+                    {isDownloading ? "Downloading..." : "Download Invoice"}
+                  </span>
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>

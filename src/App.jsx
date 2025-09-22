@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import React, { Suspense, lazy } from "react";
 import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import "./App.css";

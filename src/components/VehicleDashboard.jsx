@@ -84,7 +84,34 @@ const VehicleDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` },
               }
             );
+            // Log the raw response to check content type
+            console.log(
+              `Invoice response for ID ${numericalId} (raw):`,
+              quoteResponse.data
+            );
+            // Attempt to log as JSON, or log as text if JSON parsing fails
+            try {
+              const jsonData =
+                typeof quoteResponse.data === "string"
+                  ? JSON.parse(quoteResponse.data)
+                  : quoteResponse.data;
+              console.log(
+                `Invoice response for ID ${numericalId} (JSON):`,
+                JSON.stringify(jsonData, null, 2)
+              );
+            } catch (parseError) {
+              console.warn(
+                `Failed to parse invoice response for ID ${numericalId} as JSON. Logging as text:`,
+                quoteResponse.data
+              );
+            }
             let quoteData = quoteResponse.data.data || quoteResponse.data || {};
+            if (typeof quoteData === "string") {
+              console.warn(
+                `Invoice data for ID ${numericalId} is a string, expected JSON object. Using fallback.`
+              );
+              quoteData = {}; // Fallback to empty object to prevent errors
+            }
             if (quoteData.maintenance_start_date) {
               const dueDate = new Date(quoteData.maintenance_start_date);
               const today = new Date();
@@ -103,7 +130,11 @@ const VehicleDashboard = () => {
           } catch (err) {
             console.error(
               `Error fetching quote for booking ID ${numericalId}:`,
-              err
+              {
+                message: err.message,
+                status: err.response?.status,
+                data: err.response?.data,
+              }
             );
           }
         }
