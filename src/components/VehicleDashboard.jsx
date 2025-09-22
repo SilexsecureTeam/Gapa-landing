@@ -72,37 +72,39 @@ const VehicleDashboard = () => {
         // Fetch quotes for upcoming maintenance
         const maintenanceData = [];
         for (const vehicle of vehiclesData) {
-          if (vehicle.id !== "N/A") {
-            try {
-              const quoteResponse = await axios.get(
-                `https://api.gapafix.com.ng/api/booking/${vehicle.id}/invoice/view`,
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              );
-              let quoteData =
-                quoteResponse.data.data || quoteResponse.data || {};
-              if (quoteData.maintenance_start_date) {
-                const dueDate = new Date(quoteData.maintenance_start_date);
-                const today = new Date();
-                const dueInDays = Math.ceil(
-                  (dueDate - today) / (1000 * 60 * 60 * 24)
-                );
-                (quoteData.service_fee || []).forEach((part) => {
-                  maintenanceData.push({
-                    type: part.name,
-                    dueIn: dueInDays >= 0 ? `${dueInDays} days` : "Overdue",
-                    icon: <Wrench className="w-4 h-4" />,
-                    booking_id: vehicle.booking_id,
-                  });
-                });
+          const numericalId = parseInt(vehicle.id);
+          if (isNaN(numericalId) || numericalId <= 0) {
+            console.error(`Invalid vehicle ID: ${vehicle.id}`);
+            continue; // Skip invalid IDs
+          }
+          try {
+            const quoteResponse = await axios.get(
+              `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
               }
-            } catch (err) {
-              console.error(
-                `Error fetching quote for booking ID ${vehicle.id}:`,
-                err
+            );
+            let quoteData = quoteResponse.data.data || quoteResponse.data || {};
+            if (quoteData.maintenance_start_date) {
+              const dueDate = new Date(quoteData.maintenance_start_date);
+              const today = new Date();
+              const dueInDays = Math.ceil(
+                (dueDate - today) / (1000 * 60 * 60 * 24)
               );
+              (quoteData.service_fee || []).forEach((part) => {
+                maintenanceData.push({
+                  type: part.name,
+                  dueIn: dueInDays >= 0 ? `${dueInDays} days` : "Overdue",
+                  icon: <Wrench className="w-4 h-4" />,
+                  booking_id: vehicle.booking_id,
+                });
+              });
             }
+          } catch (err) {
+            console.error(
+              `Error fetching quote for booking ID ${numericalId}:`,
+              err
+            );
           }
         }
         setUpcomingMaintenance(maintenanceData);
@@ -167,19 +169,20 @@ const VehicleDashboard = () => {
 
   const handleViewInvoice = () => {
     const vehicle = vehicles[selectedVehicle];
-    if (vehicle?.id && vehicle.id !== "N/A") {
-      console.log(
-        "Navigating to invoice with ID:",
-        vehicle.id,
-        "Booking ID:",
-        vehicle.booking_id
-      );
-      navigate(`/booking/${vehicle.id}/invoice`, {
-        state: { ...vehicle },
-      });
-    } else {
+    const numericalId = parseInt(vehicle?.id);
+    if (!vehicle || isNaN(numericalId) || numericalId <= 0) {
       toast.error("No valid booking ID available for this vehicle.");
+      return;
     }
+    console.log(
+      "Navigating to invoice with ID:",
+      numericalId,
+      "Booking ID:",
+      vehicle.booking_id
+    );
+    navigate(`/booking/${numericalId}/invoice`, {
+      state: { ...vehicle },
+    });
   };
 
   return (

@@ -83,7 +83,6 @@ const Quote = () => {
         full_name,
         selectedParts,
         id,
-        // booking_id,
       } = location.state;
 
       // Validate id
@@ -168,7 +167,13 @@ const Quote = () => {
   const handleUpdateEndDate = async () => {
     const token = localStorage.getItem("authToken");
     const numericalId = parseInt(location.state?.id);
-    if (!token || !numericalId || isNaN(numericalId) || !maintEndDate) return;
+    if (!token || !numericalId || isNaN(numericalId) || !maintEndDate) {
+      toast.error("Missing required fields for updating end date.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
 
     if (maintStartDate && isBefore(maintEndDate, maintStartDate)) {
       toast.error("Maintenance end date must be after or equal to start date", {
@@ -269,6 +274,7 @@ const Quote = () => {
     const bookingId = parseInt(location.state?.id);
     const booking_id = location.state?.booking_id || "N/A";
 
+    // Enhanced Validation
     if (!token || !bookingId || isNaN(bookingId)) {
       toast.error("Missing or invalid booking ID", {
         position: "top-right",
@@ -298,21 +304,107 @@ const Quote = () => {
       return;
     }
 
-    if (!labourCost || !message) {
-      toast.error("Labour cost and message are required", {
+    // Validate all required fields
+    if (!customerName.trim()) {
+      toast.error("Customer name is required", {
         position: "top-right",
         autoClose: 2000,
       });
       return;
     }
 
-    if (parseFloat(labourCost) < 0) {
-      toast.error("Labour cost cannot be negative", {
+    if (!maintenanceType) {
+      toast.error("Please select a maintenance type", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    if (!message.trim()) {
+      toast.error("Message is required", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    if (!labourCost) {
+      toast.error("Labour cost is required", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    const labourCostNum = parseFloat(labourCost);
+    if (isNaN(labourCostNum) || labourCostNum < 0) {
+      toast.error("Labour cost must be a positive number", {
         position: "top-right",
         autoClose: 2000,
       });
       setLabourCost("");
       return;
+    }
+
+    if (!changeParts) {
+      toast.error("Please select whether to change parts", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    if (changeParts === "yes" && parts.length === 0) {
+      toast.error("Please add at least one part when changing parts", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    // Validate parts
+    if (changeParts === "yes") {
+      for (const part of parts) {
+        if (!part.name.trim()) {
+          toast.error("All parts must have a valid name", {
+            position: "top-right",
+            autoClose: 2000,
+          });
+          return;
+        }
+        if (
+          isNaN(part.quantity) ||
+          part.quantity <= 0 ||
+          !Number.isInteger(part.quantity)
+        ) {
+          toast.error(`Quantity for ${part.name} must be a positive integer`, {
+            position: "top-right",
+            autoClose: 2000,
+          });
+          return;
+        }
+        if (isNaN(part.price) || part.price < 0) {
+          toast.error(
+            `Unit price for ${part.name} must be a non-negative number`,
+            {
+              position: "top-right",
+              autoClose: 2000,
+            }
+          );
+          return;
+        }
+        if (isNaN(part.totalPrice) || part.totalPrice < 0) {
+          toast.error(
+            `Total price for ${part.name} must be a non-negative number`,
+            {
+              position: "top-right",
+              autoClose: 2000,
+            }
+          );
+          return;
+        }
+      }
     }
 
     if (
@@ -327,8 +419,22 @@ const Quote = () => {
       return;
     }
 
-    if (changeParts === "yes" && parts.length === 0) {
-      toast.error("Please add parts if changing parts is selected", {
+    // Validate dates if provided
+    if (
+      maintStartDate &&
+      !(maintStartDate instanceof Date && !isNaN(maintStartDate))
+    ) {
+      toast.error("Invalid maintenance start date", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (
+      maintEndDate &&
+      !(maintEndDate instanceof Date && !isNaN(maintEndDate))
+    ) {
+      toast.error("Invalid maintenance end date", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -450,6 +556,7 @@ const Quote = () => {
   };
 
   const handleAddManualPart = () => {
+    // Enhanced validation for manual part addition
     if (!manualPartName.trim()) {
       toast.error("Part name is required", {
         position: "top-right",
@@ -457,6 +564,7 @@ const Quote = () => {
       });
       return;
     }
+
     const quantityNum = Number(manualQuantity);
     if (
       isNaN(quantityNum) ||
@@ -469,6 +577,7 @@ const Quote = () => {
       });
       return;
     }
+
     const unitPriceNum = Number(manualUnitPrice);
     if (isNaN(unitPriceNum) || unitPriceNum < 0) {
       toast.error("Unit price must be a positive number or zero", {
@@ -587,7 +696,16 @@ const Quote = () => {
             <div className="relative w-full">
               <DatePicker
                 selected={maintStartDate}
-                onChange={(date) => setMaintStartDate(date)}
+                onChange={(date) => {
+                  if (date && !(date instanceof Date && !isNaN(date))) {
+                    toast.error("Invalid start date selected", {
+                      position: "top-right",
+                      autoClose: 2000,
+                    });
+                    return;
+                  }
+                  setMaintStartDate(date);
+                }}
                 dateFormat="yyyy-MM-dd"
                 placeholderText="Choose Start date"
                 className="w-full px-3 py-2 border border-[#E6E6E6] bg-[#F9F9F9] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -602,6 +720,13 @@ const Quote = () => {
               <DatePicker
                 selected={maintEndDate}
                 onChange={(date) => {
+                  if (date && !(date instanceof Date && !isNaN(date))) {
+                    toast.error("Invalid end date selected", {
+                      position: "top-right",
+                      autoClose: 2000,
+                    });
+                    return;
+                  }
                   setMaintEndDate(date);
                   if (
                     date &&
@@ -632,7 +757,7 @@ const Quote = () => {
             placeholder="Message"
             className="w-full px-3 py-3 border border-[#BDBDBD] bg-[#FBF6F6] rounded-md text-sm h-30 overflow-auto resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => setMessage(e.target.value.trimStart())}
           />
         </div>
         <div className="relative mb-4">
@@ -659,8 +784,20 @@ const Quote = () => {
               type="number"
               className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={labourCost}
-              onChange={(e) => setLabourCost(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || (Number(value) >= 0 && !isNaN(value))) {
+                  setLabourCost(value);
+                } else {
+                  toast.error("Labour cost must be a positive number", {
+                    position: "top-right",
+                    autoClose: 2000,
+                  });
+                }
+              }}
               placeholder="Enter labour cost"
+              min="0"
+              step="0.01"
             />
           </div>
           <div>
@@ -710,7 +847,7 @@ const Quote = () => {
                 placeholder="Part name"
                 className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={manualPartName}
-                onChange={(e) => setManualPartName(e.target.value)}
+                onChange={(e) => setManualPartName(e.target.value.trimStart())}
               />
               <input
                 type="number"
@@ -719,7 +856,17 @@ const Quote = () => {
                 value={manualQuantity}
                 min={1}
                 step={1}
-                onChange={(e) => setManualQuantity(e.target.value)}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 1 && Number.isInteger(value)) {
+                    setManualQuantity(value);
+                  } else {
+                    toast.error("Quantity must be a positive integer", {
+                      position: "top-right",
+                      autoClose: 2000,
+                    });
+                  }
+                }}
               />
               <input
                 type="number"
@@ -728,7 +875,20 @@ const Quote = () => {
                 value={manualUnitPrice}
                 min={0}
                 step="0.01"
-                onChange={(e) => setManualUnitPrice(e.target.value)}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (value >= 0 && !isNaN(value)) {
+                    setManualUnitPrice(value);
+                  } else {
+                    toast.error(
+                      "Unit price must be a positive number or zero",
+                      {
+                        position: "top-right",
+                        autoClose: 2000,
+                      }
+                    );
+                  }
+                }}
               />
             </div>
             <div className="mt-3 flex justify-end">
