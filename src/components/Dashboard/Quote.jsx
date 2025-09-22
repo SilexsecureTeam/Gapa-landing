@@ -40,6 +40,19 @@ const Quote = () => {
   );
   const mainTotalCost = (partsTotal + (parseFloat(labourCost) || 0)).toFixed(2);
 
+  const isFormValid = () =>
+    maintenanceType &&
+    maintStartDate &&
+    maintEndDate &&
+    changeParts &&
+    labourCost &&
+    message &&
+    parseFloat(labourCost) >= 0 &&
+    (changeParts !== "yes" || parts.length > 0) &&
+    (!maintStartDate ||
+      !maintEndDate ||
+      !isBefore(maintEndDate, maintStartDate));
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const user = localStorage.getItem("user");
@@ -53,7 +66,6 @@ const Quote = () => {
       return;
     }
 
-    // Verify admin role
     let userRole;
     try {
       userRole = JSON.parse(user).role;
@@ -85,7 +97,6 @@ const Quote = () => {
         id,
       } = location.state;
 
-      // Validate id
       const numericalId = parseInt(id);
       if (!id || isNaN(numericalId)) {
         console.error("Invalid or missing booking ID:", id);
@@ -167,13 +178,7 @@ const Quote = () => {
   const handleUpdateEndDate = async () => {
     const token = localStorage.getItem("authToken");
     const numericalId = parseInt(location.state?.id);
-    if (!token || !numericalId || isNaN(numericalId) || !maintEndDate) {
-      toast.error("Missing required fields for updating end date.", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-      return;
-    }
+    if (!token || !numericalId || isNaN(numericalId) || !maintEndDate) return;
 
     if (maintStartDate && isBefore(maintEndDate, maintStartDate)) {
       toast.error("Maintenance end date must be after or equal to start date", {
@@ -230,14 +235,14 @@ const Quote = () => {
       );
     } catch (err) {
       if (err.response?.status === 404) {
-        return false; // No quote exists
+        return false;
       }
       if (
         err.response?.data?.status === false &&
         err.response?.data?.message ===
           "A quote already exists for this booking"
       ) {
-        return true; // Quote exists, backend returned specific error
+        return true;
       }
       console.error("Error checking quote:", err.message, err.response?.data);
       return false;
@@ -274,7 +279,6 @@ const Quote = () => {
     const bookingId = parseInt(location.state?.id);
     const booking_id = location.state?.booking_id || "N/A";
 
-    // Enhanced Validation
     if (!token || !bookingId || isNaN(bookingId)) {
       toast.error("Missing or invalid booking ID", {
         position: "top-right",
@@ -284,7 +288,6 @@ const Quote = () => {
       return;
     }
 
-    // Validate booking ID
     const isValidBooking = await validateBookingId(bookingId);
     if (!isValidBooking) {
       toast.error(`Invalid or non-existent booking ID: ${booking_id}`, {
@@ -294,7 +297,6 @@ const Quote = () => {
       return;
     }
 
-    // Check if quote already exists
     const quoteExists = await checkQuoteExists(bookingId);
     if (quoteExists) {
       toast.warn(`A quote already exists for booking #${booking_id}`, {
@@ -304,49 +306,27 @@ const Quote = () => {
       return;
     }
 
-    // Validate all required fields
-    if (!customerName.trim()) {
-      toast.error("Customer name is required", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-      return;
-    }
-
     if (!maintenanceType) {
-      toast.error("Please select a maintenance type", {
+      toast.error("Maintenance type is required", {
         position: "top-right",
         autoClose: 2000,
       });
       return;
     }
-
-    if (!message.trim()) {
-      toast.error("Message is required", {
+    if (!maintStartDate) {
+      toast.error("Maintenance start date is required", {
         position: "top-right",
         autoClose: 2000,
       });
       return;
     }
-
-    if (!labourCost) {
-      toast.error("Labour cost is required", {
+    if (!maintEndDate) {
+      toast.error("Maintenance end date is required", {
         position: "top-right",
         autoClose: 2000,
       });
       return;
     }
-
-    const labourCostNum = parseFloat(labourCost);
-    if (isNaN(labourCostNum) || labourCostNum < 0) {
-      toast.error("Labour cost must be a positive number", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-      setLabourCost("");
-      return;
-    }
-
     if (!changeParts) {
       toast.error("Please select whether to change parts", {
         position: "top-right",
@@ -354,59 +334,21 @@ const Quote = () => {
       });
       return;
     }
-
-    if (changeParts === "yes" && parts.length === 0) {
-      toast.error("Please add at least one part when changing parts", {
+    if (!labourCost || !message) {
+      toast.error("Labour cost and message are required", {
         position: "top-right",
         autoClose: 2000,
       });
       return;
     }
-
-    // Validate parts
-    if (changeParts === "yes") {
-      for (const part of parts) {
-        if (!part.name.trim()) {
-          toast.error("All parts must have a valid name", {
-            position: "top-right",
-            autoClose: 2000,
-          });
-          return;
-        }
-        if (
-          isNaN(part.quantity) ||
-          part.quantity <= 0 ||
-          !Number.isInteger(part.quantity)
-        ) {
-          toast.error(`Quantity for ${part.name} must be a positive integer`, {
-            position: "top-right",
-            autoClose: 2000,
-          });
-          return;
-        }
-        if (isNaN(part.price) || part.price < 0) {
-          toast.error(
-            `Unit price for ${part.name} must be a non-negative number`,
-            {
-              position: "top-right",
-              autoClose: 2000,
-            }
-          );
-          return;
-        }
-        if (isNaN(part.totalPrice) || part.totalPrice < 0) {
-          toast.error(
-            `Total price for ${part.name} must be a non-negative number`,
-            {
-              position: "top-right",
-              autoClose: 2000,
-            }
-          );
-          return;
-        }
-      }
+    if (parseFloat(labourCost) < 0) {
+      toast.error("Labour cost cannot be negative", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      setLabourCost("");
+      return;
     }
-
     if (
       maintStartDate &&
       maintEndDate &&
@@ -418,23 +360,8 @@ const Quote = () => {
       });
       return;
     }
-
-    // Validate dates if provided
-    if (
-      maintStartDate &&
-      !(maintStartDate instanceof Date && !isNaN(maintStartDate))
-    ) {
-      toast.error("Invalid maintenance start date", {
-        position: "top-right",
-        autoClose: 2000,
-      });
-      return;
-    }
-    if (
-      maintEndDate &&
-      !(maintEndDate instanceof Date && !isNaN(maintEndDate))
-    ) {
-      toast.error("Invalid maintenance end date", {
+    if (changeParts === "yes" && parts.length === 0) {
+      toast.error("Please add parts if changing parts is selected", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -448,28 +375,25 @@ const Quote = () => {
       formData.append("message", message);
       formData.append(
         "maintenance_start_date",
-        maintStartDate ? format(maintStartDate, "yyyy-MM-dd") : ""
+        format(maintStartDate, "yyyy-MM-dd")
       );
       formData.append(
         "maintenance_end_date",
-        maintEndDate ? format(maintEndDate, "yyyy-MM-dd") : ""
+        format(maintEndDate, "yyyy-MM-dd")
       );
       formData.append("change_part", parts.length > 0 ? "1" : "0");
       parts.forEach((part, index) => {
         formData.append(`service_fee[${index + 1}][name]`, part.name);
         formData.append(
           `service_fee[${index + 1}][price]`,
-          part.totalPrice.toFixed(2)
+          part.price.toFixed(2)
         );
         formData.append(
           `service_fee[${index + 1}][quantity]`,
           part.quantity.toString()
         );
       });
-      formData.append(
-        "workmanship",
-        (parseFloat(mainTotalCost) * 0.3).toFixed(2)
-      );
+      formData.append("workmanship", parseFloat(labourCost).toFixed(2));
       formData.append("total_amount", mainTotalCost);
 
       for (let [key, value] of formData.entries()) {
@@ -493,19 +417,15 @@ const Quote = () => {
         autoClose: 2000,
       });
 
-      // Save updates for Overview page
       localStorage.setItem(
         `updatedBooking_${bookingId}`,
         JSON.stringify({
           id: bookingId,
-          maintenance_end_date: maintEndDate
-            ? format(maintEndDate, "yyyy-MM-dd")
-            : null,
+          maintenance_end_date: format(maintEndDate, "yyyy-MM-dd"),
           total_amount: parseFloat(mainTotalCost),
         })
       );
 
-      // Reset form fields but stay on page
       setParts([]);
       setLabourCost("");
       setMessage("");
@@ -556,7 +476,6 @@ const Quote = () => {
   };
 
   const handleAddManualPart = () => {
-    // Enhanced validation for manual part addition
     if (!manualPartName.trim()) {
       toast.error("Part name is required", {
         position: "top-right",
@@ -564,7 +483,6 @@ const Quote = () => {
       });
       return;
     }
-
     const quantityNum = Number(manualQuantity);
     if (
       isNaN(quantityNum) ||
@@ -577,7 +495,6 @@ const Quote = () => {
       });
       return;
     }
-
     const unitPriceNum = Number(manualUnitPrice);
     if (isNaN(unitPriceNum) || unitPriceNum < 0) {
       toast.error("Unit price must be a positive number or zero", {
@@ -691,21 +608,12 @@ const Quote = () => {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-base font-medium text-black mb-1">
-              Maintenance Start Date
+              Maintenance Start Date <span className="text-red-500">*</span>
             </label>
             <div className="relative w-full">
               <DatePicker
                 selected={maintStartDate}
-                onChange={(date) => {
-                  if (date && !(date instanceof Date && !isNaN(date))) {
-                    toast.error("Invalid start date selected", {
-                      position: "top-right",
-                      autoClose: 2000,
-                    });
-                    return;
-                  }
-                  setMaintStartDate(date);
-                }}
+                onChange={(date) => setMaintStartDate(date)}
                 dateFormat="yyyy-MM-dd"
                 placeholderText="Choose Start date"
                 className="w-full px-3 py-2 border border-[#E6E6E6] bg-[#F9F9F9] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -714,19 +622,12 @@ const Quote = () => {
           </div>
           <div className="w-full">
             <label className="block text-black font-medium text-base mb-1">
-              Maintenance End Date
+              Maintenance End Date <span className="text-red-500">*</span>
             </label>
             <div className="relative w-full">
               <DatePicker
                 selected={maintEndDate}
                 onChange={(date) => {
-                  if (date && !(date instanceof Date && !isNaN(date))) {
-                    toast.error("Invalid end date selected", {
-                      position: "top-right",
-                      autoClose: 2000,
-                    });
-                    return;
-                  }
                   setMaintEndDate(date);
                   if (
                     date &&
@@ -753,14 +654,20 @@ const Quote = () => {
           </div>
         </div>
         <div className="mb-4">
+          <label className="block text-black font-medium text-base mb-1">
+            Message <span className="text-red-500">*</span>
+          </label>
           <textarea
             placeholder="Message"
             className="w-full px-3 py-3 border border-[#BDBDBD] bg-[#FBF6F6] rounded-md text-sm h-30 overflow-auto resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={message}
-            onChange={(e) => setMessage(e.target.value.trimStart())}
+            onChange={(e) => setMessage(e.target.value)}
           />
         </div>
         <div className="relative mb-4">
+          <label className="block text-black font-medium text-base mb-1">
+            Maintenance Type <span className="text-red-500">*</span>
+          </label>
           <select
             className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
             value={maintenanceType}
@@ -778,31 +685,19 @@ const Quote = () => {
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-black font-medium text-base mb-1">
-              Labour Cost
+              Labour Cost <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
               className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-[#F9F9F9] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={labourCost}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "" || (Number(value) >= 0 && !isNaN(value))) {
-                  setLabourCost(value);
-                } else {
-                  toast.error("Labour cost must be a positive number", {
-                    position: "top-right",
-                    autoClose: 2000,
-                  });
-                }
-              }}
+              onChange={(e) => setLabourCost(e.target.value)}
               placeholder="Enter labour cost"
-              min="0"
-              step="0.01"
             />
           </div>
           <div>
             <label className="block text-black font-medium text-base mb-1">
-              Change Parts?
+              Change Parts? <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <select
@@ -847,7 +742,7 @@ const Quote = () => {
                 placeholder="Part name"
                 className="w-full px-3 py-2 border border-[#E6E6E6] rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={manualPartName}
-                onChange={(e) => setManualPartName(e.target.value.trimStart())}
+                onChange={(e) => setManualPartName(e.target.value)}
               />
               <input
                 type="number"
@@ -856,17 +751,7 @@ const Quote = () => {
                 value={manualQuantity}
                 min={1}
                 step={1}
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  if (value >= 1 && Number.isInteger(value)) {
-                    setManualQuantity(value);
-                  } else {
-                    toast.error("Quantity must be a positive integer", {
-                      position: "top-right",
-                      autoClose: 2000,
-                    });
-                  }
-                }}
+                onChange={(e) => setManualQuantity(e.target.value)}
               />
               <input
                 type="number"
@@ -875,20 +760,7 @@ const Quote = () => {
                 value={manualUnitPrice}
                 min={0}
                 step="0.01"
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  if (value >= 0 && !isNaN(value)) {
-                    setManualUnitPrice(value);
-                  } else {
-                    toast.error(
-                      "Unit price must be a positive number or zero",
-                      {
-                        position: "top-right",
-                        autoClose: 2000,
-                      }
-                    );
-                  }
-                }}
+                onChange={(e) => setManualUnitPrice(e.target.value)}
               />
             </div>
             <div className="mt-3 flex justify-end">
@@ -969,9 +841,9 @@ const Quote = () => {
           <button
             type="button"
             onClick={handleGenerateQuote}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isFormValid()}
             className={`w-full max-w-sm bg-[#B80707] text-white py-3 rounded-md font-medium transition-colors ${
-              isSubmitting
+              isSubmitting || !isFormValid()
                 ? "opacity-50 cursor-not-allowed"
                 : "hover:bg-red-700"
             }`}

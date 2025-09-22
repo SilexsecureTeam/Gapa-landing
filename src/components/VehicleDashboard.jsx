@@ -99,7 +99,7 @@ const VehicleDashboard = () => {
                 `Invoice response for ID ${numericalId} (JSON):`,
                 JSON.stringify(jsonData, null, 2)
               );
-            } catch (parseError) {
+            } catch {
               console.warn(
                 `Failed to parse invoice response for ID ${numericalId} as JSON. Logging as text:`,
                 quoteResponse.data
