@@ -33,7 +33,7 @@ const Quote = () => {
   const [manualPartName, setManualPartName] = useState("");
   const [manualQuantity, setManualQuantity] = useState(1);
   const [manualUnitPrice, setManualUnitPrice] = useState("");
-  const [quoteId, setQuoteId] = useState(null); // New state to track quote ID
+  const [quoteId, setQuoteId] = useState(null);
 
   const partsTotal = parts.reduce(
     (sum, part) => sum + (part.totalPrice || 0),
@@ -57,7 +57,6 @@ const Quote = () => {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const user = localStorage.getItem("user");
-
     if (!token || !user) {
       toast.error("Please sign in to access this page.", {
         position: "top-right",
@@ -180,7 +179,6 @@ const Quote = () => {
     const token = localStorage.getItem("authToken");
     const numericalId = parseInt(location.state?.id);
     if (!token || !numericalId || isNaN(numericalId) || !maintEndDate) return;
-
     if (maintStartDate && isBefore(maintEndDate, maintStartDate)) {
       toast.error("Maintenance end date must be after or equal to start date", {
         position: "top-right",
@@ -217,7 +215,6 @@ const Quote = () => {
     const token = localStorage.getItem("authToken");
     const numericalId = parseInt(bookingId);
     if (!token || isNaN(numericalId)) return false;
-
     try {
       const response = await axios.get(
         `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
@@ -234,7 +231,7 @@ const Quote = () => {
         response.data.data &&
         Object.keys(response.data.data).length > 0;
       if (quoteExists) {
-        setQuoteId(response.data.data.id); // Set quoteId if quote exists
+        setQuoteId(response.data.data.id);
       }
       return quoteExists;
     } catch (err) {
@@ -282,7 +279,6 @@ const Quote = () => {
     const token = localStorage.getItem("authToken");
     const bookingId = parseInt(location.state?.id);
     const booking_id = location.state?.booking_id || "N/A";
-
     if (!token || !bookingId || isNaN(bookingId)) {
       toast.error("Missing or invalid booking ID", {
         position: "top-right",
@@ -421,7 +417,7 @@ const Quote = () => {
         autoClose: 2000,
       });
 
-      setQuoteId(response.data.data.id); // Store the quote ID from response
+      setQuoteId(response.data.data.id);
 
       localStorage.setItem(
         `updatedBooking_${bookingId}`,
@@ -474,7 +470,6 @@ const Quote = () => {
     const token = localStorage.getItem("authToken");
     const bookingId = parseInt(location.state?.id);
     const booking_id = location.state?.booking_id || "N/A";
-
     if (!token || !bookingId || isNaN(bookingId)) {
       toast.error("Missing or invalid booking ID", {
         position: "top-right",
@@ -557,7 +552,7 @@ const Quote = () => {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("_method", "PATCH"); // Add _method: PATCH for Laravel
+      formData.append("_method", "PATCH");
       formData.append("booking_id", booking_id);
       formData.append("message", message);
       formData.append(
@@ -668,7 +663,6 @@ const Quote = () => {
       });
       return;
     }
-
     const newPart = {
       id: Date.now(),
       name: manualPartName.trim(),
@@ -703,7 +697,7 @@ const Quote = () => {
         return part;
       })
     );
-    toast.info(`Quantity updated`, {
+    toast.info("Quantity updated", {
       position: "top-right",
       autoClose: 2000,
     });
@@ -878,7 +872,6 @@ const Quote = () => {
             </div>
           </div>
         </div>
-
         <button
           type="button"
           onClick={handleAddFleet}

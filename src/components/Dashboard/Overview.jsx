@@ -13,7 +13,6 @@ const Overview = () => {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const user = localStorage.getItem("user");
-
     if (!token || !user) {
       setError("User is not authenticated. Please sign in.");
       navigate("/signin", { state: { from: window.location.pathname } });
@@ -95,58 +94,16 @@ const Overview = () => {
     fetchBookings();
   }, [navigate]);
 
-  const handleView = async (item) => {
-    const token = localStorage.getItem("authToken");
-    try {
-      // Fetch invoice data only when viewing
-      const quoteResponse = await axios.get(
-        `https://api.gapafix.com.ng/api/booking/${item.id}/invoice/view`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      console.log(
-        `Quote response for booking ${item.id}:`,
-        JSON.stringify(quoteResponse.data, null, 2)
-      );
-      const updatedItem =
-        quoteResponse.data.status && quoteResponse.data.data
-          ? {
-              ...item,
-              maintenance_end_date:
-                quoteResponse.data.data.maintenance_end_date ||
-                item.maintenance_end_date,
-              total_amount: quoteResponse.data.data.total_amount
-                ? parseFloat(quoteResponse.data.data.total_amount)
-                : item.total_amount,
-            }
-          : item;
-
-      navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
-        state: { ...updatedItem },
-      });
-    } catch (err) {
-      if (err.response?.status === 404) {
-        // No invoice exists, proceed with booking data
-        navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
-          state: { ...item },
-        });
-      } else {
-        console.error(
-          `Error fetching quote for booking ${item.id}:`,
-          err.message,
-          err.response?.data
-        );
-        toast.error("Error fetching quote data", {
-          position: "top-right",
-          autoClose: 2000,
-        });
-      }
-    }
+  const handleView = (item) => {
+    // Navigate directly to Quote component with item data
+    navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
+      state: { ...item },
+    });
   };
 
   const handleDelete = async (id) => {
     const token = localStorage.getItem("authToken");
     const user = localStorage.getItem("user");
-
     if (!token || !user) {
       toast.error("User is not authenticated. Please sign in.", {
         position: "top-right",
@@ -324,7 +281,6 @@ const Overview = () => {
           </tbody>
         </table>
       </div>
-
       <style>{`
         @media (max-width: 640px) {
           table {
