@@ -33,6 +33,7 @@ const Quote = () => {
   const [manualPartName, setManualPartName] = useState("");
   const [manualQuantity, setManualQuantity] = useState(1);
   const [manualUnitPrice, setManualUnitPrice] = useState("");
+  const [quoteId, setQuoteId] = useState(null); // New state to track quote ID
 
   const partsTotal = parts.reduce(
     (sum, part) => sum + (part.totalPrice || 0),
@@ -228,11 +229,14 @@ const Quote = () => {
         "Check quote response:",
         JSON.stringify(response.data, null, 2)
       );
-      return (
+      const quoteExists =
         response.data.status &&
         response.data.data &&
-        Object.keys(response.data.data).length > 0
-      );
+        Object.keys(response.data.data).length > 0;
+      if (quoteExists) {
+        setQuoteId(response.data.data.id); // Set quoteId if quote exists
+      }
+      return quoteExists;
     } catch (err) {
       if (err.response?.status === 404) {
         return false;
@@ -417,6 +421,8 @@ const Quote = () => {
         autoClose: 2000,
       });
 
+      setQuoteId(response.data.data.id); // Store the quote ID from response
+
       localStorage.setItem(
         `updatedBooking_${bookingId}`,
         JSON.stringify({
@@ -425,13 +431,6 @@ const Quote = () => {
           total_amount: parseFloat(mainTotalCost),
         })
       );
-
-      setParts([]);
-      setLabourCost("");
-      setMessage("");
-      setChangeParts("");
-      setMaintEndDate(null);
-      localStorage.removeItem(`cartItems_${bookingId}`);
     } catch (err) {
       console.error(
         "Failed to generate quote:",
@@ -452,6 +451,172 @@ const Quote = () => {
       } else if (err.response?.status === 404) {
         errorMessage =
           "Booking not found or invalid endpoint. Please check the booking ID or contact support.";
+      } else if (err.response?.status === 422 && err.response?.data?.errors) {
+        errorMessage = Object.values(err.response.data.errors)
+          .flat()
+          .join(", ");
+      } else if (err.response?.status === 401) {
+        errorMessage = "Session expired. Please sign in again.";
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        navigate("/signin", { state: { from: window.location.pathname } });
+      }
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditQuote = async () => {
+    const token = localStorage.getItem("authToken");
+    const bookingId = parseInt(location.state?.id);
+    const booking_id = location.state?.booking_id || "N/A";
+
+    if (!token || !bookingId || isNaN(bookingId)) {
+      toast.error("Missing or invalid booking ID", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      navigate("/dashboard");
+      return;
+    }
+
+    if (!quoteId) {
+      toast.error("No quote ID available for editing", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    if (!maintenanceType) {
+      toast.error("Maintenance type is required", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (!maintStartDate) {
+      toast.error("Maintenance start date is required", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (!maintEndDate) {
+      toast.error("Maintenance end date is required", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (!changeParts) {
+      toast.error("Please select whether to change parts", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (!labourCost || !message) {
+      toast.error("Labour cost and message are required", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (parseFloat(labourCost) < 0) {
+      toast.error("Labour cost cannot be negative", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      setLabourCost("");
+      return;
+    }
+    if (
+      maintStartDate &&
+      maintEndDate &&
+      isBefore(maintEndDate, maintStartDate)
+    ) {
+      toast.error("Maintenance end date must be after or equal to start date", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+    if (changeParts === "yes" && parts.length === 0) {
+      toast.error("Please add parts if changing parts is selected", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("_method", "PATCH"); // Add _method: PATCH for Laravel
+      formData.append("booking_id", booking_id);
+      formData.append("message", message);
+      formData.append(
+        "maintenance_start_date",
+        format(maintStartDate, "yyyy-MM-dd")
+      );
+      formData.append(
+        "maintenance_end_date",
+        format(maintEndDate, "yyyy-MM-dd")
+      );
+      formData.append("change_part", parts.length > 0 ? "1" : "0");
+      parts.forEach((part, index) => {
+        formData.append(`service_fee[${index + 1}][name]`, part.name);
+        formData.append(
+          `service_fee[${index + 1}][price]`,
+          part.price.toFixed(2)
+        );
+        formData.append(
+          `service_fee[${index + 1}][quantity]`,
+          part.quantity.toString()
+        );
+      });
+      formData.append("workmanship", parseFloat(labourCost).toFixed(2));
+      formData.append("total_amount", mainTotalCost);
+
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
+      const response = await axios.post(
+        `https://api.gapafix.com.ng/api/quotes/${quoteId}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Edit quote response:", response.data);
+      toast.success("Quote updated successfully", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      localStorage.setItem(
+        `updatedBooking_${bookingId}`,
+        JSON.stringify({
+          id: bookingId,
+          maintenance_end_date: format(maintEndDate, "yyyy-MM-dd"),
+          total_amount: parseFloat(mainTotalCost),
+        })
+      );
+    } catch (err) {
+      console.error("Failed to edit quote:", err.message, err.response?.data);
+      let errorMessage = "Failed to edit quote";
+      if (err.response?.status === 404) {
+        errorMessage = "Quote not found. Please check the quote ID.";
       } else if (err.response?.status === 422 && err.response?.data?.errors) {
         errorMessage = Object.values(err.response.data.errors)
           .flat()
@@ -840,7 +1005,7 @@ const Quote = () => {
         <div className="w-full max-w-3xl flex justify-end mb-14 md:mb-0">
           <button
             type="button"
-            onClick={handleGenerateQuote}
+            onClick={quoteId ? handleEditQuote : handleGenerateQuote}
             disabled={isSubmitting || !isFormValid()}
             className={`w-full max-w-sm bg-[#B80707] text-white py-3 rounded-md font-medium transition-colors ${
               isSubmitting || !isFormValid()
@@ -848,7 +1013,13 @@ const Quote = () => {
                 : "hover:bg-red-700"
             }`}
           >
-            {isSubmitting ? "Generating Quote..." : "GENERATE QUOTE"}
+            {isSubmitting
+              ? quoteId
+                ? "Updating Quote..."
+                : "Generating Quote..."
+              : quoteId
+              ? "EDIT QUOTE"
+              : "GENERATE QUOTE"}
           </button>
         </div>
       </div>

@@ -20,7 +20,6 @@ const Overview = () => {
       return;
     }
 
-    // Verify admin role
     let userRole;
     try {
       userRole = JSON.parse(user).role;
@@ -42,55 +41,17 @@ const Overview = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.status) {
-          let bookings = response.data.data.map((item) => ({
+          const bookings = response.data.data.map((item) => ({
             ...item,
-            id: parseInt(item.id), // Ensure ID is numerical
+            id: parseInt(item.id),
             maintenance_end_date: item.maintenance_end_date || null,
             total_amount: item.total_amount
               ? parseFloat(item.total_amount)
               : null,
           }));
 
-          // Fetch quote data for each booking
-          const quotePromises = bookings.map(async (booking) => {
-            try {
-              const quoteResponse = await axios.get(
-                `https://api.gapafix.com.ng/api/booking/${booking.id}/invoice/view`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              console.log(
-                `Quote response for booking ${booking.id}:`,
-                JSON.stringify(quoteResponse.data, null, 2)
-              );
-              if (quoteResponse.data.status && quoteResponse.data.data) {
-                return {
-                  ...booking,
-                  maintenance_end_date:
-                    quoteResponse.data.data.maintenance_end_date ||
-                    booking.maintenance_end_date,
-                  total_amount: quoteResponse.data.data.total_amount
-                    ? parseFloat(quoteResponse.data.data.total_amount)
-                    : booking.total_amount,
-                };
-              }
-              return booking;
-            } catch (err) {
-              if (err.response?.status === 404) {
-                return booking; // No quote exists, use booking data
-              }
-              console.error(
-                `Error fetching quote for booking ${booking.id}:`,
-                err.message,
-                err.response?.data
-              );
-              return booking;
-            }
-          });
-
-          const updatedBookings = await Promise.all(quotePromises);
-
           // Merge with localStorage updates (as a fallback)
-          const finalBookings = updatedBookings.map((booking) => {
+          const finalBookings = bookings.map((booking) => {
             const updatedBooking = localStorage.getItem(
               `updatedBooking_${booking.id}`
             );
@@ -134,11 +95,52 @@ const Overview = () => {
     fetchBookings();
   }, [navigate]);
 
-  const handleView = (item) => {
-    console.log("Navigating with ID:", item.id, "Booking ID:", item.booking_id);
-    navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
-      state: { ...item },
-    });
+  const handleView = async (item) => {
+    const token = localStorage.getItem("authToken");
+    try {
+      // Fetch invoice data only when viewing
+      const quoteResponse = await axios.get(
+        `https://api.gapafix.com.ng/api/booking/${item.id}/invoice/view`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log(
+        `Quote response for booking ${item.id}:`,
+        JSON.stringify(quoteResponse.data, null, 2)
+      );
+      const updatedItem =
+        quoteResponse.data.status && quoteResponse.data.data
+          ? {
+              ...item,
+              maintenance_end_date:
+                quoteResponse.data.data.maintenance_end_date ||
+                item.maintenance_end_date,
+              total_amount: quoteResponse.data.data.total_amount
+                ? parseFloat(quoteResponse.data.data.total_amount)
+                : item.total_amount,
+            }
+          : item;
+
+      navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
+        state: { ...updatedItem },
+      });
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // No invoice exists, proceed with booking data
+        navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
+          state: { ...item },
+        });
+      } else {
+        console.error(
+          `Error fetching quote for booking ${item.id}:`,
+          err.message,
+          err.response?.data
+        );
+        toast.error("Error fetching quote data", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      }
+    }
   };
 
   const handleDelete = async (id) => {
