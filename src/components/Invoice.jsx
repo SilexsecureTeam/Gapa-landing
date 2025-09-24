@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FileText, Download, ArrowLeft } from "lucide-react";
+import { jsPDF } from "jspdf";
 import logo from "../assets/logo.png";
 
 // Custom number formatter for Naira (e.g., ₦20,000.00)
@@ -142,7 +143,8 @@ const Invoice = () => {
         );
 
         if (isMounted) {
-          let invoiceData = response.data.data || response.data || {};
+          let invoiceData =
+            response.data.quote || response.data.data || response.data || {};
           // Handle text response
           if (typeof response.data === "string") {
             console.warn(
@@ -164,15 +166,28 @@ const Invoice = () => {
 
           console.log("Invoice data extracted:", invoiceData);
 
+          // Convert service_fee object to array
+          const serviceFeeArray = invoiceData.service_fee
+            ? Object.values(invoiceData.service_fee).map((fee) => ({
+                name: fee.name,
+                price: parseFloat(fee.price) || 0,
+                quantity: parseInt(fee.quantity) || 1,
+                subtotal: parseFloat(fee.price) * (parseInt(fee.quantity) || 1),
+              }))
+            : [];
+
           const normalizedInvoice = {
             booking_id:
-              invoiceData.booking_id || location.state?.booking_id || "N/A",
+              invoiceData.user_booking_id ||
+              invoiceData.booking_id ||
+              location.state?.booking_id ||
+              "N/A",
             full_name:
               invoiceData.full_name || location.state?.full_name || "N/A",
             email: invoiceData.email || location.state?.email || "N/A",
             message: invoiceData.message || "No message provided",
-            change_part: invoiceData.change_part || false,
-            service_fee: invoiceData.service_fee || [],
+            change_part: Boolean(invoiceData.change_part) || false,
+            service_fee: serviceFeeArray,
             workmanship: parseFloat(invoiceData.workmanship) || 0,
             total_amount: parseFloat(invoiceData.total_amount) || 0,
             maintenance_start_date: invoiceData.maintenance_start_date || "N/A",
@@ -322,102 +337,206 @@ const Invoice = () => {
       return;
     }
 
-    const numericalId = parseInt(location.state?.id);
-    if (isNaN(numericalId)) {
-      toast.error("No valid booking ID provided.", {
+    if (!invoice) {
+      toast.warn("No invoice available to download.", {
         position: "top-right",
         autoClose: 3000,
       });
       return;
     }
 
-    let isMounted = true;
-    setIsDownloading(true);
-
-    try {
-      console.log("Downloading invoice for ID:", numericalId);
-      const response = await axios.get(
-        `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/download`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
-      );
-      console.log("Download response:", {
-        status: response.status,
-        headers: response.headers,
-        contentType: response.headers["content-type"],
+    const numericalId = parseInt(location.state?.id);
+    const bookingId =
+      invoice.booking_id || location.state?.booking_id || "invoice";
+    if (!bookingId || bookingId === "N/A") {
+      toast.error("No valid booking ID provided for download.", {
+        position: "top-right",
+        autoClose: 3000,
       });
+      return;
+    }
 
-      if (isMounted) {
-        if (response.headers["content-type"] !== "application/pdf") {
-          // Log response body for debugging
-          const text = await response.data.text();
-          console.error("Non-PDF response:", text);
-          throw new Error("Invalid PDF response");
+    setIsDownloading(true);
+    try {
+      console.log("Initiating download for booking ID:", bookingId);
+
+      // Try downloading with user_booking_id (e.g., Gapafix9996)
+      let response;
+      try {
+        response = await axios.get(
+          `https://api.gapafix.com.ng/api/booking/${bookingId}/invoice/download`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: "blob",
+          }
+        );
+      } catch (err) {
+        if (err.response?.status === 404 && numericalId) {
+          console.log(
+            "Trying fallback endpoint with numerical ID:",
+            numericalId
+          );
+          // Fallback to numerical ID
+          response = await axios.get(
+            `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/download`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              responseType: "blob",
+            }
+          );
+        } else {
+          throw err; // Rethrow other errors
         }
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement("a");
-        link.href = url;
-        link.setAttribute("download", `invoice_${numericalId}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        toast.success("Invoice downloaded successfully!", {
-          position: "top-right",
-          autoClose: 2000,
-        });
       }
+
+      console.log("Download response headers:", response.headers);
+      if (response.headers["content-type"] !== "application/pdf") {
+        const text = await response.data.text();
+        console.error("Non-PDF response received:", text);
+        throw new Error("Server did not return a PDF file.");
+      }
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `invoice_${bookingId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Invoice #${bookingId} downloaded successfully!`, {
+        position: "top-right",
+        autoClose: 2000,
+      });
     } catch (err) {
       console.error("Error downloading invoice:", {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
       });
-      if (isMounted) {
+
+      // Fallback to client-side PDF generation using jsPDF
+      if (err.response?.status === 404) {
+        console.log(
+          "Falling back to client-side PDF generation for booking ID:",
+          bookingId
+        );
+        try {
+          const doc = new jsPDF();
+          doc.setFontSize(16);
+          doc.text("Invoice", 20, 20);
+          doc.setFontSize(12);
+          doc.text(`Booking ID: ${invoice.booking_id}`, 20, 30);
+          doc.text(`Customer Name: ${invoice.full_name}`, 20, 40);
+          doc.text(`Email: ${invoice.email}`, 20, 50);
+          doc.text(
+            `Maintenance Start Date: ${invoice.maintenance_start_date}`,
+            20,
+            60
+          );
+          doc.text(
+            `Maintenance End Date: ${invoice.maintenance_end_date}`,
+            20,
+            70
+          );
+          doc.text(`Message: ${invoice.message}`, 20, 80);
+          doc.text(
+            `Change Parts: ${invoice.change_part ? "Yes" : "No"}`,
+            20,
+            90
+          );
+          let y = 100;
+          if (invoice.service_fee?.length > 0) {
+            doc.text("Services:", 20, y);
+            invoice.service_fee.forEach((service, index) => {
+              y += 10;
+              doc.text(
+                `${index + 1}. ${service.name} - ${formatNaira(
+                  service.price
+                )} x ${service.quantity} = ${formatNaira(service.subtotal)}`,
+                20,
+                y
+              );
+            });
+            y += 10;
+          }
+          doc.text(`Workmanship: ${formatNaira(invoice.workmanship)}`, 20, y);
+          y += 10;
+          doc.text(`Total Amount: ${formatNaira(invoice.total_amount)}`, 20, y);
+          if (booking) {
+            y += 10;
+            doc.text(
+              `Vehicle: ${booking.vehicle_type} ${booking.make} ${booking.model}`,
+              20,
+              y
+            );
+            y += 10;
+            doc.text(`Service Required: ${booking.service_required}`, 20, y);
+            y += 10;
+            doc.text(`Service Center: ${booking.service_center}`, 20, y);
+            y += 10;
+            doc.text(`Service Date: ${booking.service_date}`, 20, y);
+            y += 10;
+            doc.text(`Status: ${booking.status}`, 20, y);
+            if (booking.additional_services?.length > 0) {
+              y += 10;
+              doc.text("Additional Services:", 20, y);
+              booking.additional_services.forEach((service, index) => {
+                y += 10;
+                doc.text(`${index + 1}. ${service}`, 20, y);
+              });
+            }
+          }
+          doc.save(`invoice_${bookingId}.pdf`);
+          toast.success(
+            `Invoice #${bookingId} generated and downloaded locally!`,
+            {
+              position: "top-right",
+              autoClose: 2000,
+            }
+          );
+        } catch (pdfErr) {
+          console.error("Error generating client-side PDF:", pdfErr);
+          toast.error(
+            "Failed to generate invoice PDF locally. Please contact support.",
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        }
+      } else {
+        let errorMessage = "Failed to download invoice. Please try again.";
         if (err.message.includes("Network Error")) {
-          toast.error(
-            "Network error: Unable to connect to the server. Please check your connection or contact support.",
-            { position: "top-right", autoClose: 3000 }
-          );
-        } else if (err.message.includes("No valid booking ID")) {
-          toast.error(
-            "No valid booking ID provided. Please select a booking from the dashboard.",
-            { position: "top-right", autoClose: 3000 }
-          );
+          errorMessage =
+            "Network error: Unable to connect to the server. Please check your connection.";
         } else if (err.response?.status === 401) {
           localStorage.removeItem("authToken");
           localStorage.removeItem("user");
-          toast.error("Session expired. Please log in again.", {
+          errorMessage = "Session expired. Please log in again.";
+          toast.error(errorMessage, {
             position: "top-right",
             autoClose: 3000,
             action: { label: "Log In", onClick: () => navigate("/signin") },
           });
+          return;
         } else if (err.response?.status === 404) {
-          console.log("Invoice not found for download (404)");
-          toast.warn(
-            `No invoice available for booking ID ${numericalId}. Contact support if this is an error.`,
-            { position: "top-right", autoClose: 3000 }
-          );
+          errorMessage = `No invoice PDF found for booking ID ${bookingId}. Please ensure the invoice is generated.`;
         } else if (err.response?.status === 500) {
-          console.log("Server error (500) for invoice download");
-          toast.error(
-            `Server error: Unable to download invoice for booking ID ${numericalId}. Please contact support.`,
-            { position: "top-right", autoClose: 3000 }
-          );
-        } else {
-          toast.error(
-            err.response?.data?.message ||
-              "Failed to download invoice. Please try again.",
-            { position: "top-right", autoClose: 3000 }
-          );
+          errorMessage = `Server error: Unable to generate or retrieve PDF for booking ID ${bookingId}. Please contact support.`;
+        } else if (err.message.includes("Server did not return a PDF")) {
+          errorMessage = "Invalid response from server. Expected a PDF file.";
         }
+
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     } finally {
-      if (isMounted) {
-        setIsDownloading(false);
-      }
+      setIsDownloading(false);
     }
   };
 
@@ -634,9 +753,11 @@ const Invoice = () => {
               <button
                 onClick={handleDownload}
                 className={`flex items-center space-x-2 bg-[#492F92] text-white px-4 py-2 rounded-full text-sm hover:bg-[#3b2371] transition-colors ${
-                  isDownloading ? "opacity-50 cursor-not-allowed" : ""
+                  isDownloading || !invoice
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
-                disabled={isDownloading}
+                disabled={isDownloading || !invoice}
               >
                 <Download className="w-4 h-4" />
                 <span>

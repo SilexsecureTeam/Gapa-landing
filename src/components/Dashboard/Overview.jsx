@@ -33,7 +33,7 @@ const Overview = () => {
       return;
     }
 
-    const fetchBookings = async () => {
+    const fetchBookingsAndQuotes = async () => {
       try {
         const response = await axios.get(
           "https://api.gapafix.com.ng/api/bookings/all",
@@ -49,26 +49,101 @@ const Overview = () => {
               : null,
           }));
 
-          // Merge with localStorage updates (as a fallback)
-          const finalBookings = bookings.map((booking) => {
-            const updatedBooking = localStorage.getItem(
-              `updatedBooking_${booking.id}`
-            );
-            if (updatedBooking) {
-              const updates = JSON.parse(updatedBooking);
-              return {
-                ...booking,
-                maintenance_end_date:
-                  updates.maintenance_end_date || booking.maintenance_end_date,
-                total_amount: updates.total_amount
-                  ? parseFloat(updates.total_amount)
-                  : booking.total_amount,
-              };
-            }
-            return booking;
-          });
+          // Fetch quote data for each booking
+          const updatedBookings = await Promise.all(
+            bookings.map(async (booking) => {
+              try {
+                const quoteResponse = await axios.get(
+                  `https://api.gapafix.com.ng/api/booking/${booking.id}/invoice/view`,
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                let quoteData =
+                  quoteResponse.data.data ||
+                  quoteResponse.data.quote ||
+                  quoteResponse.data;
 
-          setMaintenanceData(finalBookings);
+                // Handle potential text response
+                if (typeof quoteResponse.data === "string") {
+                  const parseTextToJson = (text) => {
+                    const lines = text
+                      .split("\n")
+                      .map((line) => line.trim())
+                      .filter((line) => line);
+                    const json = { service_fee: [] };
+                    let currentPart = null;
+                    lines.forEach((line) => {
+                      if (line.startsWith("Booking ID:"))
+                        json.booking_id = line.split(": ")[1];
+                      else if (line.startsWith("Customer:")) {
+                        const [name, email] = line.split(": ")[1].split(" (");
+                        json.full_name = name;
+                        json.email = email ? email.replace(")", "") : "";
+                      } else if (line.startsWith("- ")) {
+                        currentPart = { name: line.slice(2) };
+                        json.service_fee.push(currentPart);
+                      } else if (line.startsWith("Price:") && currentPart) {
+                        currentPart.price =
+                          parseFloat(line.split(": ₦")[1].replace(",", "")) ||
+                          0;
+                      } else if (line.startsWith("Qty:") && currentPart) {
+                        currentPart.quantity =
+                          parseInt(line.split(": ")[1]) || 1;
+                        currentPart.subtotal =
+                          currentPart.price * currentPart.quantity;
+                      } else if (line.startsWith("Workmanship:")) {
+                        json.workmanship =
+                          parseFloat(line.split(": ₦")[1].replace(",", "")) ||
+                          0;
+                      } else if (line.startsWith("Total:")) {
+                        json.total_amount =
+                          parseFloat(line.split(": ₦")[1].replace(",", "")) ||
+                          0;
+                      } else if (line.startsWith("Maintenance Start Date:")) {
+                        json.maintenance_start_date = line.split(": ")[1];
+                      } else if (line.startsWith("Maintenance End Date:")) {
+                        json.maintenance_end_date = line.split(": ")[1];
+                      } else if (line.startsWith("Message:")) {
+                        json.message = line.split(": ")[1];
+                      } else if (line.startsWith("Change Part:")) {
+                        json.change_part =
+                          line.split(": ")[1].toLowerCase() === "yes";
+                      }
+                    });
+                    return json;
+                  };
+                  quoteData = parseTextToJson(quoteResponse.data);
+                }
+
+                if (quoteData && Object.keys(quoteData).length > 0) {
+                  return {
+                    ...booking,
+                    maintenance_end_date:
+                      quoteData.maintenance_end_date ||
+                      booking.maintenance_end_date,
+                    total_amount: quoteData.total_amount
+                      ? parseFloat(quoteData.total_amount)
+                      : booking.total_amount,
+                    status: quoteData.status || booking.status || "Pending",
+                  };
+                }
+                return booking;
+              } catch (err) {
+                if (err.response?.status === 404) {
+                  console.log(`No quote found for booking ID: ${booking.id}`);
+                  return booking;
+                } else {
+                  console.error(
+                    `Error fetching quote for booking ${booking.id}:`,
+                    err.message,
+                    err.response?.data
+                  );
+                  return booking;
+                }
+              }
+            })
+          );
+
+          setMaintenanceData(updatedBookings);
         } else {
           setError("Failed to retrieve bookings");
         }
@@ -91,11 +166,10 @@ const Overview = () => {
       }
     };
 
-    fetchBookings();
+    fetchBookingsAndQuotes();
   }, [navigate]);
 
   const handleView = (item) => {
-    // Navigate directly to Quote component with item data
     navigate(`/dashboard/quote/${encodeURIComponent(item.id)}`, {
       state: { ...item },
     });
@@ -144,7 +218,6 @@ const Overview = () => {
         position: "top-right",
         autoClose: 2000,
       });
-      localStorage.removeItem(`updatedBooking_${id}`);
     } catch (err) {
       console.error(
         "Failed to delete booking:",
@@ -232,10 +305,21 @@ const Overview = () => {
                   {item.booking_id || "N/A"}
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-600">
-                  {item.service_date || "N/A"}
+                  {item.service_date
+                    ? new Date(item.service_date).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "N/A"}
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-600">
-                  {item.maintenance_end_date || "-"}
+                  {item.maintenance_end_date
+                    ? new Date(item.maintenance_end_date).toLocaleDateString(
+                        "en-GB",
+                        { day: "2-digit", month: "short", year: "numeric" }
+                      )
+                    : "-"}
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-600 w-70">
                   {item.service_required

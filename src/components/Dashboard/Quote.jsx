@@ -6,6 +6,7 @@ import {
   Trash2,
   PlusCircle,
   MinusCircle,
+  AlertCircle,
 } from "lucide-react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { format, isBefore } from "date-fns";
@@ -95,6 +96,7 @@ const Quote = () => {
         full_name,
         selectedParts,
         id,
+        // booking_id,
       } = location.state;
 
       const numericalId = parseInt(id);
@@ -112,12 +114,7 @@ const Quote = () => {
       }
 
       setCustomerName(full_name || "");
-      setMaintStartDate(service_date ? new Date(service_date) : null);
-      setMaintEndDate(null);
-      setLabourCost("");
       setMaintenanceType(service_required || "");
-      setMessage("");
-
       const options = [service_required, ...(additional_services || [])].filter(
         Boolean
       );
@@ -133,6 +130,141 @@ const Quote = () => {
         totalPrice: parseFloat(part.totalPrice) || 0,
       }));
       setParts(newParts);
+
+      // Check for existing quote and pre-fill form
+      const fetchExistingQuote = async () => {
+        try {
+          const response = await axios.get(
+            `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          console.log(
+            "Existing quote response:",
+            JSON.stringify(response.data, null, 2)
+          );
+          let quoteData =
+            response.data.data || response.data.quote || response.data;
+
+          // Handle potential text response
+          if (typeof response.data === "string") {
+            const parseTextToJson = (text) => {
+              const lines = text
+                .split("\n")
+                .map((line) => line.trim())
+                .filter((line) => line);
+              const json = { service_fee: [] };
+              let currentPart = null;
+              lines.forEach((line) => {
+                if (line.startsWith("Booking ID:"))
+                  json.booking_id = line.split(": ")[1];
+                else if (line.startsWith("Customer:")) {
+                  const [name, email] = line.split(": ")[1].split(" (");
+                  json.full_name = name;
+                  json.email = email ? email.replace(")", "") : "";
+                } else if (line.startsWith("- ")) {
+                  currentPart = { name: line.slice(2) };
+                  json.service_fee.push(currentPart);
+                } else if (line.startsWith("Price:") && currentPart) {
+                  currentPart.price =
+                    parseFloat(line.split(": ₦")[1].replace(",", "")) || 0;
+                } else if (line.startsWith("Qty:") && currentPart) {
+                  currentPart.quantity = parseInt(line.split(": ")[1]) || 1;
+                  currentPart.subtotal =
+                    currentPart.price * currentPart.quantity;
+                } else if (line.startsWith("Workmanship:")) {
+                  json.workmanship =
+                    parseFloat(line.split(": ₦")[1].replace(",", "")) || 0;
+                } else if (line.startsWith("Total:")) {
+                  json.total_amount =
+                    parseFloat(line.split(": ₦")[1].replace(",", "")) || 0;
+                } else if (line.startsWith("Maintenance Start Date:")) {
+                  json.maintenance_start_date = line.split(": ")[1];
+                } else if (line.startsWith("Maintenance End Date:")) {
+                  json.maintenance_end_date = line.split(": ")[1];
+                } else if (line.startsWith("Message:")) {
+                  json.message = line.split(": ")[1];
+                } else if (line.startsWith("Change Part:")) {
+                  json.change_part =
+                    line.split(": ")[1].toLowerCase() === "yes";
+                }
+              });
+              return json;
+            };
+            quoteData = parseTextToJson(response.data);
+          }
+
+          if (
+            (response.data.status || quoteData) &&
+            quoteData &&
+            Object.keys(quoteData).length > 0
+          ) {
+            setQuoteId(quoteData.id || null);
+            setMaintStartDate(
+              quoteData.maintenance_start_date
+                ? new Date(quoteData.maintenance_start_date)
+                : service_date
+                ? new Date(service_date)
+                : null
+            );
+            setMaintEndDate(
+              quoteData.maintenance_end_date
+                ? new Date(quoteData.maintenance_end_date)
+                : null
+            );
+            setLabourCost(
+              quoteData.workmanship
+                ? parseFloat(quoteData.workmanship).toFixed(2)
+                : ""
+            );
+            setChangeParts(quoteData.change_part ? "yes" : "no");
+            setMessage(quoteData.message || "");
+            const fetchedParts = quoteData.service_fee
+              ? Object.values(quoteData.service_fee).map((part, index) => ({
+                  id: part.id || Date.now() + index,
+                  name: part.name || "",
+                  price: parseFloat(part.price) || 0,
+                  quantity: parseInt(part.quantity) || 1,
+                  totalPrice:
+                    parseFloat(part.subtotal) ||
+                    (parseFloat(part.price) || 0) *
+                      (parseInt(part.quantity) || 1),
+                }))
+              : [];
+            setParts((prevParts) =>
+              fetchedParts.length > 0 ? fetchedParts : prevParts
+            );
+            // toast.info(
+            //   `Loaded existing quote #${quoteData.id} for booking #${
+            //     quoteData.user_booking_id || numericalId
+            //   }`,
+            //   {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            //   }
+            // );
+          }
+        } catch (err) {
+          if (err.response?.status === 404) {
+            console.log("No existing quote found for booking ID:", numericalId);
+            setMaintStartDate(service_date ? new Date(service_date) : null);
+          } else {
+            console.error(
+              "Error fetching existing quote:",
+              err.message,
+              err.response?.data
+            );
+            toast.error("Failed to load existing quote", {
+              position: "top-right",
+              autoClose: 2000,
+            });
+            setMaintStartDate(service_date ? new Date(service_date) : null);
+          }
+        }
+      };
+
+      fetchExistingQuote();
     } else {
       setParts([]);
       localStorage.removeItem(`cartItems_${fleetName}`);
@@ -211,45 +343,6 @@ const Quote = () => {
     }
   };
 
-  const checkQuoteExists = async (bookingId) => {
-    const token = localStorage.getItem("authToken");
-    const numericalId = parseInt(bookingId);
-    if (!token || isNaN(numericalId)) return false;
-    try {
-      const response = await axios.get(
-        `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      console.log(
-        "Check quote response:",
-        JSON.stringify(response.data, null, 2)
-      );
-      const quoteExists =
-        response.data.status &&
-        response.data.data &&
-        Object.keys(response.data.data).length > 0;
-      if (quoteExists) {
-        setQuoteId(response.data.data.id);
-      }
-      return quoteExists;
-    } catch (err) {
-      if (err.response?.status === 404) {
-        return false;
-      }
-      if (
-        err.response?.data?.status === false &&
-        err.response?.data?.message ===
-          "A quote already exists for this booking"
-      ) {
-        return true;
-      }
-      console.error("Error checking quote:", err.message, err.response?.data);
-      return false;
-    }
-  };
-
   const validateBookingId = async (id) => {
     const token = localStorage.getItem("authToken");
     const numericalId = parseInt(id);
@@ -297,8 +390,7 @@ const Quote = () => {
       return;
     }
 
-    const quoteExists = await checkQuoteExists(bookingId);
-    if (quoteExists) {
+    if (quoteId) {
       toast.warn(`A quote already exists for booking #${booking_id}`, {
         position: "top-right",
         autoClose: 3000,
@@ -710,6 +802,18 @@ const Quote = () => {
 
   return (
     <div className="w-full mx-auto p-6 bg-white overflow-y-auto custom-scrollbar">
+      {quoteId && (
+        <div className="mb-6 p-4 bg-[#F2F2F2] border-l-4 border-l-[#4B3193] text-[#4B3193] rounded-md flex items-center">
+          <AlertCircle className="w-6 h-6 mr-2" />
+          <div>
+            <p className="font-semibold">Editing Existing Quote #{quoteId}</p>
+            <p className="text-sm">
+              Loaded quote for booking #{location.state?.booking_id || "N/A"}.
+              Update the fields below and click "EDIT QUOTE" to save changes.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-[#333333] mb-4">Customer</h2>
         <div className="mb-4 max-w-4xl">
