@@ -1,4 +1,3 @@
-// src/components/Dashboard/AutomotiveParts.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Home,
@@ -7,11 +6,12 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  ArrowRight,
+  Search,
+  ImageOff,
 } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
-import placeholder from "../../assets/placeholder.png";
+import axios from "axios";
 import logoplaceholder from "../../assets/logoplaceholder.png";
 import iconplaceholder from "../../assets/iconplaceholder.png";
 
@@ -20,61 +20,165 @@ const AutomotiveParts = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const bookingId = location.state?.booking_id || fleetName;
+  const { brand_id, model_id, _sub_model_id, partNumber } =
+    location.state || {};
 
-  // Initialize cartItems based on bookingId
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem(`cartItems_${bookingId}`);
     return savedCart ? JSON.parse(savedCart) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [quantities, setQuantities] = useState({});
+  const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(partNumber || "");
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    prev_page_url: null,
+    next_page_url: null,
+    last_page: 1,
+  });
+  const [modelNotFound, setModelNotFound] = useState(false);
+  const [imageErrors, setImageErrors] = useState({}); // Track failed images
 
-  const products = [
-    {
-      id: 123456,
-      name: "RIDEX BRAKE disc, Rear Axle 300x20mm, 5/5 x 120, Vented, Cast Iron",
-      price: 40000,
-      rating: 3,
-      image: placeholder,
-      details: {
-        fittingPosition: "Rear Axle",
-        diameter: "300",
-        brakeDiscType: "Vented",
-        material: "Cast Iron",
-        surface: "Uncoated",
-        height: "76",
-        brakeDiscThickness: "20",
-      },
-    },
-    {
-      id: 123457,
-      name: "RIDEX BRAKE disc, Rear Axle 300x20mm, 5/5 x 120, Vented, Cast Iron",
-      price: 40000,
-      rating: 4,
-      image: placeholder,
-    },
-    {
-      id: 123458,
-      name: "RIDEX BRAKE disc, Rear Axle 300x20mm, 5/5 x 120, Vented, Cast Iron",
-      price: 40000,
-      rating: 4.2,
-      image: placeholder,
-    },
-    {
-      id: 123459,
-      name: "RIDEX BRAKE disc, Rear Axle 300x20mm, 5/5 x 120, Vented, Cast Iron",
-      price: 40000,
-      rating: 4.5,
-      image: placeholder,
-    },
-  ];
+  // Format article number with line breaks at hyphens
+  const formatArticleNumber = (id) => id.split("-").join("<br />");
 
-  // Save cartItems to localStorage with bookingId-specific key
+  // Determine if search is a part number
+  const isPartNumberSearch = (term) => {
+    return term && /^[A-Za-z0-9-]+$/.test(term);
+  };
+
+  // Fetch parts from search-filter API
+  useEffect(() => {
+    const fetchParts = async () => {
+      setLoading(true);
+      try {
+        const searchValue = searchTerm || partNumber || "";
+        const isPartNumber = isPartNumberSearch(searchValue);
+        const payload = {
+          search: searchValue,
+          ...(isPartNumber
+            ? { brand_id: brand_id || "", model_id: model_id || "" }
+            : {
+                category_id: "4",
+                sub_category_id: "14",
+                maker_id: "3",
+                brand_id: brand_id || "",
+                model_id: model_id || "",
+              }),
+        };
+        const response = await axios.post(
+          "https://stockmgt.gapaautoparts.com/api/search-filter",
+          payload
+        );
+        const { results, modelNotFound } = response.data;
+        console.log("API Response:", response.data); // Debug log
+        const parts =
+          results.data && Array.isArray(results.data)
+            ? results.data.map((item) => ({
+                id: item.id,
+                name: item.name,
+                price: parseInt(item.price) || 0,
+                image: `https://stockmgt.gapaautoparts.com/uploads/products/${encodeURIComponent(
+                  item.img_url
+                )}`,
+                rating: 4,
+                details: {
+                  description: item.description || "",
+                  weight_in_kg: item.weight_in_kg || "",
+                  EAN: item.EAN || "",
+                  compatibility: item.compatibility || "",
+                },
+              }))
+            : [];
+        setProducts(parts);
+        setPagination({
+          prev_page_url: results.prev_page_url || null,
+          next_page_url: results.next_page_url || null,
+          last_page: results.last_page || 1,
+        });
+        setModelNotFound(
+          modelNotFound && (!results.data || results.data.length === 0)
+        );
+        console.log(
+          "modelNotFound set to:",
+          modelNotFound && (!results.data || results.data.length === 0)
+        );
+      } catch (err) {
+        console.error("Error fetching parts:", err.message);
+        toast.error("Failed to fetch parts. Please try again.", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        setProducts([]);
+        setModelNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchParts();
+  }, [
+    searchTerm,
+    brand_id,
+    model_id,
+    partNumber,
+    currentPage,
+    fleetName,
+    navigate,
+  ]);
+
+  // Handle pagination
+  const handlePageChange = async (url) => {
+    if (!url) return;
+    setLoading(true);
+    try {
+      const response = await axios.get(url);
+      const { results } = response.data;
+      console.log("Pagination Response:", response.data);
+      const parts =
+        results.data && Array.isArray(results.data)
+          ? results.data.map((item) => ({
+              id: item.id,
+              name: item.name,
+              price: parseInt(item.price) || 0,
+              image: `https://stockmgt.gapaautoparts.com/uploads/products/${encodeURIComponent(
+                item.img_url
+              )}`,
+              rating: 4,
+              details: {
+                description: item.description || "",
+                weight_in_kg: item.weight_in_kg || "",
+                EAN: item.EAN || "",
+                compatibility: item.compatibility || "",
+              },
+            }))
+          : [];
+      setProducts(parts);
+      setPagination({
+        prev_page_url: results.prev_page_url || null,
+        next_page_url: results.next_page_url || null,
+        last_page: results.last_page || 1,
+      });
+      setCurrentPage(results.current_page || 1);
+      setModelNotFound(!results.data || results.data.length === 0);
+    } catch (err) {
+      console.error("Error fetching page:", err.message);
+      toast.error("Failed to load page. Please try again.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save cartItems to localStorage
   useEffect(() => {
     localStorage.setItem(`cartItems_${bookingId}`, JSON.stringify(cartItems));
   }, [cartItems, bookingId]);
 
-  // Clear cart for new booking if no saved cart exists
+  // Clear cart for new booking
   useEffect(() => {
     const savedCart = localStorage.getItem(`cartItems_${bookingId}`);
     if (!savedCart) {
@@ -166,6 +270,21 @@ const AutomotiveParts = () => {
     setIsCartOpen(false);
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    setSearchTerm(e.target.elements.search.value);
+  };
+
+  const handleImageError = (e, productId) => {
+    console.warn(
+      `Image failed to load: ${e.target.src} (img_url: ${e.target.src
+        .split("/")
+        .pop()})`
+    );
+    setImageErrors((prev) => ({ ...prev, [productId]: true }));
+  };
+
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -233,11 +352,18 @@ const AutomotiveParts = () => {
             ) : (
               cartItems.map((item) => (
                 <div key={item.id} className="flex items-start gap-3">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-12 h-12 object-cover rounded"
-                  />
+                  {imageErrors[item.id] ? (
+                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                      <ImageOff className="w-6 h-6 text-gray-400" />
+                    </div>
+                  ) : (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-12 h-12 object-cover rounded"
+                      onError={(e) => handleImageError(e, item.id)}
+                    />
+                  )}
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
                       {item.name}
@@ -297,83 +423,199 @@ const AutomotiveParts = () => {
       </div>
 
       <div className="p-6 relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-lg border border-gray-200 p-4 relative"
-            >
-              <img
-                src={logoplaceholder}
-                alt="product-logo"
-                className="w-20 mb-2"
+        <div className="mb-6 max-w-3xl mx-auto">
+          <form onSubmit={handleSearch} className="flex items-center gap-2">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                name="search"
+                defaultValue={searchTerm}
+                placeholder="Search parts (e.g., oil, SKBP-0011422)"
+                className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               />
-              <div className="text-sm font-semibold text-[#333333] mb-2">
-                Article No: <span className="text-[#5A1E78]">{product.id}</span>
-              </div>
-              <h3 className="text-sm text-[#333333] font-medium mb-4 leading-relaxed">
-                {product.name}
-              </h3>
-              <div className="relative mb-4">
-                <img
-                  src={product.image}
-                  alt="Brake disc"
-                  className="w-full h-32 object-contain"
-                />
-              </div>
-              <div className="flex items-center gap-1 mb-3 justify-between">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(product.rating)
-                          ? "fill-[#FA8232] text-[#FA8232]"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
-                  <span className="text-sm text-gray-600 ml-1">
-                    ({product.rating})
-                  </span>
-                </div>
-                <img src={iconplaceholder} alt="icon" />
-              </div>
-              <div className="mb-4 flex w-full items-end flex-col">
-                <div className="text-base text-[#333333] font-bold">
-                  ₦{product.price.toLocaleString()}
-                </div>
-                <div className="text-sm text-[#333333]">(Price per item)</div>
-                <div className="text-sm text-[#333333] mt-1">Incl. 20% VAT</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <button
-                    onClick={() => updateProductQuantity(product.id, -1)}
-                    className="p-2 bg-[#E5E5E5B2] cursor-pointer hover:bg-gray-100 rounded"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm p-1 border-[1px] px-3 border-[#3333334D]">
-                    {quantities[product.id] || 1}
-                  </span>
-                  <button
-                    onClick={() => updateProductQuantity(product.id, 1)}
-                    className="p-2 bg-[#E5E5E5B2] cursor-pointer hover:bg-gray-100 rounded"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-                <button
-                  onClick={() => addToCart(product)}
-                  className="bg-[#F7CD3A] cursor-pointer hover:bg-yellow-500 p-2.5 rounded"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                </button>
-              </div>
             </div>
-          ))}
+            <button
+              type="submit"
+              className="bg-[#4B3193] hover:bg-[#3A256F] text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Search
+            </button>
+          </form>
         </div>
+
+        {loading ? (
+          <div className="text-center text-gray-600">Loading parts...</div>
+        ) : products.length === 0 ? (
+          <div className="text-center text-gray-600 p-4 bg-gray-100 rounded-lg max-w-3xl mx-auto">
+            <p className="text-lg font-medium mb-2">
+              {modelNotFound
+                ? "Result not found for the selected model."
+                : "No parts found for your search."}
+            </p>
+            {modelNotFound && (
+              <button
+                onClick={() =>
+                  navigate(
+                    `/dashboard/quote/${encodeURIComponent(
+                      fleetName
+                    )}/add-fleet`,
+                    { state: location.state }
+                  )
+                }
+                className="text-blue-500 underline hover:text-blue-700 font-medium"
+              >
+                Back to Add Fleet
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-lg border border-gray-200 p-4 relative group"
+                >
+                  {imageErrors[`logo_${product.id}`] ? (
+                    <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center mb-2">
+                      <ImageOff className="w-8 h-8 text-gray-400" />
+                    </div>
+                  ) : (
+                    <img
+                      src={logoplaceholder}
+                      alt="product-logo"
+                      className="w-20 h-20 object-contain mb-2"
+                      onError={(e) => handleImageError(e, `logo_${product.id}`)}
+                    />
+                  )}
+                  <div className="text-sm font-semibold text-[#333333] mb-2 max-w-full overflow-wrap-break-word">
+                    Article No:{" "}
+                    <span
+                      className="text-[#5A1E78]"
+                      dangerouslySetInnerHTML={{
+                        __html: formatArticleNumber(product.id),
+                      }}
+                    />
+                  </div>
+                  <h3 className="text-sm text-[#333333] font-medium mb-4 leading-relaxed">
+                    {product.name}
+                  </h3>
+                  <div className="relative mb-4">
+                    {imageErrors[product.id] ? (
+                      <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center">
+                        <ImageOff className="w-8 h-8 text-gray-400" />
+                      </div>
+                    ) : (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-32 object-contain"
+                        onError={(e) => handleImageError(e, product.id)}
+                      />
+                    )}
+                    {product.details.compatibility && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 text-white text-xs p-2 rounded overflow-auto pointer-events-none">
+                        {product.details.compatibility}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 mb-3 justify-between">
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(product.rating)
+                              ? "fill-[#FA8232] text-[#FA8232]"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                      <span className="text-sm text-gray-600 ml-1">
+                        ({product.rating})
+                      </span>
+                    </div>
+                    {imageErrors[`icon_${product.id}`] ? (
+                      <div className="w-4 h-4 bg-gray-200 rounded flex items-center justify-center">
+                        <ImageOff className="w-3 h-3 text-gray-400" />
+                      </div>
+                    ) : (
+                      <img
+                        src={iconplaceholder}
+                        alt="icon"
+                        className="w-4 h-4"
+                        onError={(e) =>
+                          handleImageError(e, `icon_${product.id}`)
+                        }
+                      />
+                    )}
+                  </div>
+                  <div className="mb-4 flex w-full items-end flex-col">
+                    <div className="text-base text-[#333333] font-bold">
+                      ₦{product.price.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-[#333333]">
+                      (Price per item)
+                    </div>
+                    <div className="text-sm text-[#333333] mt-1">
+                      Incl. 20% VAT
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => updateProductQuantity(product.id, -1)}
+                        className="p-2 bg-[#E5E5E5B2] cursor-pointer hover:bg-gray-100 rounded"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="text-sm p-1 border-[1px] px-3 border-[#3333334D]">
+                        {quantities[product.id] || 1}
+                      </span>
+                      <button
+                        onClick={() => updateProductQuantity(product.id, 1)}
+                        className="p-2 bg-[#E5E5E5B2] cursor-pointer hover:bg-gray-100 rounded"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => addToCart(product)}
+                      className="bg-[#F7CD3A] cursor-pointer hover:bg-yellow-500 p-2.5 rounded"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between mt-6 max-w-3xl mx-auto">
+              <button
+                onClick={() => handlePageChange(pagination.prev_page_url)}
+                disabled={!pagination.prev_page_url || loading}
+                className={`px-4 py-2 rounded-lg ${
+                  pagination.prev_page_url
+                    ? "bg-[#4B3193] hover:bg-[#3A256F] text-white"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(pagination.next_page_url)}
+                disabled={!pagination.next_page_url || loading}
+                className={`px-4 py-2 rounded-lg ${
+                  pagination.next_page_url
+                    ? "bg-[#4B3193] hover:bg-[#3A256F] text-white"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <style jsx>{`
@@ -394,6 +636,10 @@ const AutomotiveParts = () => {
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: #6b46c1 #f1f1f1;
+        }
+        .overflow-wrap-break-word {
+          overflow-wrap: break-word;
+          max-width: 100%;
         }
       `}</style>
     </div>

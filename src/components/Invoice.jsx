@@ -4,9 +4,9 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { FileText, Download, ArrowLeft } from "lucide-react";
 import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import logo from "../assets/logo.png";
 
-// Custom number formatter for Naira (e.g., ₦20,000.00)
 const formatNaira = (number) => {
   return Number(number)
     .toLocaleString("en-NG", {
@@ -26,10 +26,8 @@ const Invoice = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Log location.state for debugging
   console.log("location.state:", location.state);
 
-  // Text-to-JSON parser for invoice response
   const parseTextToJson = (text) => {
     try {
       const lines = text.split("\n");
@@ -45,6 +43,9 @@ const Invoice = () => {
         maintenance_end_date: "N/A",
         message: "No message provided",
         change_part: false,
+        status: "N/A",
+        created_at: "N/A",
+        updated_at: "N/A",
       };
       let currentService = null;
       lines.forEach((line) => {
@@ -71,6 +72,12 @@ const Invoice = () => {
           );
         if (line.startsWith("Change Part: "))
           json.change_part = line.replace("Change Part: ", "") === "Yes";
+        if (line.startsWith("Status: "))
+          json.status = line.replace("Status: ", "");
+        if (line.startsWith("Created At: "))
+          json.created_at = line.replace("Created At: ", "");
+        if (line.startsWith("Updated At: "))
+          json.updated_at = line.replace("Updated At: ", "");
         if (line.match(/^- /)) {
           currentService = { name: line.replace("- ", "").trim() };
           json.service_fee.push(currentService);
@@ -123,13 +130,11 @@ const Invoice = () => {
       setIsLoading(true);
 
       try {
-        // Get numerical ID from location.state
         const numericalId = parseInt(location.state?.id);
         if (!location.state || isNaN(numericalId)) {
           throw new Error("No valid booking ID provided.");
         }
 
-        // Fetch invoice using numerical ID
         console.log("Fetching invoice for ID:", numericalId);
         const response = await axios.get(
           `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/view`,
@@ -145,7 +150,6 @@ const Invoice = () => {
         if (isMounted) {
           let invoiceData =
             response.data.quote || response.data.data || response.data || {};
-          // Handle text response
           if (typeof response.data === "string") {
             console.warn(
               "Invoice response is a string, attempting to parse as JSON."
@@ -166,7 +170,6 @@ const Invoice = () => {
 
           console.log("Invoice data extracted:", invoiceData);
 
-          // Convert service_fee object to array
           const serviceFeeArray = invoiceData.service_fee
             ? Object.values(invoiceData.service_fee).map((fee) => ({
                 name: fee.name,
@@ -193,17 +196,19 @@ const Invoice = () => {
             maintenance_start_date: invoiceData.maintenance_start_date || "N/A",
             maintenance_end_date: invoiceData.maintenance_end_date || "N/A",
             logo: invoiceData.logo || "",
+            status: invoiceData.status || "N/A",
+            created_at: invoiceData.created_at || "N/A",
+            updated_at: invoiceData.updated_at || "N/A",
           };
 
-          // Log normalized invoice for debugging
           console.log("Normalized invoice:", normalizedInvoice);
 
-          // Set booking details from location.state
           if (location.state) {
             setBooking({
               vehicle_type: location.state.vehicle_type || "N/A",
-              make: location.state.vehicle_make || "",
-              model: location.state.vehicle_model || "",
+              make: location.state.make || location.state.vehicle_make || "N/A",
+              model:
+                location.state.model || location.state.vehicle_model || "N/A",
               service_required: location.state.service_required || "N/A",
               service_center: location.state.service_center || "N/A",
               service_date: location.state.service_date || "N/A",
@@ -212,7 +217,6 @@ const Invoice = () => {
             });
           }
 
-          // Check if invoice is valid
           if (
             !invoiceData ||
             (Object.keys(invoiceData).length === 0 &&
@@ -222,85 +226,13 @@ const Invoice = () => {
               normalizedInvoice.total_amount === 0)
           ) {
             console.log("Invoice considered invalid due to empty or zero data");
-            toast.warn(
-              `No invoice available for booking ID ${numericalId}. Contact support if this is an error.`,
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
             setInvoice(null);
           } else {
             setInvoice(normalizedInvoice);
           }
         }
       } catch (err) {
-        console.error("Error fetching invoice:", {
-          message: err.message,
-          status: err.response?.status,
-          data: err.response?.data,
-        });
-        if (isMounted) {
-          if (err.message.includes("Network Error")) {
-            toast.error(
-              "Network error: Unable to connect to the server. Please check your connection or contact support.",
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
-          } else if (err.message.includes("No valid booking ID")) {
-            toast.error(
-              "No valid booking ID provided. Please select a booking from the dashboard.",
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
-          } else if (err.response?.status === 401) {
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("user");
-            toast.error("Session expired. Please log in again.", {
-              position: "top-right",
-              autoClose: 3000,
-              action: { label: "Log In", onClick: () => navigate("/signin") },
-            });
-          } else if (err.response?.status === 404) {
-            console.log("Invoice not found (404)");
-            toast.warn(
-              `No invoice available for booking ID ${
-                location.state?.id || "unknown"
-              }. Contact support if this is an error.`,
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
-            setInvoice(null);
-          } else if (err.response?.status === 500) {
-            console.log("Server error (500) for invoice fetch");
-            toast.error(
-              `Server error: Unable to retrieve invoice for booking ID ${
-                location.state?.id || "unknown"
-              }. Please contact support.`,
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
-            setInvoice(null);
-          } else {
-            toast.error(
-              err.response?.data?.message ||
-                "Failed to load invoice. Please try again.",
-              {
-                position: "top-right",
-                autoClose: 3000,
-              }
-            );
-            setInvoice(null);
-          }
-        }
+        console.error(err);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -356,11 +288,12 @@ const Invoice = () => {
       return;
     }
 
+    console.log("Invoice data for PDF:", JSON.stringify(invoice, null, 2));
+    console.log("Booking data for PDF:", JSON.stringify(booking, null, 2));
+
     setIsDownloading(true);
     try {
       console.log("Initiating download for booking ID:", bookingId);
-
-      // Try downloading with user_booking_id (e.g., Gapafix9996)
       let response;
       try {
         response = await axios.get(
@@ -370,13 +303,41 @@ const Invoice = () => {
             responseType: "blob",
           }
         );
+        console.log("Download response headers:", response.headers);
+
+        if (response.headers["content-type"] !== "application/pdf") {
+          const text = await response.data.text();
+          console.error("Non-PDF response received:", text);
+          throw new Error("Server did not return a valid PDF file.");
+        }
+
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `invoice_${bookingId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast.success(`Invoice #${bookingId} downloaded successfully!`, {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        return;
       } catch (err) {
+        console.error("Server download error:", {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+        });
+
         if (err.response?.status === 404 && numericalId) {
           console.log(
             "Trying fallback endpoint with numerical ID:",
             numericalId
           );
-          // Fallback to numerical ID
           response = await axios.get(
             `https://api.gapafix.com.ng/api/booking/${numericalId}/invoice/download`,
             {
@@ -384,156 +345,145 @@ const Invoice = () => {
               responseType: "blob",
             }
           );
-        } else {
-          throw err; // Rethrow other errors
-        }
-      }
+          console.log("Fallback response headers:", response.headers);
 
-      console.log("Download response headers:", response.headers);
-      if (response.headers["content-type"] !== "application/pdf") {
-        const text = await response.data.text();
-        console.error("Non-PDF response received:", text);
-        throw new Error("Server did not return a PDF file.");
-      }
-
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `invoice_${bookingId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success(`Invoice #${bookingId} downloaded successfully!`, {
-        position: "top-right",
-        autoClose: 2000,
-      });
-    } catch (err) {
-      console.error("Error downloading invoice:", {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-      });
-
-      // Fallback to client-side PDF generation using jsPDF
-      if (err.response?.status === 404) {
-        console.log(
-          "Falling back to client-side PDF generation for booking ID:",
-          bookingId
-        );
-        try {
-          const doc = new jsPDF();
-          doc.setFontSize(16);
-          doc.text("Invoice", 20, 20);
-          doc.setFontSize(12);
-          doc.text(`Booking ID: ${invoice.booking_id}`, 20, 30);
-          doc.text(`Customer Name: ${invoice.full_name}`, 20, 40);
-          doc.text(`Email: ${invoice.email}`, 20, 50);
-          doc.text(
-            `Maintenance Start Date: ${invoice.maintenance_start_date}`,
-            20,
-            60
-          );
-          doc.text(
-            `Maintenance End Date: ${invoice.maintenance_end_date}`,
-            20,
-            70
-          );
-          doc.text(`Message: ${invoice.message}`, 20, 80);
-          doc.text(
-            `Change Parts: ${invoice.change_part ? "Yes" : "No"}`,
-            20,
-            90
-          );
-          let y = 100;
-          if (invoice.service_fee?.length > 0) {
-            doc.text("Services:", 20, y);
-            invoice.service_fee.forEach((service, index) => {
-              y += 10;
-              doc.text(
-                `${index + 1}. ${service.name} - ${formatNaira(
-                  service.price
-                )} x ${service.quantity} = ${formatNaira(service.subtotal)}`,
-                20,
-                y
-              );
-            });
-            y += 10;
+          if (response.headers["content-type"] !== "application/pdf") {
+            const text = await response.data.text();
+            console.error("Non-PDF response received from fallback:", text);
+            throw new Error("Fallback server did not return a valid PDF file.");
           }
-          doc.text(`Workmanship: ${formatNaira(invoice.workmanship)}`, 20, y);
-          y += 10;
-          doc.text(`Total Amount: ${formatNaira(invoice.total_amount)}`, 20, y);
-          if (booking) {
-            y += 10;
-            doc.text(
-              `Vehicle: ${booking.vehicle_type} ${booking.make} ${booking.model}`,
-              20,
-              y
-            );
-            y += 10;
-            doc.text(`Service Required: ${booking.service_required}`, 20, y);
-            y += 10;
-            doc.text(`Service Center: ${booking.service_center}`, 20, y);
-            y += 10;
-            doc.text(`Service Date: ${booking.service_date}`, 20, y);
-            y += 10;
-            doc.text(`Status: ${booking.status}`, 20, y);
-            if (booking.additional_services?.length > 0) {
-              y += 10;
-              doc.text("Additional Services:", 20, y);
-              booking.additional_services.forEach((service, index) => {
-                y += 10;
-                doc.text(`${index + 1}. ${service}`, 20, y);
-              });
-            }
-          }
-          doc.save(`invoice_${bookingId}.pdf`);
-          toast.success(
-            `Invoice #${bookingId} generated and downloaded locally!`,
-            {
-              position: "top-right",
-              autoClose: 2000,
-            }
-          );
-        } catch (pdfErr) {
-          console.error("Error generating client-side PDF:", pdfErr);
-          toast.error(
-            "Failed to generate invoice PDF locally. Please contact support.",
-            {
-              position: "top-right",
-              autoClose: 3000,
-            }
-          );
-        }
-      } else {
-        let errorMessage = "Failed to download invoice. Please try again.";
-        if (err.message.includes("Network Error")) {
-          errorMessage =
-            "Network error: Unable to connect to the server. Please check your connection.";
-        } else if (err.response?.status === 401) {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("user");
-          errorMessage = "Session expired. Please log in again.";
-          toast.error(errorMessage, {
+
+          const blob = new Blob([response.data], { type: "application/pdf" });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", `invoice_${bookingId}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          toast.success(`Invoice #${bookingId} downloaded successfully!`, {
             position: "top-right",
-            autoClose: 3000,
-            action: { label: "Log In", onClick: () => navigate("/signin") },
+            autoClose: 2000,
           });
           return;
-        } else if (err.response?.status === 404) {
-          errorMessage = `No invoice PDF found for booking ID ${bookingId}. Please ensure the invoice is generated.`;
-        } else if (err.response?.status === 500) {
-          errorMessage = `Server error: Unable to generate or retrieve PDF for booking ID ${bookingId}. Please contact support.`;
-        } else if (err.message.includes("Server did not return a PDF")) {
-          errorMessage = "Invalid response from server. Expected a PDF file.";
+        }
+        console.log(
+          "Server-side PDF failed, falling back to client-side generation"
+        );
+      }
+
+      console.log("Generating client-side PDF for booking ID:", bookingId);
+      try {
+        const doc = new jsPDF();
+
+        if (invoice.logo) {
+          try {
+            doc.addImage(invoice.logo, "PNG", 20, 10, 50, 20);
+          } catch (e) {
+            console.warn("Failed to add logo to PDF:", e);
+            doc.addImage(logo, "PNG", 20, 10, 50, 20);
+          }
+        }
+        doc.setFontSize(16);
+        doc.text(`Invoice #${invoice.booking_id}`, 20, 35);
+
+        doc.autoTable({
+          startY: 45,
+          head: [["Field", "Value"]],
+          body: [
+            ["Customer Name", invoice.full_name || "N/A"],
+            ["Email", invoice.email || "N/A"],
+            ["Message", invoice.message || "N/A"],
+            ["Change Parts", invoice.change_part ? "Yes" : "No"],
+            ["Maintenance Start Date", invoice.maintenance_start_date || "N/A"],
+            ["Maintenance End Date", invoice.maintenance_end_date || "N/A"],
+            ["Status", invoice.status || "N/A"],
+            ["Created At", invoice.created_at || "N/A"],
+            ["Updated At", invoice.updated_at || "N/A"],
+          ],
+          theme: "striped",
+          styles: { fontSize: 10 },
+          headStyles: { fillColor: [73, 47, 146] },
+        });
+
+        let y = doc.lastAutoTable.finalY + 10;
+        if (invoice.service_fee?.length > 0) {
+          doc.autoTable({
+            startY: y,
+            head: [["Service", "Price", "Quantity", "Subtotal"]],
+            body: invoice.service_fee.map((service) => [
+              service.name || "N/A",
+              formatNaira(service.price),
+              service.quantity || "N/A",
+              formatNaira(service.subtotal),
+            ]),
+            theme: "striped",
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [73, 47, 146] },
+          });
+          y = doc.lastAutoTable.finalY + 10;
         }
 
-        toast.error(errorMessage, {
-          position: "top-right",
-          autoClose: 3000,
+        doc.autoTable({
+          startY: y,
+          head: [["Description", "Amount"]],
+          body: [
+            ["Workmanship", formatNaira(invoice.workmanship)],
+            ["Total Amount", formatNaira(invoice.total_amount)],
+          ],
+          theme: "striped",
+          styles: { fontSize: 10 },
+          headStyles: { fillColor: [73, 47, 146] },
         });
+        y = doc.lastAutoTable.finalY + 10;
+
+        if (booking) {
+          doc.autoTable({
+            startY: y,
+            head: [["Field", "Value"]],
+            body: [
+              [
+                "Vehicle",
+                `${booking.vehicle_type} ${booking.make} ${booking.model}`.trim() ||
+                  "N/A",
+              ],
+              ["Service Required", booking.service_required || "N/A"],
+              ["Service Center", booking.service_center || "N/A"],
+              ["Service Date", booking.service_date || "N/A"],
+              ["Status", booking.status || "N/A"],
+              [
+                "Additional Services",
+                booking.additional_services?.join(", ") || "None",
+              ],
+            ],
+            theme: "striped",
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [73, 47, 146] },
+          });
+        }
+
+        doc.setFontSize(8);
+        doc.text("Generated by CarFlex", 20, doc.internal.pageSize.height - 10);
+
+        doc.save(`invoice_${bookingId}.pdf`);
+        toast.success(
+          `Invoice #${bookingId} generated and downloaded locally!`,
+          {
+            position: "top-right",
+            autoClose: 2000,
+          }
+        );
+      } catch (pdfErr) {
+        console.error("Error generating client-side PDF:", pdfErr);
+        toast.error(
+          "Failed to generate invoice PDF locally. Please contact support.",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
       }
     } finally {
       setIsDownloading(false);
@@ -555,7 +505,7 @@ const Invoice = () => {
               </h2>
             </div>
             <button
-              onClick={() => navigate("/vehicle-dashboard")}
+              onClick={() => navigate(-1)}
               className="flex items-center space-x-2 text-[#492F92] hover:text-[#3b2371] transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -566,28 +516,35 @@ const Invoice = () => {
       </header>
       <div className="w-full mx-auto py-8">
         {isLoading ? (
-          <div className="text-center py-6">
-            <p className="text-gray-500 text-sm">Loading invoice...</p>
+          <div className="flex flex-col items-center justify-center py-12 bg-[#F4F4F4] rounded-xl border border-[#EBEBEB]">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#492F92] mb-4"></div>
+            <p className="text-gray-500 text-sm font-medium">
+              Loading invoice...
+            </p>
           </div>
         ) : !invoice ? (
-          <div className="text-center py-6">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-sm">
-              No invoice available for booking #
-              {location.state?.booking_id || "unknown"}. Contact support if this
-              is an error.
+          <div className="flex flex-col items-center justify-center py-12 bg-[#F4F4F4] rounded-xl border border-[#EBEBEB]">
+            <FileText className="w-16 h-16 text-gray-300 mb-4" />
+            <h3 className="text-lg font-semibold text-[#575757] mb-2">
+              No Invoice Available
+            </h3>
+            <p className="text-gray-500 text-sm text-center mb-6 max-w-md">
+              No invoice is available for booking #
+              {location.state?.booking_id || "unknown"}. Please wait until the
+              admin generates a quote or contact support for assistance.
             </p>
             <button
-              onClick={() => navigate("/vehicle-dashboard")}
-              className="mt-4 bg-[#492F92] text-white px-4 py-2 rounded-full text-sm hover:bg-[#3b2371] transition-colors"
+              onClick={() => navigate(-1)}
+              className="flex items-center space-x-2 bg-[#492F92] text-white px-6 py-3 rounded-full text-sm font-medium hover:bg-[#3b2371] transition-colors"
             >
-              Back to Dashboard
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Dashboard</span>
             </button>
           </div>
         ) : (
           <div className="bg-[#F4F4F4] rounded-xl border border-[#EBEBEB] p-4 sm:p-6">
             {invoice.logo && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <img
                   src={invoice.logo}
                   alt="Gapafix Logo"
@@ -653,6 +610,30 @@ const Invoice = () => {
                   {invoice.change_part ? "Yes" : "No"}
                 </p>
               </div>
+              <div>
+                <span className="text-sm font-medium text-gray-600">
+                  Status
+                </span>
+                <p className="font-semibold text-gray-900 text-sm">
+                  {invoice.status || "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-600">
+                  Created At
+                </span>
+                <p className="font-semibold text-gray-900 text-sm">
+                  {invoice.created_at || "N/A"}
+                </p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-600">
+                  Updated At
+                </span>
+                <p className="font-semibold text-gray-900 text-sm">
+                  {invoice.updated_at || "N/A"}
+                </p>
+              </div>
               {booking && (
                 <>
                   <div>
@@ -668,7 +649,7 @@ const Invoice = () => {
                       Service Required
                     </span>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {booking.service_required}
+                      {booking.service_required || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -676,7 +657,7 @@ const Invoice = () => {
                       Service Center
                     </span>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {booking.service_center}
+                      {booking.service_center || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -684,7 +665,7 @@ const Invoice = () => {
                       Service Date
                     </span>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {booking.service_date}
+                      {booking.service_date || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -692,7 +673,7 @@ const Invoice = () => {
                       Status
                     </span>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {booking.status}
+                      {booking.status || "N/A"}
                     </p>
                   </div>
                 </>

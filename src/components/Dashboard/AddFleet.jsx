@@ -1,4 +1,3 @@
-// src/components/Dashboard/AddFleet.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -110,8 +109,11 @@ const AddFleet = () => {
     const partName =
       partNumber ||
       (selectedBrand && model && selectedSubModel
-        ? `${selectedBrand} ${models.find((m) => m.id.toString() === model)?.name || model} ${
-            submodels.find((s) => s.id.toString() === selectedSubModel)?.name || selectedSubModel
+        ? `${selectedBrand} ${
+            models.find((m) => m.id.toString() === model)?.name || model
+          } ${
+            submodels.find((s) => s.id.toString() === selectedSubModel)?.name ||
+            selectedSubModel
           }`
         : "");
     if (!partName) {
@@ -124,6 +126,9 @@ const AddFleet = () => {
       );
       return;
     }
+    const selectedBrandObj = brands.find(
+      (b) => b.name.toLowerCase() === selectedBrand.toLowerCase()
+    );
     toast.success("Fleet model added, proceeding to select parts.", {
       position: "top-right",
       autoClose: 2000,
@@ -134,6 +139,10 @@ const AddFleet = () => {
         state: {
           ...location.state,
           booking_id: location.state?.booking_id || fleetName,
+          brand_id: selectedBrandObj?.id || "",
+          model_id: model,
+          sub_model_id: selectedSubModel,
+          partNumber: partNumber,
         },
       }
     );
@@ -148,7 +157,7 @@ const AddFleet = () => {
           </h2>
           <button
             onClick={handleCancel}
-            className="h-5 w-5 flex items-center cursor-pointer justify-center bg-red-700 text-white font-medium rounded-full transition-colors"
+            className="h-5 so w-5 flex items-center cursor-pointer justify-center bg-red-700 text-white font-medium rounded-full transition-colors"
           >
             x
           </button>
