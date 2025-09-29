@@ -12,8 +12,8 @@ import {
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
-import logoplaceholder from "../../assets/logoplaceholder.png";
 import iconplaceholder from "../../assets/iconplaceholder.png";
+import logoplaceholder from "../../assets/logoplaceholder.png"; // Reintroduced logoplaceholder
 
 const AutomotiveParts = () => {
   const { fleetName } = useParams();
@@ -39,17 +39,14 @@ const AutomotiveParts = () => {
     last_page: 1,
   });
   const [modelNotFound, setModelNotFound] = useState(false);
-  const [imageErrors, setImageErrors] = useState({}); // Track failed images
+  const [imageErrors, setImageErrors] = useState({});
 
-  // Format article number with line breaks at hyphens
   const formatArticleNumber = (id) => id.split("-").join("<br />");
 
-  // Determine if search is a part number
   const isPartNumberSearch = (term) => {
     return term && /^[A-Za-z0-9-]+$/.test(term);
   };
 
-  // Fetch parts from search-filter API
   useEffect(() => {
     const fetchParts = async () => {
       setLoading(true);
@@ -73,16 +70,18 @@ const AutomotiveParts = () => {
           payload
         );
         const { results, modelNotFound } = response.data;
-        console.log("API Response:", response.data); // Debug log
+        console.log("API Response:", response.data);
         const parts =
           results.data && Array.isArray(results.data)
             ? results.data.map((item) => ({
                 id: item.id,
                 name: item.name,
                 price: parseInt(item.price) || 0,
-                image: `https://stockmgt.gapaautoparts.com/uploads/products/${encodeURIComponent(
+                image: `https://stockmgt.gapaautoparts.com/uploads/product/${encodeURIComponent(
                   item.img_url
                 )}`,
+                maker_image: item.maker_image || "",
+                maker_name: item.maker_name || "",
                 rating: 4,
                 details: {
                   description: item.description || "",
@@ -128,7 +127,6 @@ const AutomotiveParts = () => {
     navigate,
   ]);
 
-  // Handle pagination
   const handlePageChange = async (url) => {
     if (!url) return;
     setLoading(true);
@@ -142,9 +140,11 @@ const AutomotiveParts = () => {
               id: item.id,
               name: item.name,
               price: parseInt(item.price) || 0,
-              image: `https://stockmgt.gapaautoparts.com/uploads/products/${encodeURIComponent(
+              image: `https://stockmgt.gapaautoparts.com/uploads/product/${encodeURIComponent(
                 item.img_url
               )}`,
+              maker_image: item.maker_image || "",
+              maker_name: item.maker_name || "",
               rating: 4,
               details: {
                 description: item.description || "",
@@ -173,12 +173,10 @@ const AutomotiveParts = () => {
     }
   };
 
-  // Save cartItems to localStorage
   useEffect(() => {
     localStorage.setItem(`cartItems_${bookingId}`, JSON.stringify(cartItems));
   }, [cartItems, bookingId]);
 
-  // Clear cart for new booking
   useEffect(() => {
     const savedCart = localStorage.getItem(`cartItems_${bookingId}`);
     if (!savedCart) {
@@ -475,16 +473,20 @@ const AutomotiveParts = () => {
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="bg-white rounded-lg border border-gray-200 p-4 relative group"
+                  className="bg-white rounded-lg border border-gray-200 p-4 relative"
                 >
-                  {imageErrors[`logo_${product.id}`] ? (
-                    <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center mb-2">
-                      <ImageOff className="w-8 h-8 text-gray-400" />
-                    </div>
-                  ) : (
+                  {imageErrors[`logo_${product.id}`] || !product.maker_image ? (
                     <img
                       src={logoplaceholder}
-                      alt="product-logo"
+                      alt={`${product.maker_name || "Unknown"} logo`}
+                      className="w-20 h-20 object-contain mb-2"
+                    />
+                  ) : (
+                    <img
+                      src={`https://stockmgt.gapaautoparts.com/uploads/makers_/${encodeURIComponent(
+                        product.maker_image
+                      )}`}
+                      alt={`${product.maker_name || "Unknown"} logo`}
                       className="w-20 h-20 object-contain mb-2"
                       onError={(e) => handleImageError(e, `logo_${product.id}`)}
                     />
@@ -498,10 +500,13 @@ const AutomotiveParts = () => {
                       }}
                     />
                   </div>
+                  <div className="text-sm text-[#333333] mb-2">
+                    Maker: {product.maker_name || "Unknown"}
+                  </div>
                   <h3 className="text-sm text-[#333333] font-medium mb-4 leading-relaxed">
                     {product.name}
                   </h3>
-                  <div className="relative mb-4">
+                  <div className="mb-4">
                     {imageErrors[product.id] ? (
                       <div className="w-full h-32 bg-gray-200 rounded flex items-center justify-center">
                         <ImageOff className="w-8 h-8 text-gray-400" />
@@ -513,11 +518,6 @@ const AutomotiveParts = () => {
                         className="w-full h-32 object-contain"
                         onError={(e) => handleImageError(e, product.id)}
                       />
-                    )}
-                    {product.details.compatibility && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 text-white text-xs p-2 rounded overflow-auto pointer-events-none">
-                        {product.details.compatibility}
-                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-1 mb-3 justify-between">

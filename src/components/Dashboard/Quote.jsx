@@ -96,7 +96,6 @@ const Quote = () => {
         full_name,
         selectedParts,
         id,
-        // booking_id,
       } = location.state;
 
       const numericalId = parseInt(id);
@@ -122,14 +121,6 @@ const Quote = () => {
 
       const savedCart = localStorage.getItem(`cartItems_${numericalId}`);
       const cartItems = savedCart ? JSON.parse(savedCart) : [];
-      const newParts = (selectedParts || cartItems || []).map((part) => ({
-        id: part.id,
-        name: part.name,
-        price: parseFloat(part.price) || 0,
-        quantity: parseInt(part.quantity) || 1,
-        totalPrice: parseFloat(part.totalPrice) || 0,
-      }));
-      setParts(newParts);
 
       // Check for existing quote and pre-fill form
       const fetchExistingQuote = async () => {
@@ -195,9 +186,9 @@ const Quote = () => {
             quoteData = parseTextToJson(response.data);
           }
 
+          let fetchedParts = [];
           if (
             (response.data.status || quoteData) &&
-            quoteData &&
             Object.keys(quoteData).length > 0
           ) {
             setQuoteId(quoteData.id || null);
@@ -220,7 +211,7 @@ const Quote = () => {
             );
             setChangeParts(quoteData.change_part ? "yes" : "no");
             setMessage(quoteData.message || "");
-            const fetchedParts = quoteData.service_fee
+            fetchedParts = quoteData.service_fee
               ? Object.values(quoteData.service_fee).map((part, index) => ({
                   id: part.id || Date.now() + index,
                   name: part.name || "",
@@ -232,22 +223,43 @@ const Quote = () => {
                       (parseInt(part.quantity) || 1),
                 }))
               : [];
-            setParts((prevParts) =>
-              fetchedParts.length > 0 ? fetchedParts : prevParts
-            );
-            // toast.info(
-            //   `Loaded existing quote #${quoteData.id} for booking #${
-            //     quoteData.user_booking_id || numericalId
-            //   }`,
-            //   {
-            //     position: "top-right",
-            //     autoClose: 3000,
-            //   }
-            // );
+          }
+
+          // Merge selectedParts or cartItems with fetchedParts
+          const newParts = (selectedParts || cartItems || []).map((part) => ({
+            id: part.id,
+            name: part.name,
+            price: parseFloat(part.price) || 0,
+            quantity: parseInt(part.quantity) || 1,
+            totalPrice: parseFloat(part.totalPrice) || 0,
+          }));
+          const mergedParts = [
+            ...fetchedParts,
+            ...newParts.filter(
+              (newPart) =>
+                !fetchedParts.some(
+                  (existingPart) => existingPart.id === newPart.id
+                )
+            ),
+          ];
+          setParts(mergedParts.length > 0 ? mergedParts : newParts);
+          if (newParts.length > 0 && fetchedParts.length > 0) {
+            toast.info("New parts merged with existing quote parts", {
+              position: "top-right",
+              autoClose: 2000,
+            });
           }
         } catch (err) {
           if (err.response?.status === 404) {
             console.log("No existing quote found for booking ID:", numericalId);
+            const newParts = (selectedParts || cartItems || []).map((part) => ({
+              id: part.id,
+              name: part.name,
+              price: parseFloat(part.price) || 0,
+              quantity: parseInt(part.quantity) || 1,
+              totalPrice: parseFloat(part.totalPrice) || 0,
+            }));
+            setParts(newParts);
             setMaintStartDate(service_date ? new Date(service_date) : null);
           } else {
             console.error(
@@ -260,6 +272,14 @@ const Quote = () => {
               autoClose: 2000,
             });
             setMaintStartDate(service_date ? new Date(service_date) : null);
+            const newParts = (selectedParts || cartItems || []).map((part) => ({
+              id: part.id,
+              name: part.name,
+              price: parseFloat(part.price) || 0,
+              quantity: parseInt(part.quantity) || 1,
+              totalPrice: parseFloat(part.totalPrice) || 0,
+            }));
+            setParts(newParts);
           }
         }
       };
