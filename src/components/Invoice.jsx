@@ -6,6 +6,7 @@ import { FileText, Download, ArrowLeft } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import logo from "../assets/logo.png";
+import { usePaystackPayment } from "react-paystack";
 
 const formatNaira = (number) => {
   return Number(number)
@@ -23,10 +24,176 @@ const Invoice = () => {
   const [booking, setBooking] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log("location.state:", location.state);
+  // Paystack Config
+  const config = {
+    reference: new Date().getTime().toString(),
+    email: invoice?.email || location.state?.email,
+    amount: invoice ? parseInt(invoice.total_amount * 100) : 0,
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+    label: `Pay Invoice #${invoice?.booking_id || "N/A"}`,
+    channels: ["card", "bank_transfer", "ussd"],
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const handlePayNow = () => {
+    console.log(
+      "Initiating payment for invoice:",
+      invoice?.booking_id || "N/A"
+    );
+    if (!invoice) {
+      console.error("No invoice data available");
+      toast.error("No invoice data available.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsProcessingPayment(false);
+      return;
+    }
+    if (invoice.total_amount <= 0) {
+      console.error("Invalid invoice amount:", invoice.total_amount);
+      toast.error("Invoice amount must be greater than zero.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsProcessingPayment(false);
+      return;
+    }
+    if (!config.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.email)) {
+      console.error("Invalid email:", config.email);
+      toast.error("Please provide a valid email address for payment.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsProcessingPayment(false);
+      return;
+    }
+    if (!import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
+      console.error("Missing Paystack public key");
+      toast.error("Payment configuration error. Please contact support.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsProcessingPayment(false);
+      return;
+    }
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      console.error("No auth token found");
+      toast.error("Please log in to proceed with payment.", {
+        position: "top-right",
+        autoClose: 3000,
+        action: { label: "Log In", onClick: () => navigate("/signin") },
+      });
+      setIsProcessingPayment(false);
+      return;
+    }
+
+    console.log("Paystack config:", JSON.stringify(config, null, 2));
+    setIsProcessingPayment(true);
+
+    // Global fallback timeout to reset button if Paystack fails to respond
+    const fallbackTimeout = setTimeout(() => {
+      console.warn("Paystack payment flow timed out after 30 seconds");
+      toast.error("Payment processing timed out. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsProcessingPayment(false);
+    }, 30000); // 30s timeout
+
+    try {
+      if (!initializePayment) {
+        console.error("Paystack hook not initialized");
+        toast.error("Payment system not initialized. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        setIsProcessingPayment(false);
+        clearTimeout(fallbackTimeout);
+        return;
+      }
+      initializePayment(
+        (ref) => {
+          clearTimeout(fallbackTimeout); // Clear on success
+          onSuccess(ref);
+        },
+        () => {
+          clearTimeout(fallbackTimeout); // Clear on close
+          onClose();
+        }
+      );
+    } catch (error) {
+      console.error("Paystack initialization failed:", error.message);
+      toast.error("Failed to initialize payment. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      setIsProcessingPayment(false);
+      clearTimeout(fallbackTimeout);
+    }
+  };
+
+  const onSuccess = async (reference) => {
+    console.log("Payment successful! Reference:", reference);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.warn("Payment verification timed out after 10 seconds");
+      }, 10000); // 10s timeout
+      await axios.post(
+        "https://api.gapafix.com.ng/api/verify-payment",
+        { reference: reference.reference },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+      console.log(
+        "Payment verified successfully for invoice:",
+        invoice?.booking_id
+      );
+      toast.success(`Payment verified! Invoice #${invoice?.booking_id} paid.`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } catch (error) {
+      console.error(
+        "Payment verification failed:",
+        error.response?.data || error.message
+      );
+      toast.error(
+        error.name === "AbortError"
+          ? "Payment verification timed out. Please try again."
+          : "Payment verification failed. Please contact support.",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
+    } finally {
+      console.log("Resetting isProcessingPayment in onSuccess");
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const onClose = () => {
+    console.log("Payment modal closed without completing");
+    toast.info("Payment cancelled. You can try again.", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    console.log("Resetting isProcessingPayment in onClose");
+    setIsProcessingPayment(false);
+  };
 
   const parseTextToJson = (text) => {
     try {
@@ -232,7 +399,14 @@ const Invoice = () => {
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Fetch invoice error:", err);
+        toast.error(
+          `Failed to load invoice: ${err.message || "Unknown error"}`,
+          {
+            position: "top-right",
+            autoClose: 3000,
+          }
+        );
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -542,9 +716,9 @@ const Invoice = () => {
             </button>
           </div>
         ) : (
-          <div className="bg-[#F4F4F4] rounded-xl border border-[#EBEBEB] p-4 sm:p-6">
+          <div className="bg-white rounded-xl border border-[#EBEBEB] p-6 max-w-2xl mx-auto">
             {invoice.logo && (
-              <div className="mb-6">
+              <div className="mb-6 text-center">
                 <img
                   src={invoice.logo}
                   alt="Gapafix Logo"
@@ -552,192 +726,159 @@ const Invoice = () => {
                 />
               </div>
             )}
-            <h3 className="text-base sm:text-lg font-semibold text-[#575757] mb-4">
-              Invoice Details
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Booking ID
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.booking_id}
+
+            <h1 className="text-xl font-bold text-[#575757] mb-2">
+              Quote Created
+            </h1>
+            <p className="text-[#575757] mb-6">Hello {invoice.full_name},</p>
+
+            <p className="text-[#575757] mb-4">
+              A new quote has been created for your booking:
+            </p>
+
+            <div className="bg-[#F4F4F4] p-4 rounded-lg mb-4">
+              <p className="font-semibold text-[#575757]">
+                Booking ID: {invoice.booking_id}
+              </p>
+              {invoice.message && (
+                <p className="text-[#575757] mt-2">
+                  <strong>Message:</strong> {invoice.message}
                 </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Customer Name
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.full_name}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">Email</span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.email && `(${invoice.email})`}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Maintenance Start Date
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.maintenance_start_date}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Maintenance End Date
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.maintenance_end_date}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Message
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.message}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Change Parts
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.change_part ? "Yes" : "No"}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Status
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.status || "N/A"}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Created At
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.created_at || "N/A"}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Updated At
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {invoice.updated_at || "N/A"}
-                </p>
-              </div>
-              {booking && (
-                <>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">
-                      Vehicle
-                    </span>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {booking.vehicle_type} {booking.make} {booking.model}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">
-                      Service Required
-                    </span>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {booking.service_required || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">
-                      Service Center
-                    </span>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {booking.service_center || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">
-                      Service Date
-                    </span>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {booking.service_date || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-gray-600">
-                      Status
-                    </span>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {booking.status || "N/A"}
-                    </p>
-                  </div>
-                </>
-              )}
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Workmanship
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {formatNaira(invoice.workmanship)}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-600">
-                  Total Amount
-                </span>
-                <p className="font-semibold text-gray-900 text-sm">
-                  {formatNaira(invoice.total_amount)}
-                </p>
-              </div>
-              {invoice.service_fee?.length > 0 && (
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="text-sm font-medium text-gray-600">
-                    Services
-                  </span>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {invoice.service_fee.map((service, index) => (
-                      <li
-                        key={index}
-                        className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
-                      >
-                        {service.name} - {formatNaira(service.price)} x{" "}
-                        {service.quantity} = {formatNaira(service.subtotal)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {booking?.additional_services?.length > 0 && (
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="text-sm font-medium text-gray-600">
-                    Additional Services
-                  </span>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {booking.additional_services.map((service, index) => (
-                      <li
-                        key={index}
-                        className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
-                      >
-                        {service}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               )}
             </div>
-            <div className="mt-6 flex justify-end">
+
+            <div className="mb-6">
+              <h3 className="font-semibold text-[#575757] mb-2">
+                Maintenance Window:
+              </h3>
+              <p className="text-[#575757]">
+                Start: {invoice.maintenance_start_date || "N/A"} | End:{" "}
+                {invoice.maintenance_end_date || "N/A"}
+              </p>
+            </div>
+
+            {invoice.service_fee?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-[#575757] mb-3">
+                  Parts & Services
+                </h3>
+                <table className="w-full border-collapse border border-[#EBEBEB]">
+                  <thead>
+                    <tr className="bg-[#F4F4F4]">
+                      <th className="border border-[#EBEBEB] p-2 text-left">
+                        Item
+                      </th>
+                      <th className="border border-[#EBEBEB] p-2 text-left">
+                        Price
+                      </th>
+                      <th className="border border-[#EBEBEB] p-2 text-left">
+                        Qty
+                      </th>
+                      <th className="border border-[#EBEBEB] p-2 text-left">
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoice.service_fee.map((item, index) => (
+                      <tr key={index}>
+                        <td className="border border-[#EBEBEB] p-2">
+                          {item.name}
+                        </td>
+                        <td className="border border-[#EBEBEB] p-2">
+                          {formatNaira(item.price)}
+                        </td>
+                        <td className="border border-[#EBEBEB] p-2">
+                          {item.quantity}
+                        </td>
+                        <td className="border border-[#EBEBEB] p-2">
+                          {formatNaira(item.subtotal)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="bg-[#F4F4F4] p-4 rounded-lg mb-6">
+              <p className="text-[#575757] mb-1">
+                Subtotal:{" "}
+                {formatNaira(invoice.total_amount - invoice.workmanship)}
+              </p>
+              <p className="text-[#575757] mb-1">
+                Workmanship: {formatNaira(invoice.workmanship)}
+              </p>
+              <p className="text-xl font-bold text-[#492F92]">
+                Total: {formatNaira(invoice.total_amount)}
+              </p>
+            </div>
+
+            {booking && (
+              <div className="bg-[#F4F4F4] p-4 rounded-lg mb-6">
+                <h3 className="font-semibold text-[#575757] mb-2">
+                  Booking Details
+                </h3>
+                <p>
+                  <strong>Vehicle:</strong> {booking.vehicle_type}{" "}
+                  {booking.make} {booking.model}
+                </p>
+                <p>
+                  <strong>Service Required:</strong> {booking.service_required}
+                </p>
+                <p>
+                  <strong>Service Center:</strong> {booking.service_center}
+                </p>
+                <p>
+                  <strong>Service Date:</strong> {booking.service_date}
+                </p>
+                {booking.additional_services?.length > 0 && (
+                  <p>
+                    <strong>Additional Services:</strong>{" "}
+                    {booking.additional_services.join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {invoice?.status && (
+              <div className="mt-4 text-center">
+                <p className="text-sm font-medium text-[#575757]">
+                  Payment Status:{" "}
+                  <span className="capitalize">{invoice.status}</span>
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 mb-2 text-center">
+                  Pay with Card, Bank Transfer, or USSD
+                </p>
+                <button
+                  onClick={handlePayNow}
+                  disabled={
+                    isProcessingPayment || !invoice || invoice.total_amount <= 0
+                  }
+                  className={`w-full flex items-center justify-center space-x-2 bg-[#492F92] text-white py-3 rounded-full text-sm font-medium hover:bg-[#3b2371] transition-colors ${
+                    isProcessingPayment || !invoice || invoice.total_amount <= 0
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                      <span>Processing Payment...</span>
+                    </>
+                  ) : (
+                    <span>Pay Now ({formatNaira(invoice.total_amount)})</span>
+                  )}
+                </button>
+              </div>
               <button
                 onClick={handleDownload}
-                className={`flex items-center space-x-2 bg-[#492F92] text-white px-4 py-2 rounded-full text-sm hover:bg-[#3b2371] transition-colors ${
-                  isDownloading || !invoice
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
+                className="flex items-center space-x-2 bg-[#575757] text-white px-6 py-3 rounded-full text-sm hover:bg-gray-900 transition-colors"
                 disabled={isDownloading || !invoice}
               >
                 <Download className="w-4 h-4" />
@@ -746,6 +887,10 @@ const Invoice = () => {
                 </span>
               </button>
             </div>
+
+            <p className="text-xs text-gray-500 mt-4 text-center">
+              This is an automated notification from Gapafix.
+            </p>
           </div>
         )}
       </div>

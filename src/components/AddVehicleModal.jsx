@@ -12,6 +12,8 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
     vehicle_model: "",
     vin_number: "",
     full_name: "",
+    email: "",
+    phone: "",
     year_of_manufacture: "",
     service_required: "",
     service_center: "",
@@ -19,7 +21,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
     service_date: "",
     service_time: "",
   });
-  const [isExpanded, setIsExpanded] = useState(false);
+  // const [isExpanded, setIsExpanded] = useState(false); // Commented out toggle state
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [submodels, setSubmodels] = useState([]);
@@ -30,6 +32,10 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
 
   const isValidVIN = (vin) =>
     /^[A-HJ-NPR-Z0-9]{17}$/i.test(vin) && vin.length === 17;
+
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const isValidPhone = (phone) => /^\+?[1-9]\d{1,14}$/.test(phone);
 
   useEffect(() => {
     axios
@@ -128,24 +134,29 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
       !form.vehicle_make ||
       !form.vehicle_model ||
       !form.vin_number ||
-      (isExpanded &&
-        (!form.full_name ||
-          !form.service_required ||
-          !form.service_center ||
-          !form.service_date ||
-          !form.service_time))
+      !form.full_name ||
+      !form.email ||
+      !form.phone ||
+      !form.service_required ||
+      !form.service_center ||
+      !form.service_date ||
+      !form.service_time
     ) {
-      toast.error(
-        isExpanded
-          ? "Please fill in all required fields, including additional details."
-          : "Please fill in all required vehicle fields."
-      );
+      toast.error("Please fill in all required fields.");
       return;
     }
     if (!isValidVIN(form.vin_number)) {
       toast.error(
         "Please enter a valid 17-character VIN (letters and numbers, no I/O/Q)."
       );
+      return;
+    }
+    if (!isValidEmail(form.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    if (!isValidPhone(form.phone)) {
+      toast.error("Please enter a valid phone number (e.g., +2341234567890).");
       return;
     }
     const token = localStorage.getItem("authToken");
@@ -169,15 +180,17 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
           submodels.find((s) => s.id.toString() === form.vehicle_model)?.name ||
           form.vehicle_model,
         vin_number: form.vin_number,
-        full_name: form.full_name || null,
+        full_name: form.full_name,
+        email: form.email,
+        phone: form.phone,
         year_of_manufacture: form.year_of_manufacture || null,
-        service_required: form.service_required || null,
-        service_center: form.service_center || null,
+        service_required: form.service_required,
+        service_center: form.service_center,
         additional_services: form.additional_services.length
           ? form.additional_services
           : [],
-        service_date: form.service_date || null,
-        service_time: form.service_time || null,
+        service_date: form.service_date,
+        service_time: form.service_time,
       };
       const response = await axios.post(
         "https://api.gapafix.com.ng/api/car_registration",
@@ -192,13 +205,15 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
         make: payload.vehicle_make,
         model: payload.vehicle_model,
         vin_number: payload.vin_number,
-        full_name: payload.full_name || "N/A",
+        full_name: payload.full_name,
+        email: payload.email,
+        phone: payload.phone,
         year: payload.year_of_manufacture || "N/A",
-        service_required: payload.service_required || "N/A",
-        service_center: payload.service_center || "N/A",
+        service_required: payload.service_required,
+        service_center: payload.service_center,
         additional_services: payload.additional_services || [],
-        service_date: payload.service_date || "N/A",
-        service_time: payload.service_time || "N/A",
+        service_date: payload.service_date,
+        service_time: payload.service_time,
         booking_id: response.data.booking_id || null,
       };
       setVehicles((prev) => [...prev, newVehicle]);
@@ -210,6 +225,8 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
         vehicle_model: "",
         vin_number: "",
         full_name: "",
+        email: "",
+        phone: "",
         year_of_manufacture: "",
         service_required: "",
         service_center: "",
@@ -217,7 +234,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
         service_date: "",
         service_time: "",
       });
-      setIsExpanded(false);
+      // setIsExpanded(false); // Commented out toggle reset
     } catch (err) {
       console.error("Error adding vehicle", err);
       if (err.response?.status === 401) {
@@ -350,17 +367,70 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Service Date<span className="text-[#FF0000]">*</span>
+                Full Name<span className="text-[#FF0000]">*</span>
               </label>
               <input
-                type="date"
-                name="service_date"
-                value={form.service_date}
+                type="text"
+                name="full_name"
+                value={form.full_name}
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
                 className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                placeholder="Enter your full name"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email<span className="text-[#FF0000]">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                placeholder="Enter your email address"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone<span className="text-[#FF0000]">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                placeholder="Enter your phone number (e.g., +2341234567890)"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Year of Manufacture
+              </label>
+              <select
+                name="year_of_manufacture"
+                value={form.year_of_manufacture}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              >
+                <option value="">Select a year</option>
+                {Array.from(
+                  { length: 2025 - 1980 + 1 },
+                  (_, i) => 2025 - i
+                ).map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -385,7 +455,80 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Select Location<span className="text-[#FF0000]">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  name="service_center"
+                  value={form.service_center}
+                  onChange={handleChange}
+                  required
+                  disabled={isSubmitting}
+                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                >
+                  <option value="">Select a location</option>
+                  {locations.map((location, index) => (
+                    <option key={index} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Service Date<span className="text-[#FF0000]">*</span>
+              </label>
+              <input
+                type="date"
+                name="service_date"
+                value={form.service_date}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Service Time<span className="text-[#FF0000]">*</span>
+              </label>
+              <input
+                type="time"
+                name="service_time"
+                value={form.service_time}
+                onChange={handleChange}
+                required
+                disabled={isSubmitting}
+                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Additional Services
+              </label>
+              <div className="space-y-2">
+                {services.map((service, index) => (
+                  <label key={index} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      name="additional_services"
+                      value={service}
+                      checked={form.additional_services.includes(service)}
+                      onChange={handleChange}
+                      disabled={isSubmitting}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700">{service}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
+          {/* Commented out toggle UI for future use
           <div className="flex items-center space-x-2">
             <div
               className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${
@@ -403,105 +546,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
               Add additional vehicle and service details
             </span>
           </div>
-          {isExpanded && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name<span className="text-[#FF0000]">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="full_name"
-                  value={form.full_name}
-                  onChange={handleChange}
-                  required={isExpanded}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  placeholder="Enter your full name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Year of Manufacture
-                </label>
-                <select
-                  name="year_of_manufacture"
-                  value={form.year_of_manufacture}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                >
-                  <option value="">Select a year</option>
-                  {Array.from(
-                    { length: 2025 - 1980 + 1 },
-                    (_, i) => 2025 - i
-                  ).map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Location<span className="text-[#FF0000]">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="service_center"
-                    value={form.service_center}
-                    onChange={handleChange}
-                    required={isExpanded}
-                    disabled={isSubmitting}
-                    className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
-                  >
-                    <option value="">Select a location</option>
-                    {locations.map((location, index) => (
-                      <option key={index} value={location}>
-                        {location}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Service Time<span className="text-[#FF0000]">*</span>
-                </label>
-                <input
-                  type="time"
-                  name="service_time"
-                  value={form.service_time}
-                  onChange={handleChange}
-                  required={isExpanded}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Additional Services
-                </label>
-                <div className="space-y-2">
-                  {services.map((service, index) => (
-                    <label key={index} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        name="additional_services"
-                        value={service}
-                        checked={form.additional_services.includes(service)}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="text-sm text-gray-700">{service}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          */}
           <button
             type="submit"
             disabled={isSubmitting}
