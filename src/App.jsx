@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
-import { HelmetProvider } from "@dr.pogodin/react-helmet";
+import { HelmetProvider } from "react-helmet";
 import "./App.css";
 import logo from "./assets/logo.png";
 import ScrollToTop from "./components/ScrollToTop";

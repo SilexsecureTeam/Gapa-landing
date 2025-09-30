@@ -1,4 +1,4 @@
-import { Helmet } from "@dr.pogodin/react-helmet";
+import { Helmet } from "react-helmet";
 import React from "react";
 import Header from "../components/Header.jsx";
 import Newsletter from "../components/Newsletter.jsx";

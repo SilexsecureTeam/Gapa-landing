@@ -9,7 +9,7 @@ import Car from "../components/Car.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import Footer from "../components/Footer.jsx";
 import TrustedSource from "../components/TrustedSource.jsx";
-import { Helmet } from "@dr.pogodin/react-helmet";
+import { Helmet } from "react-helmet";
 import { useLocation } from "react-router-dom"; // Add useLocation
 
 const HomePage = () => {
