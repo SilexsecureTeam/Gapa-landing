@@ -6,7 +6,6 @@ import { FileText, Download, ArrowLeft } from "lucide-react";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import logo from "../assets/logo.png";
-import { usePaystackPayment } from "react-paystack";
 
 const formatNaira = (number) => {
   return Number(number)
@@ -28,23 +27,8 @@ const Invoice = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Paystack Config
-  const config = {
-    reference: new Date().getTime().toString(),
-    email: invoice?.email || location.state?.email,
-    amount: invoice ? parseInt(invoice.total_amount * 100) : 0,
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-    label: `Pay Invoice #${invoice?.booking_id || "N/A"}`,
-    channels: ["card", "bank_transfer", "ussd"],
-  };
-
-  const initializePayment = usePaystackPayment(config);
-
-  const handlePayNow = () => {
-    console.log(
-      "Initiating payment for invoice:",
-      invoice?.booking_id || "N/A"
-    );
+  const handlePayNow = async () => {
+    console.log("Initiating payment for invoice:", invoice?.booking_id || "N/A");
     if (!invoice) {
       console.error("No invoice data available");
       toast.error("No invoice data available.", {
@@ -63,8 +47,8 @@ const Invoice = () => {
       setIsProcessingPayment(false);
       return;
     }
-    if (!config.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.email)) {
-      console.error("Invalid email:", config.email);
+    if (!invoice.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invoice.email)) {
+      console.error("Invalid email:", invoice.email);
       toast.error("Please provide a valid email address for payment.", {
         position: "top-right",
         autoClose: 3000,
@@ -72,127 +56,74 @@ const Invoice = () => {
       setIsProcessingPayment(false);
       return;
     }
-    if (!import.meta.env.VITE_PAYSTACK_PUBLIC_KEY) {
-      console.error("Missing Paystack public key");
-      toast.error("Payment configuration error. Please contact support.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      setIsProcessingPayment(false);
-      return;
-    }
     const token = localStorage.getItem("authToken");
+    // Note: Token is optional; remove if endpoint doesn't require authentication
     if (!token) {
-      console.error("No auth token found");
-      toast.error("Please log in to proceed with payment.", {
-        position: "top-right",
-        autoClose: 3000,
-        action: { label: "Log In", onClick: () => navigate("/signin") },
-      });
-      setIsProcessingPayment(false);
-      return;
+      console.warn("No auth token found; proceeding without it");
+      // Optionally redirect to login if token is required
+      // toast.error("Please log in to proceed with payment.", {
+      //   position: "top-right",
+      //   autoClose: 3000,
+      //   action: { label: "Log In", onClick: () => navigate("/signin") },
+      // });
+      // setIsProcessingPayment(false);
+      // return;
     }
 
-    console.log("Paystack config:", JSON.stringify(config, null, 2));
     setIsProcessingPayment(true);
-
-    // Global fallback timeout to reset button if Paystack fails to respond
-    const fallbackTimeout = setTimeout(() => {
-      console.warn("Paystack payment flow timed out after 30 seconds");
-      toast.error("Payment processing timed out. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      setIsProcessingPayment(false);
-    }, 30000); // 30s timeout
-
     try {
-      if (!initializePayment) {
-        console.error("Paystack hook not initialized");
-        toast.error("Payment system not initialized. Please try again.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        setIsProcessingPayment(false);
-        clearTimeout(fallbackTimeout);
-        return;
+      const payload = {
+        email: invoice.email,
+        amount: invoice.total_amount * 100, // Convert to kobo
+        booking_id: invoice.booking_id,
+      };
+      console.log("Payment payload:", JSON.stringify(payload, null, 2));
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
-      initializePayment(
-        (ref) => {
-          clearTimeout(fallbackTimeout); // Clear on success
-          onSuccess(ref);
-        },
-        () => {
-          clearTimeout(fallbackTimeout); // Clear on close
-          onClose();
-        }
-      );
-    } catch (error) {
-      console.error("Paystack initialization failed:", error.message);
-      toast.error("Failed to initialize payment. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      setIsProcessingPayment(false);
-      clearTimeout(fallbackTimeout);
-    }
-  };
 
-  const onSuccess = async (reference) => {
-    console.log("Payment successful! Reference:", reference);
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.warn("Payment verification timed out after 10 seconds");
-      }, 10000); // 10s timeout
-      await axios.post(
-        "https://api.gapafix.com.ng/api/verify-payment",
-        { reference: reference.reference },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-          signal: controller.signal,
-        }
+      const response = await axios.post(
+        `https://api.gapafix.com.ng/api/bookings/${invoice.booking_id}/initialize-payment`,
+        payload,
+        { headers }
       );
-      clearTimeout(timeoutId);
-      console.log(
-        "Payment verified successfully for invoice:",
-        invoice?.booking_id
-      );
-      toast.success(`Payment verified! Invoice #${invoice?.booking_id} paid.`, {
-        position: "top-right",
-        autoClose: 3000,
-      });
+
+      console.log("Backend response:", JSON.stringify(response.data, null, 2));
+
+      if (response.data.status && response.data.data?.authorization_url) {
+        console.log("Redirecting to Paystack:", response.data.data.authorization_url);
+        window.location.href = response.data.data.authorization_url;
+        toast.info("Redirecting to payment page...", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } else {
+        console.error("No authorization_url in response:", response.data);
+        throw new Error(
+          response.data.message || "Payment initialization failed: No authorization URL returned."
+        );
+      }
     } catch (error) {
-      console.error(
-        "Payment verification failed:",
-        error.response?.data || error.message
-      );
+      console.error("Payment initialization failed:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       toast.error(
-        error.name === "AbortError"
-          ? "Payment verification timed out. Please try again."
-          : "Payment verification failed. Please contact support.",
+        error.response?.data?.message ||
+          "Failed to initialize payment. Please try again.",
         {
           position: "top-right",
           autoClose: 3000,
         }
       );
-    } finally {
-      console.log("Resetting isProcessingPayment in onSuccess");
       setIsProcessingPayment(false);
     }
-  };
-
-  const onClose = () => {
-    console.log("Payment modal closed without completing");
-    toast.info("Payment cancelled. You can try again.", {
-      position: "top-right",
-      autoClose: 3000,
-    });
-    console.log("Resetting isProcessingPayment in onClose");
-    setIsProcessingPayment(false);
   };
 
   const parseTextToJson = (text) => {
@@ -309,25 +240,17 @@ const Invoice = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log(
-          "Invoice response:",
-          JSON.stringify(response.data, null, 2)
-        );
+        console.log("Invoice response:", JSON.stringify(response.data, null, 2));
 
         if (isMounted) {
           let invoiceData =
             response.data.quote || response.data.data || response.data || {};
           if (typeof response.data === "string") {
-            console.warn(
-              "Invoice response is a string, attempting to parse as JSON."
-            );
+            console.warn("Invoice response is a string, attempting to parse as JSON.");
             try {
               invoiceData = JSON.parse(response.data);
             } catch {
-              console.warn(
-                "Failed to parse as JSON, using text parser:",
-                response.data
-              );
+              console.warn("Failed to parse as JSON, using text parser:", response.data);
               invoiceData = parseTextToJson(response.data);
               if (!invoiceData) {
                 throw new Error("Failed to parse invoice text response.");
@@ -397,16 +320,27 @@ const Invoice = () => {
           } else {
             setInvoice(normalizedInvoice);
           }
+
+          // Check for payment callback
+          const urlParams = new URLSearchParams(location.search);
+          if (urlParams.get("payment") === "success") {
+            toast.success("Payment successful! Invoice status updated.", {
+              position: "top-right",
+              autoClose: 3000,
+            });
+          } else if (urlParams.get("payment") === "cancelled") {
+            toast.info("Payment cancelled. You can try again.", {
+              position: "top-right",
+              autoClose: 3000,
+            });
+          }
         }
       } catch (err) {
         console.error("Fetch invoice error:", err);
-        toast.error(
-          `Failed to load invoice: ${err.message || "Unknown error"}`,
-          {
-            position: "top-right",
-            autoClose: 3000,
-          }
-        );
+        toast.error(`Failed to load invoice: ${err.message || "Unknown error"}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -430,7 +364,7 @@ const Invoice = () => {
       );
       setIsLoading(false);
     }
-  }, [navigate, location.state]);
+  }, [navigate, location.state, location.search]);
 
   const handleDownload = async () => {
     const token = localStorage.getItem("authToken");
@@ -850,7 +784,7 @@ const Invoice = () => {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end items-end">
               <div className="flex-1">
                 <p className="text-xs text-gray-500 mb-2 text-center">
                   Pay with Card, Bank Transfer, or USSD
@@ -878,7 +812,7 @@ const Invoice = () => {
               </div>
               <button
                 onClick={handleDownload}
-                className="flex items-center space-x-2 bg-[#575757] text-white px-6 py-3 rounded-full text-sm hover:bg-gray-900 transition-colors"
+                className="flex items-end h-fit space-x-2 bg-[#575757] text-white px-6 py-3 rounded-full text-sm hover:bg-gray-900 transition-colors"
                 disabled={isDownloading || !invoice}
               >
                 <Download className="w-4 h-4" />

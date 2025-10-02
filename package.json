@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-helmet": "^6.1.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/material": "^7.1.1",
@@ -21,10 +20,12 @@
     "form-data": "^4.0.4",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.513.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "react-datepicker": "^8.7.0",
+    "react-dom": "^18.3.1",
+    "react-helmet": "^6.1.0",
     "react-paystack": "^6.0.0",
     "react-router-dom": "^6.26.2",
     "react-toastify": "^11.0.5",

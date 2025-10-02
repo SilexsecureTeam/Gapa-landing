@@ -1,17 +1,24 @@
-import React from "react";
-import profile from "../../assets/Profile.png";
+import React, { useState, useEffect, useRef } from "react";
 import { BellIcon, MailIcon, SearchIcon, Menu, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { debounce } from "lodash";
 import logo from "../../assets/logo.png";
+import profile from "../../assets/Profile.png";
+import { toast } from "react-toastify";
 
 const Header = ({ open, setOpen }) => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef(null);
 
   // Determine the logo's destination based on authentication and role
   const getLogoDestination = () => {
     if (!user) {
-      return "/signin"; // Redirect to sign-in if not authenticated
+      return "/signin";
     }
     return user.role === "admin" ? "/dashboard" : "/vehicle-dashboard";
   };
@@ -21,6 +28,97 @@ const Header = ({ open, setOpen }) => {
     const destination = getLogoDestination();
     navigate(destination);
   };
+
+  // Debounced search function
+  const fetchSearchResults = debounce(async (query) => {
+    if (!query || user?.role !== "admin") {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+      return;
+    }
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+      toast.error("Please sign in to use search.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      navigate("/signin", { state: { from: window.location.pathname } });
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        "https://api.gapafix.com.ng/api/bookings/all",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.status) {
+        const bookings = response.data.data.filter((booking) =>
+          booking.booking_id
+            ?.toString()
+            .toLowerCase()
+            .includes(query.toLowerCase())
+        );
+        setSearchResults(bookings);
+        setIsSearchOpen(bookings.length > 0);
+      } else {
+        setSearchResults([]);
+        setIsSearchOpen(false);
+      }
+    } catch (err) {
+      console.error(
+        "Error fetching search results:",
+        err.message,
+        err.response?.data
+      );
+      setSearchResults([]);
+      setIsSearchOpen(false);
+      if (err.response?.status === 401) {
+        toast.error("Session expired. Please sign in again.", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        navigate("/signin", { state: { from: window.location.pathname } });
+      }
+    }
+  }, 300);
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (user?.role === "admin") {
+      fetchSearchResults(query);
+    } else {
+      setSearchResults([]);
+      setIsSearchOpen(false);
+    }
+  };
+
+  // Handle search result selection
+  const handleResultClick = (booking) => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setIsSearchOpen(false);
+    navigate(`/dashboard/quote/${encodeURIComponent(booking.booking_id)}`, {
+      state: { ...booking },
+    });
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -65,19 +163,45 @@ const Header = ({ open, setOpen }) => {
           </div>
         </div>
 
-        {/* Row 2: Logo */}
-        <div className="flex justify-center">
+        {/* Row 2: Search */}
+        <div className="flex justify-center" ref={searchRef}>
           <div className="relative flex-grow">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={
+                user?.role === "admin"
+                  ? "Search fleet name..."
+                  : "Search disabled for non-admins"
+              }
               className="bg-[#F5F5F5] rounded-md outline-none px-2 pl-6 py-0.5 w-full text-sm"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              disabled={user?.role !== "admin"}
             />
             <SearchIcon className="absolute top-0.5 left-1 opacity-60 w-4 h-4 text-[#333333]" />
+            {isSearchOpen && user?.role === "admin" && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  searchResults.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleResultClick(booking)}
+                    >
+                      {booking.booking_id}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-400">
+                    No results found
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Row 3: Search, Notifications, Profile, Button */}
+        {/* Row 3: Logo, Button */}
         <div className="flex flex-wrap justify-between items-center gap-2">
           <a href={getLogoDestination()} onClick={handleLogoClick}>
             <img src={logo} alt="CarFlex Logo" className="h-10" />
@@ -89,7 +213,7 @@ const Header = ({ open, setOpen }) => {
       </header>
 
       {/* Tablet Header (sm to <lg, single header with flex-wrap) */}
-      <header className="hidden sm:flex lg:hidden bg-white px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <header className=" sm:flex lg:hidden bg-white px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
         {/* Left: Hamburger and Welcome */}
         <div className="flex items-center gap-4">
           <div>
@@ -124,14 +248,40 @@ const Header = ({ open, setOpen }) => {
         </div>
 
         {/* Right: Search, Notifications, Profile, Button */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap" ref={searchRef}>
           <div className="relative w-full sm:w-40 max-w-xs">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={
+                user?.role === "admin"
+                  ? "Search fleet name..."
+                  : "Search disabled for non-admins"
+              }
               className="bg-[#F5F5F5] rounded-md outline-none px-3 pl-7 py-1 w-full"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              disabled={user?.role !== "admin"}
             />
             <SearchIcon className="absolute top-1 left-1 opacity-60 w-5 h-5 text-[#333333]" />
+            {isSearchOpen && user?.role === "admin" && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  searchResults.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleResultClick(booking)}
+                    >
+                      {booking.booking_id}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-400">
+                    No results found
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -175,13 +325,42 @@ const Header = ({ open, setOpen }) => {
               Let’s check your Garage today
             </p>
           </div>
-          <div className="relative md:w-[30%] flex-grow max-w-[180px] md:max-w-xs">
+          <div
+            className="relative md:w-[30%] flex-grow max-w-[180px] md:max-w-xs"
+            ref={searchRef}
+          >
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={
+                user?.role === "admin"
+                  ? "Search fleet name..."
+                  : "Search disabled for non-admins"
+              }
               className="bg-[#F5F5F5] rounded-md outline-none px-3 pl-7 py-1 w-full"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              disabled={user?.role !== "admin"}
             />
             <SearchIcon className="absolute top-1 opacity-60 w-5 h-5 left-1 text-[#333333]" />
+            {isSearchOpen && user?.role === "admin" && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  searchResults.map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleResultClick(booking)}
+                    >
+                      {booking.booking_id}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-400">
+                    No results found
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-4 md:space-x-10">
             <div className="relative">

@@ -10,6 +10,7 @@ import SignOutModal from "../components/Dashboard/SignOutModal";
 import Quote from "../components/Dashboard/Quote";
 import AddFleet from "../components/Dashboard/AddFleet";
 import AutomotiveParts from "../components/Dashboard/AutomotiveParts";
+import Customers from "../components/Dashboard/Customers"; // Add this import
 
 const DashboardPage = () => {
   const [open, setOpen] = useState(false);
@@ -55,17 +56,15 @@ const DashboardPage = () => {
             <Route path="quote/:fleetName" element={<Quote />} />
             <Route path="quote/:fleetName/add-fleet" element={<AddFleet />} />
             <Route
-                  path="quote/:fleetName/automotive-parts"
-                  element={<AutomotiveParts />}
-                />
+              path="quote/:fleetName/automotive-parts"
+              element={<AutomotiveParts />}
+            />
             <Route
               path="fleet"
               element={<div>Fleet Management Placeholder</div>}
             />
-            <Route
-              path="fleet/customers"
-              element={<div>Customer List Placeholder</div>}
-            />
+            <Route path="fleet/customers" element={<Customers />} />{" "}
+            {/* Updated */}
             <Route
               path="fleet/assignments"
               element={<div>Fleet Assignments Placeholder</div>}
