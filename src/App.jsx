@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import React, { Suspense, lazy } from "react";
-import { HelmetProvider } from "react-helmet";
+import { Helmet } from "react-helmet";
 import "./App.css";
 import logo from "./assets/logo.png";
 import ScrollToTop from "./components/ScrollToTop";
@@ -47,58 +47,91 @@ function App() {
   const hideFloating = location.pathname.includes("dashboard");
 
   return (
-    <HelmetProvider>
-      <div className="min-h-screen w-full">
-        <ScrollToTop />
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-              <div className="relative">
-                <img
-                  src={logo}
-                  alt="Loading logo"
-                  className="w-20 h-20 animate-scale-pulse relative z-10"
-                />
-              </div>
+    <div className="min-h-screen w-full">
+      <Helmet>
+        <title>Gapa Fix | Fast & Reliable Fix Services</title>
+        <meta
+          name="description"
+          content="Gapa Fix provides fast, reliable, and affordable home and office repair services. Book a professional today!"
+        />
+        <meta
+          name="keywords"
+          content="Gapa Fix, home repair, office repair, handyman, fixing services, maintenance"
+        />
+        <meta name="author" content="Gapa Fix Team" />
+        {/* Open Graph */}
+        <meta
+          property="og:title"
+          content="Gapa Fix | Fast & Reliable Fix Services"
+        />
+        <meta
+          property="og:description"
+          content="Get professional home and office repair services with Gapa Fix. Quick, affordable, and reliable."
+        />
+        <meta property="og:image" content="/logo.png" />
+        <meta property="og:url" content="https://gapa-fix.com" />
+        <meta property="og:type" content="website" />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="Gapa Fix | Fast & Reliable Fix Services"
+        />
+        <meta
+          name="twitter:description"
+          content="Book trusted repair professionals with Gapa Fix today."
+        />
+        <meta name="twitter:image" content="/logo.png" />
+      </Helmet>
+      <ScrollToTop />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="relative">
+              <img
+                src={logo}
+                alt="Loading logo"
+                className="w-20 h-20 animate-scale-pulse relative z-10"
+              />
             </div>
-          }
-        >
-          <ToastContainer position="top-right" autoClose={3000} />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/service" element={<ServicePage />} />
-            <Route path="/signin" element={<SigninPage />} />
-            <Route path="/forgot-password" element={<ForgetPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile-mec" element={<ProfileMecPage />} />
-            <Route path="/book-first" element={<Book1Page />} />
-            <Route path="/book-second" element={<Book2Page />} />
-            <Route path="/book-third" element={<Book3Page />} />
-            <Route path="/book-forth" element={<Book4Page />} />
-            <Route path="/book-fifth" element={<Book5Page />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/success" element={<Success />} />
-            <Route path="/suc" element={<Suc />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard/*" element={<DashboardPage />} />
-              <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
-              <Route path="/book-service" element={<BookService />} />
-              <Route path="/booking/:bookingId/invoice" element={<Invoice />} />
-              <Route path="/profile-change" element={<ProfileChange />} />
-            </Route>
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-        {!hideFloating && <FloatingContact />}
-      </div>
-    </HelmetProvider>
+          </div>
+        }
+      >
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/service" element={<ServicePage />} />
+          <Route path="/signin" element={<SigninPage />} />
+          <Route path="/forgot-password" element={<ForgetPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile-mec" element={<ProfileMecPage />} />
+          <Route path="/book-first" element={<Book1Page />} />
+          <Route path="/book-second" element={<Book2Page />} />
+          <Route path="/book-third" element={<Book3Page />} />
+          <Route path="/book-forth" element={<Book4Page />} />
+          <Route path="/book-fifth" element={<Book5Page />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/success" element={<Success />} />
+          <Route path="/suc" element={<Suc />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard/*" element={<DashboardPage />} />
+            <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            <Route path="/book-service" element={<BookService />} />
+            <Route path="/booking/:bookingId/invoice" element={<Invoice />} />
+            <Route path="/profile-change" element={<ProfileChange />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+      {!hideFloating && <FloatingContact />}
+    </div>
   );
 }
 
