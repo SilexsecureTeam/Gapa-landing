@@ -41,6 +41,9 @@ const Invoice = lazy(() => import("./components/Invoice"));
 const ProfileChange = lazy(() => import("./components/ProfileChange"));
 const BookService = lazy(() => import("./components/BookService"));
 const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
+const PaymentRedirectHandler = lazy(() =>
+  import("./components/PaymentRedirectHandler")
+);
 
 function App() {
   const location = useLocation();
@@ -122,6 +125,10 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard/*" element={<DashboardPage />} />
             <Route path="/vehicle-dashboard" element={<VehicleDashboard />} />
+            <Route
+              path="/payment-callback"
+              element={<PaymentRedirectHandler />}
+            />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/book-service" element={<BookService />} />
             <Route path="/booking/:bookingId/invoice" element={<Invoice />} />

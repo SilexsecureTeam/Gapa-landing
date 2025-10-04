@@ -25,6 +25,26 @@ const VehicleDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  const getDaysRemaining = (bookingId) => {
+    console.log("getDaysRemaining called for bookingId:", bookingId);
+    const paymentTimestamps = JSON.parse(
+      localStorage.getItem("paymentTimestamps") || "{}"
+    );
+    console.log("paymentTimestamps:", paymentTimestamps);
+    const paymentTimestamp = paymentTimestamps[bookingId];
+    if (!paymentTimestamp) {
+      console.log("No timestamp found for bookingId:", bookingId);
+      return null;
+    }
+    const paymentDate = new Date(paymentTimestamp);
+    const endDate = new Date(paymentDate);
+    endDate.setDate(endDate.getDate() + 90);
+    const today = new Date();
+    const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+    console.log("Days remaining:", daysRemaining);
+    return daysRemaining >= 0 ? daysRemaining : 0;
+  };
+
   useEffect(() => {
     const fetchOrdersAndQuotes = async () => {
       const token = localStorage.getItem("authToken");
@@ -37,7 +57,6 @@ const VehicleDashboard = () => {
       }
 
       try {
-        // Fetch bookings
         const response = await axios.get(
           "https://api.gapafix.com.ng/api/orders",
           {
@@ -69,13 +88,12 @@ const VehicleDashboard = () => {
         }));
         setVehicles(vehiclesData);
 
-        // Fetch quotes for upcoming maintenance
         const maintenanceData = [];
         for (const vehicle of vehiclesData) {
           const numericalId = parseInt(vehicle.id);
           if (isNaN(numericalId) || numericalId <= 0) {
             console.error(`Invalid vehicle ID: ${vehicle.id}`);
-            continue; // Skip invalid IDs
+            continue;
           }
           try {
             const quoteResponse = await axios.get(
@@ -84,33 +102,12 @@ const VehicleDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` },
               }
             );
-            // Log the raw response to check content type
-            console.log(
-              `Invoice response for ID ${numericalId} (raw):`,
-              quoteResponse.data
-            );
-            // Attempt to log as JSON, or log as text if JSON parsing fails
-            try {
-              const jsonData =
-                typeof quoteResponse.data === "string"
-                  ? JSON.parse(quoteResponse.data)
-                  : quoteResponse.data;
-              console.log(
-                `Invoice response for ID ${numericalId} (JSON):`,
-                JSON.stringify(jsonData, null, 2)
-              );
-            } catch {
-              console.warn(
-                `Failed to parse invoice response for ID ${numericalId} as JSON. Logging as text:`,
-                quoteResponse.data
-              );
-            }
             let quoteData = quoteResponse.data.data || quoteResponse.data || {};
             if (typeof quoteData === "string") {
               console.warn(
                 `Invoice data for ID ${numericalId} is a string, expected JSON object. Using fallback.`
               );
-              quoteData = {}; // Fallback to empty object to prevent errors
+              quoteData = {};
             }
             if (quoteData.maintenance_start_date) {
               const dueDate = new Date(quoteData.maintenance_start_date);
@@ -179,6 +176,7 @@ const VehicleDashboard = () => {
         }
       );
       localStorage.removeItem("authToken");
+      // localStorage.removeItem("paymentTimestamps"); // Uncomment to clear countdowns on logout
       toast.success("Logged out successfully!");
       navigate("/signin");
     } catch (err) {
@@ -189,6 +187,7 @@ const VehicleDashboard = () => {
       });
       if (err.response?.status === 401) {
         localStorage.removeItem("authToken");
+        localStorage.removeItem("paymentTimestamps");
         toast.error("Session expired. Please log in again.", {
           action: { label: "Log In", onClick: () => navigate("/signin") },
         });
@@ -205,12 +204,6 @@ const VehicleDashboard = () => {
       toast.error("No valid booking ID available for this vehicle.");
       return;
     }
-    console.log(
-      "Navigating to invoice with ID:",
-      numericalId,
-      "Booking ID:",
-      vehicle.booking_id
-    );
     navigate(`/booking/${numericalId}/invoice`, {
       state: { ...vehicle },
     });
@@ -303,35 +296,47 @@ const VehicleDashboard = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-50 overflow-y-auto">
-                  {vehicles.map((vehicle, index) => (
-                    <div
-                      key={vehicle.id}
-                      className={`rounded-xl px-4 py-3 sm:px-6 sm:py-4 border border-[#EBEBEB] transition-all cursor-pointer hover:shadow-lg ${
-                        selectedVehicle === index ? "bg-[#F7CD3A]" : ""
-                      }`}
-                      onClick={() => setSelectedVehicle(index)}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="bg-amber-100 p-2 rounded-lg">
-                            <Car className="w-6 h-6 text-amber-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                              {vehicle.vehicle_type} {vehicle.make}{" "}
-                              {vehicle.model}
-                            </h3>
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              VIN: {vehicle.vin_number}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              Booking ID: {vehicle.booking_id || "N/A"}
-                            </p>
+                  {vehicles.map((vehicle, index) => {
+                    const daysRemaining = getDaysRemaining(vehicle.booking_id);
+                    return (
+                      <div
+                        key={vehicle.id}
+                        className={`rounded-xl px-4 py-3 sm:px-6 sm:py-4 border border-[#EBEBEB] transition-all cursor-pointer hover:shadow-lg ${
+                          selectedVehicle === index ? "bg-[#F7CD3A]" : ""
+                        }`}
+                        onClick={() => setSelectedVehicle(index)}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="bg-amber-100 p-2 rounded-lg">
+                              <Car className="w-6 h-6 text-amber-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {vehicle.vehicle_type} {vehicle.make}{" "}
+                                {vehicle.model}
+                              </h3>
+                              <p className="text-xs sm:text-sm text-gray-500">
+                                VIN: {vehicle.vin_number}
+                              </p>
+                              <p className="text-xs sm:text-sm text-gray-500">
+                                Booking ID: {vehicle.booking_id || "N/A"}
+                              </p>
+                              {daysRemaining !== null ? (
+                                <p className="text-xs sm:text-sm text-[#492F92] font-semibold">
+                                  Next Service In: {daysRemaining} days
+                                </p>
+                              ) : (
+                                <p className="text-xs sm:text-sm text-gray-500">
+                                  No service countdown available
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -518,6 +523,21 @@ const VehicleDashboard = () => {
                                   "10:00"}
                               </p>
                             </div>
+                            {getDaysRemaining(
+                              vehicles[selectedVehicle]?.booking_id
+                            ) !== null ? (
+                              <p className="text-sm text-[#492F92] font-semibold">
+                                Next Service In:{" "}
+                                {getDaysRemaining(
+                                  vehicles[selectedVehicle]?.booking_id
+                                )}{" "}
+                                days
+                              </p>
+                            ) : (
+                              <p className="text-sm text-gray-500">
+                                No service countdown available
+                              </p>
+                            )}
                           </div>
                           <button className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-[#575757] text-white">
                             {vehicles[selectedVehicle]?.status || "Scheduled"}
