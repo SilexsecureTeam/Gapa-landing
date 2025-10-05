@@ -275,15 +275,26 @@ const Invoice = () => {
 
         const urlParams = new URLSearchParams(location.search);
         if (urlParams.get("status") === "success") {
-          // Store payment timestamp and booking_id in localStorage
+          // Store payment timestamp and maintenance_end_date in localStorage
           const paymentTimestamps = JSON.parse(
             localStorage.getItem("paymentTimestamps") || "{}"
           );
+          const maintenanceEndDates = JSON.parse(
+            localStorage.getItem("maintenanceEndDates") || "{}"
+          );
           paymentTimestamps[normalizedInvoice.booking_id] =
             new Date().toISOString();
+          if (normalizedInvoice.maintenance_end_date !== "N/A") {
+            maintenanceEndDates[normalizedInvoice.booking_id] =
+              normalizedInvoice.maintenance_end_date;
+          }
           localStorage.setItem(
             "paymentTimestamps",
             JSON.stringify(paymentTimestamps)
+          );
+          localStorage.setItem(
+            "maintenanceEndDates",
+            JSON.stringify(maintenanceEndDates)
           );
 
           toast.success("Payment successful! Redirecting to dashboard...", {

@@ -25,24 +25,78 @@ const VehicleDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const getDaysRemaining = (bookingId) => {
-    console.log("getDaysRemaining called for bookingId:", bookingId);
-    const paymentTimestamps = JSON.parse(
-      localStorage.getItem("paymentTimestamps") || "{}"
+  const getDaysRemaining = async (vehicleId, bookingId) => {
+    console.log(
+      "getDaysRemaining called for vehicleId:",
+      vehicleId,
+      "bookingId:",
+      bookingId
     );
-    console.log("paymentTimestamps:", paymentTimestamps);
-    const paymentTimestamp = paymentTimestamps[bookingId];
-    if (!paymentTimestamp) {
-      console.log("No timestamp found for bookingId:", bookingId);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.warn("No auth token for API fetch");
+        return null;
+      }
+
+      const response = await axios.get(
+        `https://api.gapafix.com.ng/api/booking/${vehicleId}/invoice/view`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      let invoiceData =
+        response.data.quote || response.data.data || response.data || {};
+      if (typeof invoiceData === "string") {
+        console.warn("Invoice data is string, attempting to parse...");
+        try {
+          invoiceData = JSON.parse(invoiceData);
+        } catch {
+          console.error("Failed to parse invoice data");
+          return null;
+        }
+      }
+
+      const paymentStatus = invoiceData.status || "N/A";
+      console.log(
+        `VehicleId: ${vehicleId}, BookingId: ${bookingId}, PaymentStatus: ${paymentStatus}`
+      );
+      const maintenanceEndDate = invoiceData.maintenance_end_date || "N/A";
+
+      if (
+        !["success", "paid"].includes(paymentStatus) ||
+        !maintenanceEndDate ||
+        maintenanceEndDate === "N/A"
+      ) {
+        console.log(
+          `No valid payment or maintenance_end_date for vehicleId ${vehicleId}. Status: ${paymentStatus}, End Date: ${maintenanceEndDate}`
+        );
+        return null;
+      }
+
+      const endDate = new Date(maintenanceEndDate);
+      const today = new Date();
+      if (isNaN(endDate.getTime())) {
+        console.warn("Invalid maintenance_end_date:", maintenanceEndDate);
+        return null;
+      }
+
+      const daysRemaining = Math.ceil(
+        (endDate - today) / (1000 * 60 * 60 * 24)
+      );
+      console.log(
+        "Days remaining for vehicleId",
+        vehicleId,
+        ":",
+        daysRemaining
+      );
+      return daysRemaining >= 0 ? daysRemaining : 0;
+    } catch (err) {
+      console.error(`Failed to fetch invoice for vehicleId ${vehicleId}:`, err);
       return null;
     }
-    const paymentDate = new Date(paymentTimestamp);
-    const endDate = new Date(paymentDate);
-    endDate.setDate(endDate.getDate() + 90);
-    const today = new Date();
-    const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-    console.log("Days remaining:", daysRemaining);
-    return daysRemaining >= 0 ? daysRemaining : 0;
   };
 
   useEffect(() => {
@@ -64,28 +118,37 @@ const VehicleDashboard = () => {
           }
         );
         const fetchedVehicles = response.data.data || [];
-        const vehiclesData = fetchedVehicles.map((v) => ({
-          id: v.id || Date.now(),
-          booking_id: v.booking_id || "N/A",
-          vehicle_type: v.vehicle_type || "N/A",
-          make: v.vehicle_make || "N/A",
-          model: v.vehicle_model || "N/A",
-          vin_number: v.vin_number || "N/A",
-          full_name: v.full_name || "N/A",
-          year: v.year_of_manufacture || "N/A",
-          service_required: v.service_required || "N/A",
-          service_center: v.service_center || "N/A",
-          additional_services: v.additional_services || [],
-          service_date: v.service_date || "N/A",
-          service_time: v.service_time || "N/A",
-          phone: v.phone || "N/A",
-          email: v.email || "N/A",
-          user_id: v.user_id || "N/A",
-          status: v.status || "N/A",
-          created_at: v.created_at || "N/A",
-          updated_at: v.updated_at || "N/A",
-          total_amount: v.total_amount || 0,
-        }));
+        const vehiclesData = await Promise.all(
+          fetchedVehicles.map(async (v) => {
+            const numericalId = parseInt(v.id);
+            const daysRemaining = isNaN(numericalId)
+              ? null
+              : await getDaysRemaining(numericalId, v.booking_id);
+            return {
+              id: v.id || Date.now(),
+              booking_id: v.booking_id || "N/A",
+              vehicle_type: v.vehicle_type || "N/A",
+              make: v.vehicle_make || "N/A",
+              model: v.vehicle_model || "N/A",
+              vin_number: v.vin_number || "N/A",
+              full_name: v.full_name || "N/A",
+              year: v.year_of_manufacture || "N/A",
+              service_required: v.service_required || "N/A",
+              service_center: v.service_center || "N/A",
+              additional_services: v.additional_services || [],
+              service_date: v.service_date || "N/A",
+              service_time: v.service_time || "N/A",
+              phone: v.phone || "N/A",
+              email: v.email || "N/A",
+              user_id: v.user_id || "N/A",
+              status: v.status || "N/A",
+              created_at: v.created_at || "N/A",
+              updated_at: v.updated_at || "N/A",
+              total_amount: v.total_amount || 0,
+              daysRemaining,
+            };
+          })
+        );
         setVehicles(vehiclesData);
 
         const maintenanceData = [];
@@ -153,18 +216,6 @@ const VehicleDashboard = () => {
     fetchOrdersAndQuotes();
   }, [navigate]);
 
-  useEffect(() => {
-    console.log("Vehicles state:", vehicles);
-    console.log("Upcoming maintenance:", upcomingMaintenance);
-  }, [vehicles, upcomingMaintenance]);
-
-  const tabs = [
-    { id: "overview", label: "Overview" },
-    { id: "service-history", label: "Service History" },
-    { id: "track-history", label: "Track History" },
-    { id: "report", label: "Report" },
-  ];
-
   const handleLogout = async () => {
     const token = localStorage.getItem("authToken");
     try {
@@ -176,7 +227,6 @@ const VehicleDashboard = () => {
         }
       );
       localStorage.removeItem("authToken");
-      // localStorage.removeItem("paymentTimestamps"); // Uncomment to clear countdowns on logout
       toast.success("Logged out successfully!");
       navigate("/signin");
     } catch (err) {
@@ -187,7 +237,6 @@ const VehicleDashboard = () => {
       });
       if (err.response?.status === 401) {
         localStorage.removeItem("authToken");
-        localStorage.removeItem("paymentTimestamps");
         toast.error("Session expired. Please log in again.", {
           action: { label: "Log In", onClick: () => navigate("/signin") },
         });
@@ -296,52 +345,55 @@ const VehicleDashboard = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-50 overflow-y-auto">
-                  {vehicles.map((vehicle, index) => {
-                    const daysRemaining = getDaysRemaining(vehicle.booking_id);
-                    return (
-                      <div
-                        key={vehicle.id}
-                        className={`rounded-xl px-4 py-3 sm:px-6 sm:py-4 border border-[#EBEBEB] transition-all cursor-pointer hover:shadow-lg ${
-                          selectedVehicle === index ? "bg-[#F7CD3A]" : ""
-                        }`}
-                        onClick={() => setSelectedVehicle(index)}
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="bg-amber-100 p-2 rounded-lg">
-                              <Car className="w-6 h-6 text-amber-600" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                                {vehicle.vehicle_type} {vehicle.make}{" "}
-                                {vehicle.model}
-                              </h3>
-                              <p className="text-xs sm:text-sm text-gray-500">
-                                VIN: {vehicle.vin_number}
+                  {vehicles.map((vehicle, index) => (
+                    <div
+                      key={vehicle.id}
+                      className={`rounded-xl px-4 py-3 sm:px-6 sm:py-4 border border-[#EBEBEB] transition-all cursor-pointer hover:shadow-lg ${
+                        selectedVehicle === index ? "bg-[#F7CD3A]" : ""
+                      }`}
+                      onClick={() => setSelectedVehicle(index)}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-amber-100 p-2 rounded-lg">
+                            <Car className="w-6 h-6 text-amber-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                              {vehicle.vehicle_type} {vehicle.make}{" "}
+                              {vehicle.model}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              VIN: {vehicle.vin_number}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              Booking ID: {vehicle.booking_id || "N/A"}
+                            </p>
+                            {vehicle.daysRemaining !== null &&
+                            vehicle.daysRemaining !== undefined ? (
+                              <p className="text-xs sm:text-sm text-[#492F92] font-semibold">
+                                Next Service In: {vehicle.daysRemaining} days
                               </p>
+                            ) : (
                               <p className="text-xs sm:text-sm text-gray-500">
-                                Booking ID: {vehicle.booking_id || "N/A"}
+                                Awaiting payment or quote
                               </p>
-                              {daysRemaining !== null ? (
-                                <p className="text-xs sm:text-sm text-[#492F92] font-semibold">
-                                  Next Service In: {daysRemaining} days
-                                </p>
-                              ) : (
-                                <p className="text-xs sm:text-sm text-gray-500">
-                                  No service countdown available
-                                </p>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
             <nav className="flex flex-wrap gap-2 sm:gap-0 px-4 sm:px-6">
-              {tabs.map((tab) => (
+              {[
+                { id: "overview", label: "Overview" },
+                { id: "service-history", label: "Service History" },
+                { id: "track-history", label: "Track History" },
+                { id: "report", label: "Report" },
+              ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -497,53 +549,51 @@ const VehicleDashboard = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-[#F4F4F4] rounded-lg p-4 flex-1">
-                      <h3 className="text-base font-semibold text-[#575757]">
-                        Ongoing / Upcoming
-                      </h3>
-                      <p className="text-[#575757] text-sm mb-4">
-                        Track your current booking
-                      </p>
-                      <div className="bg-[#F4F4F4] rounded-lg p-4 sm:p-6 border border-[#EBEBEB]">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-semibold text-[#575757] mb-2 text-sm sm:text-base">
-                              {vehicles[selectedVehicle]?.service_required ||
-                                "Full Service"}{" "}
-                              with{" "}
-                              {vehicles[selectedVehicle]?.service_center ||
-                                "Prime Auto Care"}
-                            </h4>
-                            <div className="flex items-center space-x-2 text-sm text-[#575757] mb-1">
-                              <Calendar className="w-4 h-4" />
-                              <p>
-                                {vehicles[selectedVehicle]?.service_date ||
-                                  "2025-09-10"}{" "}
-                                {vehicles[selectedVehicle]?.service_time ||
-                                  "10:00"}
-                              </p>
+                    <div className=" flex flex-col space-y-4 sm:space-y-6 mt-4 sm:mt-0 flex-1 items-center">
+                      <div className="bg-[#F4F4F4] rounded-lg p-4 flex-1">
+                        <h3 className="text-base font-semibold text-[#575757]">
+                          Ongoing / Upcoming
+                        </h3>
+                        <p className="text-[#575757] text-sm mb-4">
+                          Track your current booking
+                        </p>
+                        <div className="bg-[#F4F4F4] rounded-lg p-4 sm:p-6 border border-[#EBEBEB]">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-semibold text-[#575757] mb-2 text-sm sm:text-base">
+                                {vehicles[selectedVehicle]?.service_required ||
+                                  "Full Service"}{" "}
+                                with{" "}
+                                {vehicles[selectedVehicle]?.service_center ||
+                                  "Prime Auto Care"}
+                              </h4>
+                              <div className="flex items-center space-x-2 text-sm text-[#575757] mb-1">
+                                <Calendar className="w-4 h-4" />
+                                <p>
+                                  {vehicles[selectedVehicle]?.service_date ||
+                                    "2025-09-10"}{" "}
+                                  {vehicles[selectedVehicle]?.service_time ||
+                                    "10:00"}
+                                </p>
+                              </div>
                             </div>
-                            {getDaysRemaining(
-                              vehicles[selectedVehicle]?.booking_id
-                            ) !== null ? (
-                              <p className="text-sm text-[#492F92] font-semibold">
-                                Next Service In:{" "}
-                                {getDaysRemaining(
-                                  vehicles[selectedVehicle]?.booking_id
-                                )}{" "}
-                                days
-                              </p>
-                            ) : (
-                              <p className="text-sm text-gray-500">
-                                No service countdown available
-                              </p>
-                            )}
+                            <button className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-[#575757] text-white">
+                              {vehicles[selectedVehicle]?.status || "Scheduled"}
+                            </button>
                           </div>
-                          <button className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-[#575757] text-white">
-                            {vehicles[selectedVehicle]?.status || "Scheduled"}
-                          </button>
                         </div>
                       </div>
+                      {vehicles[selectedVehicle]?.daysRemaining !== null &&
+                      vehicles[selectedVehicle]?.daysRemaining !== undefined ? (
+                        <p className="text-lg text-[#492F92] bg-[#F4F4F4] rounded-lg p-4 font-semibold">
+                          Next Service In:{" "}
+                          {vehicles[selectedVehicle]?.daysRemaining} days
+                        </p>
+                      ) : (
+                        <p className="text-lg text-[#492F92] bg-[#F4F4F4] rounded-lg p-4 font-semibold hidden">
+                          Awaiting payment or quote
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="rounded-xl border border-[#EBEBEB] p-4 sm:p-6">
@@ -571,7 +621,16 @@ const VehicleDashboard = () => {
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-sm">
-                    Content for {tabs.find((t) => t.id === activeTab)?.label}{" "}
+                    Content for{" "}
+                    {
+                      [
+                        { id: "overview", label: "Overview" },
+                        { id: "service-history", label: "Service History" },
+                        { id: "track-history", label: "Track History" },
+                        { id: "report", label: "Report" },
+                      ].find((t) => t.id === activeTab)?.label
+                    }
+                    {` `}
                     will be displayed here
                   </p>
                 </div>

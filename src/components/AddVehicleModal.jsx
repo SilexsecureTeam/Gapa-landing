@@ -35,7 +35,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const isValidPhone = (phone) => /^\+?[1-9]\d{1,14}$/.test(phone);
+  const isValidPhone = (phone) => /^0\d{10}$/.test(phone);
 
   useEffect(() => {
     axios
