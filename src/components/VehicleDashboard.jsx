@@ -375,7 +375,7 @@ const VehicleDashboard = () => {
                                 Next Service In: {vehicle.daysRemaining} days
                               </p>
                             ) : (
-                              <p className="text-xs sm:text-sm text-gray-500">
+                              <p className="text-xs sm:text-sm text-gray-500 hidden">
                                 Awaiting payment or quote
                               </p>
                             )}
