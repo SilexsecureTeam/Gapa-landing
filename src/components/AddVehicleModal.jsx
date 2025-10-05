@@ -21,7 +21,6 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
     service_date: "",
     service_time: "",
   });
-  // const [isExpanded, setIsExpanded] = useState(false); // Commented out toggle state
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [submodels, setSubmodels] = useState([]);
@@ -234,7 +233,6 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
         service_date: "",
         service_time: "",
       });
-      // setIsExpanded(false); // Commented out toggle reset
     } catch (err) {
       console.error("Error adding vehicle", err);
       if (err.response?.status === 401) {
@@ -256,25 +254,28 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 overflow-y-auto">
-      <div className="bg-white w-full max-w-xl rounded-xl shadow-lg p-6 sm:max-w-lg mx-4 max-h-[80vh] overflow-y-auto">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 overflow-y-auto p-4 sm:p-6">
+      <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Add Vehicle</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+            Add Vehicle
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-black text-lg"
+            className="text-gray-500 hover:text-gray-700 text-2xl font-medium"
+            aria-label="Close modal"
           >
             ×
           </button>
         </div>
-        <p className="text-sm text-gray-500 mb-6">
-          Register a car so you can book services and track history.
+        <p className="text-sm sm:text-base text-gray-600 mb-6">
+          Register a car to book services and track history.
         </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vehicle Type<span className="text-[#FF0000]">*</span>
+                Vehicle Type<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -283,7 +284,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                  className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
                 >
                   <option value="">Select a type</option>
                   {brands.map((brand) => (
@@ -292,12 +293,12 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vehicle Make<span className="text-[#FF0000]">*</span>
+                Vehicle Make<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -306,7 +307,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   onChange={handleChange}
                   required
                   disabled={loadingModels || !form.vehicle_type}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                  className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
                 >
                   <option value="">Select a make</option>
                   {models.map((model) => (
@@ -316,14 +317,14 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   ))}
                 </select>
                 {loadingModels && (
-                  <p className="text-sm text-gray-500 mt-1">Loading makes...</p>
+                  <p className="text-xs text-gray-500 mt-1">Loading makes...</p>
                 )}
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Vehicle Model<span className="text-[#FF0000]">*</span>
+                Vehicle Model<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -332,7 +333,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   onChange={handleChange}
                   required
                   disabled={loadingSubModels || !form.vehicle_make}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                  className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
                 >
                   <option value="">Select a model</option>
                   {submodels.map((sub) => (
@@ -342,16 +343,16 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   ))}
                 </select>
                 {loadingSubModels && (
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     Loading models...
                   </p>
                 )}
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                VIN Number<span className="text-[#FF0000]">*</span>
+                VIN Number<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -361,13 +362,13 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 required
                 maxLength={17}
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter your 17-character VIN"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name<span className="text-[#FF0000]">*</span>
+                Full Name<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -376,13 +377,13 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter your full name"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email<span className="text-[#FF0000]">*</span>
+                Email<span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -391,13 +392,13 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter your email address"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone<span className="text-[#FF0000]">*</span>
+                Phone<span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -406,7 +407,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 placeholder="Enter your phone number (e.g., +2341234567890)"
               />
             </div>
@@ -419,7 +420,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 value={form.year_of_manufacture}
                 onChange={handleChange}
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
               >
                 <option value="">Select a year</option>
                 {Array.from(
@@ -431,10 +432,11 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   </option>
                 ))}
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Service<span className="text-[#FF0000]">*</span>
+                Select Service<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -443,7 +445,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                  className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
                 >
                   <option value="">Select a service</option>
                   {services.map((service, index) => (
@@ -452,12 +454,12 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Location<span className="text-[#FF0000]">*</span>
+                Select Location<span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
@@ -466,7 +468,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                   onChange={handleChange}
                   required
                   disabled={isSubmitting}
-                  className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
+                  className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors appearance-none"
                 >
                   <option value="">Select a location</option>
                   {locations.map((location, index) => (
@@ -475,12 +477,12 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Service Date<span className="text-[#FF0000]">*</span>
+                Service Date<span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -489,12 +491,12 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Service Time<span className="text-[#FF0000]">*</span>
+                Service Time<span className="text-red-500">*</span>
               </label>
               <input
                 type="time"
@@ -503,14 +505,14 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 onChange={handleChange}
                 required
                 disabled={isSubmitting}
-                className="w-full bg-[#F2F2F2] rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
               />
             </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Additional Services
               </label>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {services.map((service, index) => (
                   <label key={index} className="flex items-center space-x-2">
                     <input
@@ -520,7 +522,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                       checked={form.additional_services.includes(service)}
                       onChange={handleChange}
                       disabled={isSubmitting}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded"
                     />
                     <span className="text-sm text-gray-700">{service}</span>
                   </label>
@@ -528,29 +530,10 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
               </div>
             </div>
           </div>
-          {/* Commented out toggle UI for future use
-          <div className="flex items-center space-x-2">
-            <div
-              className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${
-                isExpanded ? "bg-[#492F92]" : "bg-gray-300"
-              }`}
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform ${
-                  isExpanded ? "translate-x-6" : "left-0.5"
-                }`}
-              />
-            </div>
-            <span className="text-sm text-gray-700">
-              Add additional vehicle and service details
-            </span>
-          </div>
-          */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full bg-[#492F92] text-white py-2 rounded-md text-sm font-medium hover:bg-[#3b2371] transition-colors ${
+            className={`w-full bg-indigo-700 text-white py-3 rounded-lg text-sm font-medium hover:bg-indigo-800 transition-colors duration-200 ${
               isSubmitting ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
