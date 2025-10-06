@@ -241,8 +241,8 @@ const Invoice = () => {
   useEffect(() => {
     const fetchInvoiceAndBooking = async () => {
       const token = localStorage.getItem("authToken");
-      // Check authentication and referrer
-      if (!token || !document.referrer.includes("/vehicle-dashboard")) {
+      // Check authentication and navigation source
+      if (!token || !location.state) {
         navigate(`/signin?redirect=/booking/${bookingId}/invoice`);
         toast.error(
           "Please log in and access the invoice from the dashboard.",
