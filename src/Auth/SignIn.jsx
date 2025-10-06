@@ -41,25 +41,47 @@ const SignIn = () => {
       );
 
       const { token, user } = response.data;
-      console.log("Login response:", response.data); // Debug
+      console.log("Login response:", response.data); // Debug: Log full response
+
+      // Validate user and role
       if (!user || !user.role) {
         console.error("Login response missing user or role:", response.data);
         toast.error("Invalid user data. Please contact support.");
         return;
       }
+
+      // Validate role explicitly
+      const validRoles = ["admin", "user"];
+      if (!validRoles.includes(user.role.toLowerCase())) {
+        console.error("Invalid role received:", user.role);
+        toast.error("Invalid user role. Please contact support.");
+        return;
+      }
+
+      // Clear previous localStorage data
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+
+      // Store new data
       localStorage.setItem("authToken", token);
       localStorage.setItem("user", JSON.stringify(user));
       console.log(
         "Stored user in localStorage:",
         JSON.parse(localStorage.getItem("user"))
       ); // Debug
+
       toast.success("Login successful!");
 
-      // Redirect to the intended route (from state) or based on user role
-      const from =
-        location.state?.from ||
-        (user.role === "admin" ? "/dashboard" : "/vehicle-dashboard");
-      navigate(from, { state: { user }, replace: true });
+      // Determine redirect based on role, ignore invalid location.state.from
+      let redirectTo = location.state?.from;
+      if (!redirectTo || redirectTo === "/login" || redirectTo === "/") {
+        redirectTo =
+          user.role.toLowerCase() === "admin"
+            ? "/dashboard"
+            : "/vehicle-dashboard";
+      }
+
+      navigate(redirectTo, { state: { user }, replace: true });
     } catch (error) {
       console.error("Login error:", error.response?.data);
       let errorMessage = "Failed to sign in. Please try again.";

@@ -16,6 +16,17 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import AddVehicleModal from "./AddVehicleModal";
 
+const formatNaira = (number) => {
+  return Number(number)
+    .toLocaleString("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    .replace("NGN", "₦");
+};
+
 const VehicleDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedVehicle, setSelectedVehicle] = useState(0);
@@ -37,7 +48,11 @@ const VehicleDashboard = () => {
       const token = localStorage.getItem("authToken");
       if (!token) {
         console.warn("No auth token for API fetch");
-        return null;
+        return {
+          daysRemaining: null,
+          paymentStatus: "Payment Pending",
+          total_amount: 0,
+        };
       }
 
       const response = await axios.get(
@@ -55,13 +70,18 @@ const VehicleDashboard = () => {
           invoiceData = JSON.parse(invoiceData);
         } catch {
           console.error("Failed to parse invoice data");
-          return null;
+          return {
+            daysRemaining: null,
+            paymentStatus: "Payment Pending",
+            total_amount: 0,
+          };
         }
       }
 
-      const paymentStatus = invoiceData.status || "N/A";
+      const paymentStatus = invoiceData.status || "Payment Pending";
+      const total_amount = parseFloat(invoiceData.total_amount) || 0;
       console.log(
-        `VehicleId: ${vehicleId}, BookingId: ${bookingId}, PaymentStatus: ${paymentStatus}`
+        `VehicleId: ${vehicleId}, BookingId: ${bookingId}, PaymentStatus: ${paymentStatus}, TotalAmount: ${total_amount}`
       );
       const maintenanceEndDate = invoiceData.maintenance_end_date || "N/A";
 
@@ -73,14 +93,18 @@ const VehicleDashboard = () => {
         console.log(
           `No valid payment or maintenance_end_date for vehicleId ${vehicleId}. Status: ${paymentStatus}, End Date: ${maintenanceEndDate}`
         );
-        return null;
+        return {
+          daysRemaining: null,
+          paymentStatus: "Payment Pending",
+          total_amount,
+        };
       }
 
       const endDate = new Date(maintenanceEndDate);
       const today = new Date();
       if (isNaN(endDate.getTime())) {
         console.warn("Invalid maintenance_end_date:", maintenanceEndDate);
-        return null;
+        return { daysRemaining: null, paymentStatus: "Paid", total_amount };
       }
 
       const daysRemaining = Math.ceil(
@@ -92,10 +116,18 @@ const VehicleDashboard = () => {
         ":",
         daysRemaining
       );
-      return daysRemaining >= 0 ? daysRemaining : 0;
+      return {
+        daysRemaining: daysRemaining >= 0 ? daysRemaining : 0,
+        paymentStatus: "Paid",
+        total_amount,
+      };
     } catch (err) {
       console.error(`Failed to fetch invoice for vehicleId ${vehicleId}:`, err);
-      return null;
+      return {
+        daysRemaining: null,
+        paymentStatus: "Payment Pending",
+        total_amount: 0,
+      };
     }
   };
 
@@ -121,8 +153,14 @@ const VehicleDashboard = () => {
         const vehiclesData = await Promise.all(
           fetchedVehicles.map(async (v) => {
             const numericalId = parseInt(v.id);
-            const daysRemaining = isNaN(numericalId)
-              ? null
+            const { daysRemaining, paymentStatus, total_amount } = isNaN(
+              numericalId
+            )
+              ? {
+                  daysRemaining: null,
+                  paymentStatus: "Payment Pending",
+                  total_amount: 0,
+                }
               : await getDaysRemaining(numericalId, v.booking_id);
             return {
               id: v.id || Date.now(),
@@ -144,8 +182,9 @@ const VehicleDashboard = () => {
               status: v.status || "N/A",
               created_at: v.created_at || "N/A",
               updated_at: v.updated_at || "N/A",
-              total_amount: v.total_amount || 0,
+              total_amount,
               daysRemaining,
+              paymentStatus,
             };
           })
         );
@@ -578,7 +617,8 @@ const VehicleDashboard = () => {
                               </div>
                             </div>
                             <button className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-[#575757] text-white">
-                              {vehicles[selectedVehicle]?.status || "Scheduled"}
+                              {vehicles[selectedVehicle]?.paymentStatus ||
+                                "Payment Pending"}
                             </button>
                           </div>
                         </div>
@@ -605,7 +645,9 @@ const VehicleDashboard = () => {
                     </p>
                     <div className="flex items-center justify-between p-4 sm:p-6">
                       <p className="text-2xl sm:text-3xl font-bold text-[#575757]">
-                        ₦{vehicles[selectedVehicle]?.total_amount || 0}
+                        {formatNaira(
+                          vehicles[selectedVehicle]?.total_amount || 0
+                        )}
                       </p>
                       <button
                         onClick={handleViewInvoice}
