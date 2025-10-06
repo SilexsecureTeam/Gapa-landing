@@ -110,29 +110,6 @@ const Invoice = () => {
   const location = useLocation();
   const { bookingId } = useParams();
 
-  // Load Paystack script dynamically
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://js.paystack.co/v2/inline.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    script.onload = () => {
-      console.log("Paystack script loaded");
-    };
-    script.onerror = () => {
-      console.error("Failed to load Paystack script");
-      toast.error("Failed to load payment system. Please try again later.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    };
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   const handlePayNow = async () => {
     if (!invoice) return;
     if (invoice.total_amount <= 0) {
@@ -149,90 +126,49 @@ const Invoice = () => {
       });
       return;
     }
+    const token = localStorage.getItem("authToken");
 
-    setIsProcessingPayment(true);
     try {
-      if (!window.PaystackPop) {
-        throw new Error("PaystackPop not loaded");
-      }
-      const popup = new window.PaystackPop();
-      popup.newTransaction({
-        key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+      setIsProcessingPayment(true);
+      const payload = {
         email: invoice.email,
-        amount: invoice.total_amount * 100, // Convert to kobo
-        reference: `booking_${invoice.booking_id}_${Date.now()}`, // Unique reference
-        onLoad: () => {
-          console.log("Payment form loaded");
-        },
-        onSuccess: async (transaction) => {
-          console.log("Transaction successful:", transaction);
-          try {
-            const token = localStorage.getItem("authToken");
-            console.log("Sending verification request:", {
-              url: `https://api.gapafix.com.ng/api/bookings/payment/${transaction.reference}/${invoice.booking_id}`,
-              headers: { Authorization: `Bearer ${token}` },
-              token,
-            });
-            await axios.get(
-              `https://api.gapafix.com.ng/api/bookings/payment/${transaction.reference}/${invoice.booking_id}`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            toast.success("Payment successful! Redirecting to dashboard...", {
-              position: "top-right",
-              autoClose: 3000,
-              onClose: () => navigate("/vehicle-dashboard"),
-            });
-            // Store payment timestamp and maintenance_end_date
-            const paymentTimestamps = JSON.parse(
-              localStorage.getItem("paymentTimestamps") || "{}"
-            );
-            const maintenanceEndDates = JSON.parse(
-              localStorage.getItem("maintenanceEndDates") || "{}"
-            );
-            paymentTimestamps[invoice.booking_id] = new Date().toISOString();
-            if (invoice.maintenance_end_date !== "N/A") {
-              maintenanceEndDates[invoice.booking_id] =
-                invoice.maintenance_end_date;
-            }
-            localStorage.setItem(
-              "paymentTimestamps",
-              JSON.stringify(paymentTimestamps)
-            );
-            localStorage.setItem(
-              "maintenanceEndDates",
-              JSON.stringify(maintenanceEndDates)
-            );
-          } catch (error) {
-            console.error(
-              "Validation error:",
-              error.response?.data || error.message
-            );
-            toast.error("Failed to validate payment. Please contact support.", {
-              position: "top-right",
-              autoClose: 3000,
-            });
-          }
-        },
-        onCancel: () => {
-          toast.info("Payment cancelled. You can try again.", {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        },
-        onError: (error) => {
-          console.error("Payment error:", error);
-          toast.error(`Payment failed: ${error.message}`, {
-            position: "top-right",
-            autoClose: 3000,
-          });
-        },
-      });
+        amount: invoice.total_amount * 100,
+        booking_id: invoice.booking_id,
+      };
+
+      const headers = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await axios.post(
+        `https://api.gapafix.com.ng/api/bookings/${invoice.booking_id}/initialize-payment`,
+        payload,
+        { headers }
+      );
+
+      if (response.data.status && response.data.data?.authorization_url) {
+        window.location.href = response.data.data.authorization_url;
+        toast.info("Redirecting to payment page...", {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      } else {
+        throw new Error(
+          "Payment initialization failed: No authorization URL returned."
+        );
+      }
     } catch (error) {
-      console.error("Payment initialization error:", error);
-      toast.error("Failed to initialize payment. Please try again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      console.error("Payment initialization failed:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to initialize payment. Please try again.",
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
     } finally {
       setIsProcessingPayment(false);
     }
@@ -241,16 +177,12 @@ const Invoice = () => {
   useEffect(() => {
     const fetchInvoiceAndBooking = async () => {
       const token = localStorage.getItem("authToken");
-      // Check authentication and referrer
-      if (!token || !document.referrer.includes("/vehicle-dashboard")) {
+      if (!token) {
         navigate(`/signin?redirect=/booking/${bookingId}/invoice`);
-        toast.error(
-          "Please log in and access the invoice from the dashboard.",
-          {
-            position: "top-right",
-            autoClose: 3000,
-          }
-        );
+        toast.error("Please log in to view the invoice.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
         return;
       }
 
@@ -802,16 +734,10 @@ const Invoice = () => {
                 <button
                   onClick={handlePayNow}
                   disabled={
-                    isProcessingPayment ||
-                    !invoice ||
-                    invoice.total_amount <= 0 ||
-                    ["success", "paid"].includes(invoice.status.toLowerCase())
+                    isProcessingPayment || !invoice || invoice.total_amount <= 0
                   }
                   className={`w-full flex items-center justify-center space-x-2 bg-[#492F92] text-white py-3 rounded-full text-sm font-medium hover:bg-[#3b2371] transition-colors ${
-                    isProcessingPayment ||
-                    !invoice ||
-                    invoice.total_amount <= 0 ||
-                    ["success", "paid"].includes(invoice.status.toLowerCase())
+                    isProcessingPayment || !invoice || invoice.total_amount <= 0
                       ? "opacity-50 cursor-not-allowed"
                       : ""
                   }`}
