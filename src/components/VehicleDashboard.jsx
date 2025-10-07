@@ -34,6 +34,8 @@ const VehicleDashboard = () => {
   const [vehicles, setVehicles] = useState([]);
   const [upcomingMaintenance, setUpcomingMaintenance] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [transactions, setTransactions] = useState([]);
+  const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
   const navigate = useNavigate();
 
   const getDaysRemaining = async (vehicleId, bookingId) => {
@@ -230,7 +232,7 @@ const VehicleDashboard = () => {
             console.error(
               `Error fetching quote for booking ID ${numericalId}:`,
               {
-                message: err.message,
+                _message: err.message,
                 status: err.response?.status,
                 data: err.response?.data,
               }
@@ -254,6 +256,66 @@ const VehicleDashboard = () => {
     };
     fetchOrdersAndQuotes();
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (activeTab !== "track-history") return;
+
+      setIsTransactionsLoading(true);
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        toast.error("Please log in to view transactions.", {
+          action: { label: "Log In", onClick: () => navigate("/signin") },
+        });
+        setIsTransactionsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          "https://api.gapafix.com.ng/api/user/transactions",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const transactionData = response.data.data || [];
+        console.log("Fetched transactions:", transactionData);
+        console.log(
+          "Selected vehicle booking_id:",
+          vehicles[selectedVehicle]?.booking_id
+        );
+        // Log filtered transactions
+        const filteredTransactions = transactionData.filter((tx) => {
+          const extractedBookingId = tx.reference?.startsWith("booking_Gapafix")
+            ? tx.reference.split("_")[1]
+            : null;
+          return (
+            tx.booking_id === vehicles[selectedVehicle]?.booking_id ||
+            extractedBookingId === vehicles[selectedVehicle]?.booking_id
+          );
+        });
+        console.log("Filtered transactions:", filteredTransactions);
+        setTransactions(transactionData);
+      } catch (err) {
+        console.error("Error fetching transactions:", {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+        });
+        if (err.response?.status === 401) {
+          localStorage.removeItem("authToken");
+          toast.error("Session expired. Please log in again.", {
+            action: { label: "Log In", onClick: () => navigate("/signin") },
+          });
+        } else {
+          toast.error("Failed to load transactions. Please try again.");
+        }
+      } finally {
+        setIsTransactionsLoading(false);
+      }
+    };
+    fetchTransactions();
+  }, [activeTab, navigate, vehicles, selectedVehicle]);
 
   const handleLogout = async () => {
     const token = localStorage.getItem("authToken");
@@ -502,59 +564,12 @@ const VehicleDashboard = () => {
                         <div>
                           <div className="flex items-center space-x-2 mb-2">
                             <span className="text-sm font-medium text-gray-600">
-                              Full Name
-                            </span>
-                          </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.full_name || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
                               Year of Manufacture
                             </span>
                           </div>
                           <p className="font-semibold text-gray-900 text-sm">
                             {vehicles[selectedVehicle]?.year || "N/A"}
                           </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
-                              Service Required
-                            </span>
-                          </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.service_required ||
-                              "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
-                              Additional Services
-                            </span>
-                          </div>
-                          {vehicles[selectedVehicle]?.additional_services
-                            ?.length ? (
-                            <ul className="list-disc pl-5 space-y-1">
-                              {vehicles[
-                                selectedVehicle
-                              ].additional_services.map((service, index) => (
-                                <li
-                                  key={index}
-                                  className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
-                                >
-                                  {service}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-sm font-semibold text-gray-900">
-                              None
-                            </p>
-                          )}
                         </div>
                         <div>
                           <div className="flex items-center space-x-2 mb-2">
@@ -569,16 +584,6 @@ const VehicleDashboard = () => {
                         <div>
                           <div className="flex items-center space-x-2 mb-2">
                             <span className="text-sm font-medium text-gray-600">
-                              Status
-                            </span>
-                          </div>
-                          <p className="font-semibold text-gray-900 text-sm">
-                            {vehicles[selectedVehicle]?.status || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">
                               Email
                             </span>
                           </div>
@@ -588,7 +593,7 @@ const VehicleDashboard = () => {
                         </div>
                       </div>
                     </div>
-                    <div className=" flex flex-col space-y-4 sm:space-y-6 mt-4 sm:mt-0 flex-1 items-center">
+                    <div className="flex flex-col space-y-2 mt-4 sm:mt-0 flex-1 items-center">
                       <div className="bg-[#F4F4F4] rounded-lg p-4 flex-1">
                         <h3 className="text-base font-semibold text-[#575757]">
                           Ongoing / Upcoming
@@ -616,7 +621,17 @@ const VehicleDashboard = () => {
                                 </p>
                               </div>
                             </div>
-                            <button className="inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-[#575757] text-white">
+                            <button
+                              className={`inline-flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium 
+    ${
+      vehicles[selectedVehicle]?.paymentStatus?.toLowerCase() === "paid"
+        ? "bg-green-100 text-green-800"
+        : vehicles[selectedVehicle]?.paymentStatus?.toLowerCase() ===
+          "scheduled"
+        ? "bg-yellow-100 text-yellow-800"
+        : "bg-orange-100 text-orange-800"
+    }`}
+                            >
                               {vehicles[selectedVehicle]?.paymentStatus ||
                                 "Payment Pending"}
                             </button>
@@ -636,47 +651,197 @@ const VehicleDashboard = () => {
                       )}
                     </div>
                   </div>
-                  <div className="rounded-xl border border-[#EBEBEB] p-4 sm:p-6">
-                    <h3 className="text-base sm:text-lg font-semibold text-[#575757] mb-2">
-                      Spend Overview
+                </div>
+              )}
+              {activeTab === "service-history" && (
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="bg-[#F4F4F4] rounded-lg p-4">
+                    <h3 className="text-base font-semibold text-[#575757]">
+                      Service History
                     </h3>
-                    <p className="text-[#575757] mb-4 text-sm">
-                      Total spent on this vehicle
+                    <p className="text-[#575757] text-sm mb-4">
+                      Service details for {vehicles[selectedVehicle]?.make}{" "}
+                      {vehicles[selectedVehicle]?.model}
                     </p>
-                    <div className="flex items-center justify-between p-4 sm:p-6">
-                      <p className="text-2xl sm:text-3xl font-bold text-[#575757]">
-                        {formatNaira(
-                          vehicles[selectedVehicle]?.total_amount || 0
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-sm font-medium text-gray-600">
+                            Service Required
+                          </span>
+                        </div>
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {vehicles[selectedVehicle]?.service_required || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-sm font-medium text-gray-600">
+                            Additional Services
+                          </span>
+                        </div>
+                        {vehicles[selectedVehicle]?.additional_services
+                          ?.length ? (
+                          <ul className="list-disc pl-5 space-y-1">
+                            {vehicles[selectedVehicle].additional_services.map(
+                              (service, index) => (
+                                <li
+                                  key={index}
+                                  className="text-sm font-semibold text-gray-900 marker:text-[#492F92]"
+                                >
+                                  {service}
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        ) : (
+                          <p className="text-sm font-semibold text-gray-900">
+                            None
+                          </p>
                         )}
-                      </p>
-                      <button
-                        onClick={handleViewInvoice}
-                        className="bg-[#575757] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-900 transition-colors text-sm"
-                      >
-                        View Invoice
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
-              {activeTab !== "overview" && (
+              {activeTab === "track-history" && (
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="bg-[#F4F4F4] rounded-lg p-4">
+                    <h3 className="text-base font-semibold text-[#575757]">
+                      Transaction History
+                    </h3>
+                    <p className="text-[#575757] text-sm mb-4">
+                      Payment details for {vehicles[selectedVehicle]?.make}{" "}
+                      {vehicles[selectedVehicle]?.model}
+                    </p>
+                    {isTransactionsLoading ? (
+                      <div className="text-center py-6">
+                        <p className="text-gray-500 text-sm">
+                          Loading transactions...
+                        </p>
+                      </div>
+                    ) : transactions.length === 0 ? (
+                      <div className="text-center py-6">
+                        <p className="text-gray-500 text-sm">
+                          No transactions found for this vehicle.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left text-gray-900">
+                          <thead className="text-xs text-gray-600 uppercase bg-[#EBEBEB]">
+                            <tr>
+                              <th scope="col" className="px-4 py-3">
+                                Booking ID
+                              </th>
+                              <th scope="col" className="px-4 py-3">
+                                Amount
+                              </th>
+                              <th scope="col" className="px-4 py-3">
+                                Currency
+                              </th>
+                              <th scope="col" className="px-4 py-3">
+                                Status
+                              </th>
+                              <th scope="col" className="px-4 py-3">
+                                Paid At
+                              </th>
+                              <th scope="col" className="px-4 py-3">
+                                Payment Channel
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {transactions
+                              .filter((tx) => {
+                                // Extract GapafixXXXX from reference
+                                const extractedBookingId =
+                                  tx.reference?.startsWith("booking_Gapafix")
+                                    ? tx.reference.split("_")[1]
+                                    : null;
+                                return (
+                                  tx.booking_id ===
+                                    vehicles[selectedVehicle]?.booking_id ||
+                                  extractedBookingId ===
+                                    vehicles[selectedVehicle]?.booking_id
+                                );
+                              })
+                              .map((tx, index) => (
+                                <tr
+                                  key={index}
+                                  className="border-b border-[#EBEBEB]"
+                                >
+                                  <td className="px-4 py-3">
+                                    {tx.booking_id || "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {tx.currency === "NGN"
+                                      ? formatNaira(parseFloat(tx.amount) || 0)
+                                      : tx.amount || "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {tx.currency || "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span
+                                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                        tx.status?.toLowerCase() === "success"
+                                          ? "bg-green-100 text-green-800"
+                                          : tx.status?.toLowerCase() ===
+                                            "pending"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-red-100 text-red-800"
+                                      }`}
+                                    >
+                                      {tx.status || "N/A"}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {tx.paid_at
+                                      ? new Date(
+                                          tx.paid_at
+                                        ).toLocaleDateString()
+                                      : "N/A"}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {tx.payment_channel || "N/A"}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {activeTab === "report" && (
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 text-sm">
-                    Content for{" "}
-                    {
-                      [
-                        { id: "overview", label: "Overview" },
-                        { id: "service-history", label: "Service History" },
-                        { id: "track-history", label: "Track History" },
-                        { id: "report", label: "Report" },
-                      ].find((t) => t.id === activeTab)?.label
-                    }
-                    {` `}
-                    will be displayed here
+                    Content for Report will be displayed here
                   </p>
                 </div>
               )}
+            </div>
+            <div className="rounded-xl border border-[#EBEBEB] p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-[#575757] mb-2">
+                Spend Overview
+              </h3>
+              <p className="text-[#575757] mb-4 text-sm">
+                Total spent on this vehicle
+              </p>
+              <div className="flex items-center justify-between p-4 sm:p-6">
+                <p className="text-2xl sm:text-3xl font-bold text-[#575757]">
+                  {formatNaira(vehicles[selectedVehicle]?.total_amount || 0)}
+                </p>
+                <button
+                  onClick={handleViewInvoice}
+                  className="bg-[#575757] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-900 transition-colors text-sm"
+                >
+                  View Invoice
+                </button>
+              </div>
             </div>
           </div>
           <div className="space-y-4 sm:space-y-6 hidden lg:block">

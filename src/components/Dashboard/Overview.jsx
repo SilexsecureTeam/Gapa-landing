@@ -340,10 +340,32 @@ const Overview = () => {
                     : "-"}
                 </td>
                 <td className="py-4 px-4 text-sm">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    {item.status || "Pending"}
-                  </span>
+                  {(() => {
+                    const status = item.status?.toLowerCase();
+                    let bgColor = "bg-yellow-100";
+                    let textColor = "text-yellow-800";
+
+                    if (status === "success") {
+                      bgColor = "bg-green-100";
+                      textColor = "text-green-800";
+                    } else if (status === "scheduled") {
+                      bgColor = "bg-blue-100";
+                      textColor = "text-blue-800";
+                    } else if (status === "payment_pending") {
+                      bgColor = "bg-orange-100";
+                      textColor = "text-orange-800";
+                    }
+
+                    return (
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+                      >
+                        {item.status || "Pending"}
+                      </span>
+                    );
+                  })()}
                 </td>
+
                 <td className="py-4 px-4">
                   <div className="flex items-center space-x-2">
                     <button
