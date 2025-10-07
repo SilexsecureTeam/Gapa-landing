@@ -633,7 +633,7 @@ const VehicleDashboard = () => {
     }`}
                             >
                               {vehicles[selectedVehicle]?.paymentStatus ||
-                                "Payment Pending"}
+                                "Pending"}
                             </button>
                           </div>
                         </div>

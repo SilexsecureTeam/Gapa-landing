@@ -408,7 +408,7 @@ const AddVehicleModal = ({ isOpen, onClose, setVehicles }) => {
                 required
                 disabled={isSubmitting}
                 className="w-full bg-gray-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                placeholder="Enter your phone number (e.g., +2341234567890)"
+                placeholder="e.g., 07088885268"
               />
             </div>
             <div>

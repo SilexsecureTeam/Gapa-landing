@@ -8,6 +8,8 @@ const Overview = () => {
   const [maintenanceData, setMaintenanceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -249,6 +251,11 @@ const Overview = () => {
     );
   }
 
+  const totalPages = Math.ceil(maintenanceData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = maintenanceData.slice(startIndex, endIndex);
+
   if (error) {
     return (
       <div className="w-full bg-white flex justify-center items-center h-64">
@@ -294,11 +301,11 @@ const Overview = () => {
             </tr>
           </thead>
           <tbody>
-            {maintenanceData.map((item, index) => (
+            {paginatedData.map((item, index) => (
               <tr
                 key={item.id}
                 className={`border-b bg-[#F9F9F9] border-[#E0E0E0] hover:bg-gray-50 transition-colors ${
-                  index === maintenanceData.length - 1 ? "border-b-0" : ""
+                  index === paginatedData.length - 1 ? "border-b-0" : ""
                 }`}
               >
                 <td className="py-4 px-4 text-sm text-gray-900 font-medium">
@@ -317,7 +324,11 @@ const Overview = () => {
                   {item.maintenance_end_date
                     ? new Date(item.maintenance_end_date).toLocaleDateString(
                         "en-GB",
-                        { day: "2-digit", month: "short", year: "numeric" }
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        }
                       )
                     : "-"}
                 </td>
@@ -342,30 +353,33 @@ const Overview = () => {
                 <td className="py-4 px-4 text-sm">
                   {(() => {
                     const status = item.status?.toLowerCase();
+                    let displayStatus = status;
                     let bgColor = "bg-yellow-100";
                     let textColor = "text-yellow-800";
 
                     if (status === "success") {
                       bgColor = "bg-green-100";
                       textColor = "text-green-800";
+                      displayStatus = "Success";
                     } else if (status === "scheduled") {
                       bgColor = "bg-blue-100";
                       textColor = "text-blue-800";
+                      displayStatus = "Scheduled";
                     } else if (status === "payment_pending") {
                       bgColor = "bg-orange-100";
                       textColor = "text-orange-800";
+                      displayStatus = "Pending";
                     }
 
                     return (
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
                       >
-                        {item.status || "Pending"}
+                        {displayStatus || "Pending"}
                       </span>
                     );
                   })()}
                 </td>
-
                 <td className="py-4 px-4">
                   <div className="flex items-center space-x-2">
                     <button
@@ -386,25 +400,63 @@ const Overview = () => {
             ))}
           </tbody>
         </table>
+        <div className="flex justify-between items-center mt-4 px-4">
+          <p className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </p>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-[#492F92] text-white hover:bg-[#3b2371]"
+              }`}
+            >
+              Previous
+            </button>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-[#492F92] text-white hover:bg-[#3b2371]"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
       <style>{`
-        @media (max-width: 640px) {
-          table {
-            font-size: 0.85rem;
-          }
-          th,
-          td {
-            padding: 0.5rem;
-          }
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-          .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        }
-      `}</style>
+  @media (max-width: 640px) {
+    table {
+      font-size: 0.85rem;
+    }
+    th,
+    td {
+      padding: 0.5rem;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .flex.justify-between.items-center {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .flex.space-x-2 {
+      justify-content: center;
+    }
+  }
+`}</style>
     </div>
   );
 };
