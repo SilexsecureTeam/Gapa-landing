@@ -891,19 +891,20 @@ const VehicleDashboard = () => {
               </p>
               <div className="space-y-4">
                 <div className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
-                  <h4 className="font-semibold text-[#575757] mb-1">
+                  <h4 className="font-semibold hidden text-[#575757] mb-1">
                     Prime Auto Care
                   </h4>
                   <p className="text-[#575757] text-sm mb-2">
-                    Lekki Phase 1 · Workshop
+                    Giwa Barracks Car Park, Ikoyi, Lagos, Nigeria
                   </p>
                 </div>
                 <div className="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors">
-                  <h4 className="font-semibold text-[#575757] mb-1">
+                  <h4 className="font-semibold hidden text-[#575757] mb-1">
                     RoadPro Mobile Mechanics
                   </h4>
                   <p className="text-[#575757] text-sm mb-2">
-                    Victoria Island · Mobile
+                    Kilometer 15, Lekki Epe Expressway, By Jakande Roundabout,
+                    Lekki, Lagos
                   </p>
                 </div>
               </div>
